@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hive-container">
+    <table id="contactTable" class="hover compact stripe cell-border" style="width:100%">
+        <colgroup>
+            <col width="15%" /><!-- 이름 -->
+            <col width="20%" /><!-- 전화 -->
+            <col width="20%" /><!-- 주소 -->
+            <col width="20%" /><!-- 등록일 -->
+            <col width="20%" /><!-- 설명 -->
+            <col width="3%" /><!-- 삭제 -->
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="align-middle">이름</th>
+                <th class="align-middle">전화</th>
+                <th class="align-middle">주소</th>
+                <th class="align-middle">등록일</th>
+                <th class="align-middle">설명</th>
+                <th class="align-middle">삭제</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Contact Modal -->
+<div class="modal fade" id="addContactModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addContactModalLabel">연락처 추가</h5>
+                <button type="button" class="btn btn-secondary" id="closeContactModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="return false;">
+                    <label for="name">이름</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                    <label for="phone">전화</label>
+                    <input type="text" id="phone" name="phone" class="form-control">
+                    <label for="address">주소</label>
+                    <input type="text" id="address" name="address" class="form-control">
+                    <label for="description">설명</label>
+                    <input type="text" id="description" name="description" class="form-control">
+                    <button type="submit" class="btn btn-primary">연락처 추가</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', path='js/contact.js') }}"></script>
+
+{% endblock %}

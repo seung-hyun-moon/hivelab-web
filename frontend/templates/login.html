@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/login.css') }}">
+<div class="hive-container">
+    <form id="loginForm">
+        <div>
+            <img src="/static/images/title.png" width="100%">
+        </div>
+        <div>
+            <input type="text" id="username" placeholder="Username" required>
+        </div>
+        <div>
+            <input type="password" id="password" placeholder="Password" required>
+        </div>
+        <div>
+            <button type="submit">Login</button>
+        </div>
+<!--        <div>-->
+<!--            <a href="/signup" class="btn btn-primary">회원가입</a>-->
+<!--        </div>-->
+    </form>
+</div>
+<script src="{{ url_for('static', path='js/auth.js') }}"></script>
+
+{% endblock %}

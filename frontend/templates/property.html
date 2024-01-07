@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hive-container">
+    <table id="propertyTable" class="hover compact stripe cell-border" style="width:100%">
+        <colgroup>
+            <col width="5%" /><!-- 매물번호 -->
+            <col width="10%" /><!-- 대표이미지 -->
+
+            <col width="19%" /><!-- 주소 등 -->
+            <col width="19%" /><!-- 건물명 등 -->
+            <col width="19%" /><!-- 임대조건 -->
+
+            <col width="20%" /><!-- 물건정보 -->
+            <col width="5%" /><!-- 담당자 -->
+            <col width="3%" /><!-- 삭제 -->
+        </colgroup>
+       <thead style="display:none">
+            <tr>
+                <th class="align-middle">매물번호</th>
+                <th class="align-middle">대표이미지</th>
+
+                <th class="align-middle">주소 등</th>
+                <th class="align-middle">건물명 등</th>
+                <th class="align-middle">임대조건</th>
+
+                <th class="align-middle">물건정보</th>
+                <th class="align-middle">담당자</th>
+                <th class="align-middle">삭제</th>
+
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Property Modal -->
+<div class="modal fade" id="addPropertyModal" tabindex="-1" role="dialog" aria-labelledby="addPropertyModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPropertyModalLabel">물건정보 추가</h5>
+                <button type="button" class="btn btn-secondary" id="closePropertyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="return false;" method="post" enctype="multipart/form-data">
+                    <label for="thumbnail_path">대표이미지</label>
+                    <input type="file" id="thumbnail_path" name="thumbnail_path" class="form-control">
+                    <label for="imgs_path">사진</label>
+                    <input type="file" id="imgs_path" name="imgs_path" class="form-control" multiple>
+                    <label for="address">주소</label>
+                    <input type="text" id="address" name="address" class="form-control">
+                    <label for="year_built">준공년도</label>
+                    <input type="text" id="year_built" name="year_built" class="form-control">
+                    <label for="size">규모</label>
+                    <input type="text" id="size" name="size" class="form-control">
+                    <label for="usage">주용도</label>
+                    <input type="text" id="usage" name="usage" class="form-control">
+                    <label for="building_name">건물명</label>
+                    <input type="text" id="building_name" name="building_name" class="form-control">
+                    <label for="floor">해당층</label>
+                    <input type="text" id="floor" name="floor" class="form-control">
+                    <label for="supply_area">공급면적</label>
+                    <input type="text" id="supply_area" name="supply_area" class="form-control">
+                    <label for="private_area">전용면적</label>
+                    <input type="text" id="private_area" name="private_area" class="form-control">
+                    <label for="deposit">보증금</label>
+                    <input type="text" id="deposit" name="deposit" class="form-control">
+                    <label for="rent">임대료</label>
+                    <input type="text" id="rent" name="rent" class="form-control">
+                    <label for="maintenance_fee">관리비</label>
+                    <input type="text" id="maintenance_fee" name="maintenance_fee" class="form-control">
+                    <label for="details">물건정보</label>
+                    <input type="text" id="details" name="details" class="form-control">
+                    <label for="manager1">담당자1</label>
+                    <input type="text" id="manager1" name="manager1" class="form-control">
+                    <label for="manager2">담당자2</label>
+                    <input type="text" id="manager2" name="manager2" class="form-control">
+
+                    <button type="submit" class="btn btn-primary">물건정보 추가</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', path='js/property.js') }}"></script>
+
+{% endblock %}

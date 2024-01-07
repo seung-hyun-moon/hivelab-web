@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Favicon.ico -->
+    <link rel="shortcut icon" href="{{ url_for('static', path='icon/favicon.ico') }}">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/bootstrap/css/bootstrap.min.css') }}">
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/bootstrap/css/bootstrap-switch.css') }}"> -->
+
+    <!-- dataTable CSS -->
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/datatables/css/dataTables.bootstrap4.min.css') }}"> -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/datatables/dataTables.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/datatables/buttons.dataTables.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/datatables/rowGroup.dataTables.min.css') }}">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='css/base.css') }}">
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/jquery/js/jquery-3.7.1.min.js') }}"></script>
+<!--    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/popper/js/popper.min.js') }}"></script>-->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/bootstrap/js/bootstrap.min.js') }}"></script>
+
+    <!--  Mustache  -->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/mustache/js/mustache.min.js') }}"></script>
+
+    <!-- JQuery Cookie -->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/jquery.cookie/js/jquery.cookie.js') }}"></script>
+
+    <!-- Font Awesome (To using icons)-->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/fontawesome/js/fontawesome-all.min.js') }}"></script>
+
+    <!-- WheelZoom -->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/wheelzoom/js/wheelzoom.js') }}"></script>
+
+    <!-- dataTable -->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/datatables.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/dataTables.buttons.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/jszip.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/pdfmake.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/vfs_fonts.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/buttons.html5.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/buttons.print.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatables/dataTables.rowGroup.min.js') }}"></script>
+
+    <!-- dataTable Editor -->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/datatable-editor/js/datatable-editor.js') }}"></script>
+
+    <!-- d3 -->
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/d3/js/d3.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='3rd-party/d3/js/d3-selection-multi.v1.min.js') }}"></script>
+
+
+    <title>HiveMate DB</title>
+</head>
+<body>
+    {% include "header.html" %}
+    {% block content %}
+    {% endblock %}
+    {% include "footer.html" %}
+</body>
+</html>
