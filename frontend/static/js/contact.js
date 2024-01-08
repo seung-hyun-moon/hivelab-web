@@ -1,27 +1,34 @@
 function formatDate() {
     var date = new Date();
-    var year = date.getFullYear().toString().substr(-2);
+    var year = date.getFullYear().toString();
     var month = ('0' + (date.getMonth() + 1)).slice(-2);
     var day = ('0' + date.getDate()).slice(-2);
     var hour = ('0' + date.getHours()).slice(-2);
     var minute = ('0' + date.getMinutes()).slice(-2);
     var second = ('0' + date.getSeconds()).slice(-2);
-    console.log(year + '년 ' + month + '월 ' + day + '일 ' + hour + '시 ' + minute + '분 ' + second + '초');
-    return year + '년 ' + month + '월 ' + day + '일 ' + hour + '시 ' + minute + '분 ' + second + '초';
+    return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
 $(document).ready(function() {
     var table = $('#contactTable').DataTable({
         dom : 'Blfrtip',
         lengthChange : true,
-        order : [[ 3, "desc" ]],
+        order : [[ 3, "asc" ]],
+        "pageLength": 25,
         buttons: [
             {
                 text: '추가',
                 action: function ( e, dt, node, config ) {
                     $('#addContactModal').modal('show');
                 }
-            }, 'copy', 'excel'
+            },
+            {
+                text: 'Excel 업로드',
+                action: function ( e, dt, node, config ) {
+                    $('#uploadModal').modal('show');
+                }
+            },
+            'copy', 'excel'
         ],
         language: {
             emptyTable: "데이터가 없습니다.",
@@ -129,6 +136,35 @@ $(document).ready(function() {
         });
     
         return false;
+    });
+
+    // 업로드 데이터
+    $('#uploadForm').on('submit', function(e) {
+        e.preventDefault();
+        var fileInput = $('#fileUpload')[0];
+        var file = fileInput.files[0];
+        var formData = new FormData();
+        formData.append('file', file);
+    
+        $.ajax({
+            url: '/api/contact/upload',
+            type: 'POST',
+            data: formData,
+            processData: false,  // tell jQuery not to process the data
+            contentType: false,  // tell jQuery not to set contentType
+            success: function(data) {
+                // 업로드 완료 후 모달 닫기
+                $('#uploadModal').modal('hide');
+                table.ajax.reload();
+            },
+            error: function(error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+
+    $("#closeUploadModal").click(function(){
+        $("#uploadModal").modal("hide");
     });
 
 

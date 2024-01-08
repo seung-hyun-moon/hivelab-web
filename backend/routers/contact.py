@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends
+from datetime import datetime
+
+import pandas as pd
+from fastapi import APIRouter, Depends, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -46,3 +49,32 @@ def delete_contact(contact_id: int, db: Session = Depends(get_db)):
         db.delete(db_contact)
         db.commit()
     return {"message": "Contact deleted"}
+
+
+@router.post("/upload")
+def upload_excel_to_db(file: UploadFile, db: Session = Depends(get_db)):
+    print(file.filename)
+    if file.filename.endswith('.xlsx') or file.filename.endswith('.xls'):
+        df = pd.read_excel(file.file)
+        print(file.filename)
+
+        required_columns = ['이름', '전화', '주소', '설명']
+        if not all(column in df.columns for column in required_columns):
+            raise HTTPException(status_code=400, detail="Excel file must have the following headers: 이름, 전화, 주소, 설명")
+
+        for _, row in df.iterrows():
+            name = row['이름']
+            phone = row['전화']
+            address = row['주소']
+            if '등록일' in df.columns and pd.notna(row['등록일']):
+                # 문자열을 datetime 객체로 변환
+                registration_date = pd.to_datetime(row['등록일']).strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                registration_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            description = row['설명']
+
+            contact = models.Contact(name=name, phone=phone, address=address, registration_date=registration_date, description=description)
+            db.add(contact)
+        db.commit()
+    else:
+        raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .xlsx or .xls file.")

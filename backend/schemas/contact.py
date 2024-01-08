@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class ContactBase(BaseModel):
-    name: str
+    name: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
     registration_date: Optional[str] = None
