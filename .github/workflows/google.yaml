@@ -1,0 +1,50 @@
+# # This workflow will build a docker container, publish it to Google Container Registry, and deploy it to GKE when there is a push to the "main" branch.
+# #
+# # To configure this workflow:
+# #
+# # 1. Ensure that your repository contains the necessary configuration for your Google Kubernetes Engine cluster, including deployment.yml, kustomization.yml, service.yml, etc.
+# #
+# # 2. Create and configure a Workload Identity Provider for GitHub (https://github.com/google-github-actions/auth#setting-up-workload-identity-federation)
+# #
+# # 3. Change the values for the GAR_LOCATION, GKE_ZONE, GKE_CLUSTER, IMAGE, REPOSITORY and DEPLOYMENT_NAME environment variables (below).
+# #
+# # For more support on how to run the workflow, please visit https://github.com/google-github-actions/setup-gcloud/tree/master/example-workflows/gke-kustomize
+
+name: Deploy Hive-Web
+
+on:
+  push:
+    branches:
+    - 'develop'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: code checkout
+      uses: actions/checkout@v3
+
+    - name: install the gcloud cli
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+        service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        install_components: 'gke-gcloud-auth-plugin'
+        export_default_credentials: true
+
+    - name: build and push the docker image
+      env:
+        GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+      run: |
+        gcloud auth configure-docker asia-northeast3-docker.pkg.dev
+        docker build -t asia-northeast3-docker.pkg.dev/$GOOGLE_PROJECT_ID/hivelab-repo-demo/hivelab-web:latest .
+        docker push asia-northeast3-docker.pkg.dev/$GOOGLE_PROJECT_ID/hivelab-repo-demo/hivelab-web:latest
+
+    - name: deploy to gke
+      env:
+        GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+      run: |
+        gcloud container clusters get-credentials hivelab-cluster-demo --region asia-northeast3
+        sed -i "s/GOOGLE_PROJECT_ID/$GOOGLE_PROJECT_ID/g" deployments.yaml
+        kubectl apply -f deployments.yaml
