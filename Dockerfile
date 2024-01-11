@@ -4,7 +4,7 @@ WORKDIR /project
 
 COPY . /project
 
-RUN pip install --no-cache-dir --upgrade -r /project/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /project/hivelab-web/requirements.txt
 
 EXPOSE 80
 
