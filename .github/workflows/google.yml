@@ -31,7 +31,7 @@ jobs:
       with:
         project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
         credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-
+  
     - name: build and push the docker image
       env:
         GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
@@ -39,6 +39,13 @@ jobs:
         gcloud auth configure-docker asia-northeast3-docker.pkg.dev
         docker build -t asia-northeast3-docker.pkg.dev/$GOOGLE_PROJECT_ID/hivelab-repo-demo/hivelab-web:latest .
         docker push asia-northeast3-docker.pkg.dev/$GOOGLE_PROJECT_ID/hivelab-repo-demo/hivelab-web:latest
+
+    - id: 'get-credentials'
+      name: Configures authentication to a GKE cluster via a kubeconfig file
+      uses: 'google-github-actions/get-gke-credentials@v2'
+      with:
+        cluster_name: hivelab-cluster-demo
+        location: asia-northeast3
 
     - name: deploy to gke
       env:
