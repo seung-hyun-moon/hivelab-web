@@ -51,6 +51,5 @@ jobs:
       env:
         GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
       run: |
-        gcloud container clusters get-credentials hivelab-cluster-demo --region asia-northeast3
         sed -i "s/GOOGLE_PROJECT_ID/$GOOGLE_PROJECT_ID/g" deployments.yaml
         kubectl apply -f deployments.yaml
