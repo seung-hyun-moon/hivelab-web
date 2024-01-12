@@ -36,6 +36,3 @@ The application will be available at `http://localhost:80`.
 ## Usage
 
 Navigate to `http://localhost:80` in your web browser to use the application. You can view and manage customers and items from here.
-
-# Test entry
-Test entry. to be deleted.
