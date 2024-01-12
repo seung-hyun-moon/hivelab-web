@@ -61,6 +61,9 @@
 </head>
 <body>
     {% include "header.html" %}
+    <div id="loading-icon" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);z-index: 9999;">
+        <img src="{{ url_for('static', path='images/loading.svg') }}" alt="Loading...">
+    </div>
     {% block content %}
     {% endblock %}
     {% include "footer.html" %}

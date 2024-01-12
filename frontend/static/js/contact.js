@@ -10,6 +10,9 @@ function formatDate() {
 }
 
 $(document).ready(function() {
+    console.log('loading-icon');
+    $('#loading-icon').show();
+    console.log('loading-icon');
     var table = $('#contactTable').DataTable({
         dom : 'Blfrtip',
         lengthChange : true,
@@ -24,6 +27,10 @@ $(document).ready(function() {
             },
             'copy', 'excel'
         ],
+        "initComplete": function(settings, json) {
+            $('#loading-icon').hide();
+            console.log('loading-icon');
+        },
         language: {
             emptyTable: "데이터가 없습니다.",
             lengthMenu: "_MENU_ 개씩 보기",
