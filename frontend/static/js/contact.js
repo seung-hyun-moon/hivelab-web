@@ -22,12 +22,6 @@ $(document).ready(function() {
                     $('#addContactModal').modal('show');
                 }
             },
-            {
-                text: 'Excel 업로드',
-                action: function ( e, dt, node, config ) {
-                    $('#uploadModal').modal('show');
-                }
-            },
             'copy', 'excel'
         ],
         language: {

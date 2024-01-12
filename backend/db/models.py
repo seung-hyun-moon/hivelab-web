@@ -17,7 +17,7 @@ class User(Base):
     # properties = relationship("Property", back_populates="user")
 
 
-class Customer(Base):
+class CustomerModel(Base):
     __tablename__ = "customers"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -78,7 +78,7 @@ class Property(Base):
     # user = relationship("User", back_populates="properties")
 
 
-class Contact(Base):
+class ContactModel(Base):
     __tablename__ = "contacts"
 
     id = Column(Integer, primary_key=True, index=True)

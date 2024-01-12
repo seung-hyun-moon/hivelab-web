@@ -1,54 +1,19 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List
 
-from backend.schemas import customer
-from backend.db import models
+from backend.schemas.customer import Customer, CustomerCreate, CustomerUpdate
+from backend.db.models import CustomerModel
 from backend.db.database import get_db
-
-router = APIRouter()
-
-
-@router.get("/", response_model=List[customer.Customer])
-def get_customers(db: Session = Depends(get_db)):
-    customers = db.query(models.Customer).all()
-    return customers
+from backend.routers.basecurd import BaseCRUD
 
 
-@router.get("/{customer_id}", response_model=customer.Customer)
-def get_customer(customer_id: int, db: Session = Depends(get_db)):
-    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    return customer
+class CustomerRouter(BaseCRUD):
+    def __init__(self):
+        self.router = APIRouter()
+        super().__init__(get_schema=Customer, post_schema=CustomerCreate, put_schema=CustomerUpdate, model=CustomerModel)
 
+    def create_item(self, item: CustomerCreate, db: Session = Depends(get_db)):
+        return super().create_item(item=item, db=db)
 
-@router.post("/", response_model=customer.Customer)
-def create_customer(customer: customer.CustomerCreate, db: Session = Depends(get_db)):
-    db_customer = models.Customer(**customer.dict())
-    db.add(db_customer)
-    db.commit()
-    db.refresh(db_customer)
-    return db_customer
-
-
-@router.put("/{customer_id}", response_model=customer.Customer)
-def update_customer(customer_id: int, customer: customer.CustomerUpdate, db: Session = Depends(get_db)):
-    db_customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
-    if not db_customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    for field, value in customer.dict().items():
-        setattr(db_customer, field, value)
-    db.commit()
-    db.refresh(db_customer)
-    return db_customer
-
-
-@router.delete("/{customer_id}")
-def delete_customer(customer_id: int, db: Session = Depends(get_db)):
-    db_customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
-    if not db_customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    db.delete(db_customer)
-    db.commit()
-    return {"message": "Customer deleted"}
+    def update_item(self, item_id: int, item: CustomerUpdate, db: Session = Depends(get_db)):
+        return super().update_item(item_id=item_id, item=item, db=db)
