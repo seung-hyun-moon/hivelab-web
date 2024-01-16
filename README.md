@@ -28,7 +28,7 @@ pip install -r requirements.txt
 2. Run the application:
 
 ```
-uvicorn main:app --reload
+uvicorn main:app --reload --port 80
 ```
 
 The application will be available at `http://localhost:80`.

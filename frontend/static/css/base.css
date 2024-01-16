@@ -37,16 +37,6 @@ label, span {
     padding: 0;
 }
 
-.nav-link {
-    text-decoration:none !important;
-    color: #1a1a1a;
-}
-
-.nav-link:hover {
-    text-decoration:none !important;
-    color: #2a2a2a;
-}
-
 #nav-logo {
     height: 80px;
     width: 80px;
@@ -127,4 +117,18 @@ table tbody td { min-width:10px;}
 .dataTables_wrapper {
     width: 90%;
     margin: 10px;
+}
+
+.nav-link {
+    margin: 10px;
+    background-color: #e9cc4a;
+    border: none;
+    border-radius: 4px;
+    color: #5f5f5f;
+    cursor: pointer;
+    font-family: NanumBarunGothic sans-serif;
+}
+
+.nav-link:hover {
+    background-color: #cfd152;
 }
