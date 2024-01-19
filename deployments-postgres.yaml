@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: v1
+kind: Secret
+metadata: 
+    name: postgre-secret
+type: Opaque
+data:
+   POSTGRES_PASSWORD: cm9vdA==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16.1
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: hive
+        - name: POSTGRES_USER
+          value: hive
+        - name: POSTGRES_PASSWORD
+          valueFrom: 
+            secretKeyRef: 
+              key: POSTGRES_PASSWORD
+              name: postgre-secret
+        volumeMounts:
+        - name: postgres-persistent-storage
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+      volumes:
+      - name: postgres-persistent-storage
+        persistentVolumeClaim:
+          claimName: postgres-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pv-claim
+spec:
+  storageClassName: "standard-rwo"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+# ---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: postgres-pv
+# spec:
+#   storageClassName: "standard-rwo"
+#   capacity:
+#     storage: 10Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   claimRef:
+#     namespace: default
+#     name: postgres-pv-claim
+#   csi:
+#     driver: pd.csi.storage.gke.io
+#     volumeHandle: projects/hivelab-prj-1/zones/asia-northeast3-b/disks/postgres-disk
+#     fsType: ext4

@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hive-web
+spec:
+  type: LoadBalancer
+  selector:
+    app: hive-web
+  ports:
+  - port: 80
+    targetPort: 80
+  loadBalancerIP: 34.64.222.31
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hive-web
+  labels:
+    app: hive-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hive-web
+  template:
+    metadata:
+      labels:
+        app: hive-web
+    spec:
+      containers:
+      - name: hive-web
+        image: asia-northeast3-docker.pkg.dev/hivelab-prj-1/hivelab-repo-demo/hivelab-web:latest
