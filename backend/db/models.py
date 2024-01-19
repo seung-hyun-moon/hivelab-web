@@ -20,31 +20,24 @@ class User(Base):
 class CustomerModel(Base):
     __tablename__ = "customers"
 
-    id = Column(Integer, primary_key=True, index=True)
-    # category = Column(String)
-    importance = Column(String)
-    move_in_date = Column(String)
-    industry = Column(String)
-    contact_info = Column(String)
-    deposit = Column(String)
-    rent = Column(String)
-    size = Column(String)
-    sector = Column(String)
-    notes = Column(String)
+    id = Column(Integer, primary_key=True, index=True)  # 구분
+    importance = Column(String)                         # 중요도
+    contact_date = Column(String)                       # 컨택일
+    move_in_date = Column(String)                       # 입주시기
+    industry = Column(String)                           # 업종
+    contact_info = Column(String)                       # 연락처
+    notes = Column(String)                              # 비고
 
-    contact_person1 = Column(String)
-    contact_person2 = Column(String)
+    contact_person = Column(String)                     # 컨택
+    head = Column(String)                               # 정
+    deputy = Column(String)                             # 부
 
-    handling_person1 = Column(String)
-    handling_person2 = Column(String)
-
-    talk_person1 = Column(String)
-    talk_person2 = Column(String)
+    customer_page = Column(String)                      # 고객페이지
 
     # property_id = Column(Integer, ForeignKey("properties.id"))
     # user_id = Column(Integer, ForeignKey("users.id"))
-    property_id = Column(Integer)
-    user_id = Column(Integer)
+    # property_id = Column(Integer)
+    # user_id = Column(Integer)
 
     # Relationships
     # user = relationship("User", back_populates="customers")

@@ -119,6 +119,10 @@ table tbody td { min-width:10px;}
     margin: 10px;
 }
 
+table.dataTable th {
+    font-size: 0.5em;
+}
+
 .nav-link {
     margin: 10px;
     background-color: #e9cc4a;

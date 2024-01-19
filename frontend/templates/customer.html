@@ -6,62 +6,34 @@
         <colgroup>
             <col width="3%" /><!-- 구분 -->
             <col width="3%" /><!-- 중요도 -->
-            <col width="7%" /><!-- 입주시기 -->
-            <col width="8%" /><!-- 업종 -->
-            <col width="8%" /><!-- 연락처 -->
-            <col width="5%" /><!-- 보증금 -->
-            <col width="5%" /><!-- 임대료 -->
-            <col width="6%" /><!-- 평수 -->
-            <col width="9%" /><!-- 섹터 -->
-            <col width="15%" /><!-- 특이사항 -->
+            <col width="8%" /><!-- 컨택일 -->
+            <col width="8%" /><!-- 입주시기 -->
+            <col width="10%" /><!-- 업종 -->
+            <col width="10%" /><!-- 연락처 -->
+            <col width="32%" /><!-- 비고 -->
 
-            <col width="4%" /><!-- 컨택 -->
-            <col width="4%" /><!-- 컨택 -->
+            <col width="5%" /><!-- 컨택 -->
+            <col width="5%" /><!-- 정 -->
+            <col width="5%" /><!-- 부 -->
 
-            <col width="4%" /><!-- 핸드링 -->
-            <col width="4%" /><!-- 핸드링 -->
-
-            <col width="4%" /><!-- 톡방 -->
-            <col width="4%" /><!-- 톡방 -->
-
-            <col width="4%" /><!-- 브리핑 -->
+            <col width="8%" /><!-- 고객페이지 -->
 
             <col width="3%" /><!-- 삭제 -->
         </colgroup>
         <thead>
             <tr>
-                <th rowspan="2" class="align-middle">구분</th>
-                <th rowspan="2" class="align-middle">중요도</th>
-                <th rowspan="2" class="align-middle">입주시기</th>
-                <th rowspan="2" class="align-middle">업종</th>
-                <th rowspan="2" class="align-middle">연락처</th>
-                <th rowspan="2" class="align-middle">보증금</th>
-                <th rowspan="2" class="align-middle">임대료</th>
-                <th rowspan="2" class="align-middle">평수</th>
-                <th rowspan="2" class="align-middle">섹터</th>
-                <th rowspan="2" class="align-middle">특이사항</th>
-
-                <th colspan="2" class="align-middle">컨택</th>
-                <!-- <th rowspan="2" class="align-middle">컨택2</th> -->
-
-                <th colspan="2" class="align-middle">핸드링</th>
-                <!-- <th rowspan="2" class="align-middle">핸드링2</th> -->
-
-                <th colspan="2" class="align-middle">톡방</th>
-                <!-- <th rowspan="2" class="align-middle">톡방2</th> -->
-
-                <th rowspan="2" class="align-middle">브리핑</th>
-                <th rowspan="2" class="align-middle">삭제</th>
-            </tr>
-            <tr style="display:none">
-                <th>컨택1</th>
-                <th>컨택2</th>
-
-                <th>핸드링1</th>
-                <th>핸드링2</th>
-
-                <th>톡방1</th>
-                <th>톡방2</th>
+                <th class="align-middle">구분</th>
+                <th class="align-middle">중요도</th>
+                <th class="align-middle">컨택일</th>
+                <th class="align-middle">입주시기</th>
+                <th class="align-middle">업종</th>
+                <th class="align-middle">연락처</th>
+                <th class="align-middle">컨디션 및 진행상황</th>
+                <th class="align-middle">컨택</th>
+                <th class="align-middle">정</th>
+                <th class="align-middle">부</th>
+                <th class="align-middle">고객페이지</th>
+                <th class="align-middle">삭제</th>
             </tr>
         </thead>
         <tbody>
@@ -81,36 +53,24 @@
                 <form onsubmit="return false;">
                     <label for="importance">중요도</label>
                     <input type="text" id="importance" name="importance" class="form-control">
+                    <label for="contact_date">컨택일</label>
+                    <input type="text" id="contact_date" name="contact_date" class="form-control">
                     <label for="move_in_date">입주시기</label>
                     <input type="text" id="move_in_date" name="move_in_date" class="form-control">
                     <label for="industry">업종</label>
                     <input type="text" id="industry" name="industry" class="form-control">
                     <label for="contact_info">연락처</label>
                     <input type="text" id="contact_info" name="contact_info" class="form-control">
-                    <label for="deposit">보증금</label>
-                    <input type="text" id="deposit" name="deposit" class="form-control">
-                    <label for="rent">임대료</label>
-                    <input type="text" id="rent" name="rent" class="form-control">
-                    <label for="size">평수</label>
-                    <input type="text" id="size" name="size" class="form-control">
-                    <label for="sector">섹터</label>
-                    <input type="text" id="sector" name="sector" class="form-control">
-                    <label for="notes">특이사항</label>
+                    <label for="notes">비고</label>
                     <input type="text" id="notes" name="notes" class="form-control">
-                    <label for="contact_person1">컨택1</label>
-                    <input type="text" id="contact_person1" name="contact_person1" class="form-control">
-                    <label for="contact_person2">컨택2</label>
-                    <input type="text" id="contact_person2" name="contact_person2" class="form-control">
-                    <label for="handling_person1">핸드링1</label>
-                    <input type="text" id="handling_person1" name="handling_person1" class="form-control">
-                    <label for="handling_person2">핸드링2</label>
-                    <input type="text" id="handling_person2" name="handling_person2" class="form-control">
-                    <label for="talk_person1">톡방1</label>
-                    <input type="text" id="talk_person1" name="talk_person1" class="form-control">
-                    <label for="talk_person2">톡방2</label>
-                    <input type="text" id="talk_person2" name="talk_person2" class="form-control">
-                    <label for="property_id">브리핑</label>
-                    <input type="text" id="property_id" name="property_id" class="form-control">
+                    <label for="contact_person">컨택</label>
+                    <input type="text" id="contact_person" name="contact_person" class="form-control">
+                    <label for="head">정</label>
+                    <input type="text" id="head" name="head" class="form-control">
+                    <label for="deputy">부</label>
+                    <input type="text" id="deputy" name="deputy" class="form-control">
+                    <label for="customer_page">고객페이지</label>
+                    <input type="text" id="customer_page" name="customer_page" class="form-control">
 
                     <button type="submit" class="btn btn-primary">고객정보 추가</button>
                 </form>

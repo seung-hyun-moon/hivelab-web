@@ -1,25 +1,57 @@
-function custom_datas(data) {
-    // importance 필드를 ★로 변환
-    if (typeof data.importance === 'string' && !isNaN(data.importance)) {
-        if (data.importance < 0 || data.importance > 5) {
-            alert('importance는 0에서 5 사이의 숫자여야 합니다.');
-            return data;
+function formatDateField(data, type) {
+    if (type === 'display') {
+        data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
+        if (data.length === 6) {
+            return `${data.slice(0, 2)}년${data.slice(2, 4)}월${data.slice(4, 6)}일`;
         }
-        data.importance = '★'.repeat(data.importance);
     }
+    return data;
+}
 
-    // move_in_date 필드를 년월일 형식으로 변환
-    if (typeof data.move_in_date === 'string' && !isNaN(data.move_in_date)) {
-        let dateStr = data.move_in_date.toString();
-        if (dateStr.length !== 6) {
-            return data;
-        }
-        data.move_in_date = `${dateStr.slice(0, 2)}년${dateStr.slice(2, 4)}월${dateStr.slice(4, 6)}일`;
+function formatData(data, type) {
+    if (type === 'display') {
+        data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
+        return String(data).replace(/ /g, '&nbsp;').replace(/\n/g, '<br/>');
     }
+    return data;
 }
 
 $(document).ready(function() {
     var table = $('#customerTable').DataTable({
+        initComplete: function() {
+            // 테이블의 모든 셀에 대해 이벤트 리스너를 추가
+            $('td').each(function() {
+                $(this).dblclick(function() {
+                    // 더블 클릭하면 셀을 수정 가능
+                    $(this).attr('contenteditable', 'true');
+                });
+    
+                $(this).keydown(function(e) {
+                    // Enter를 누르면 수정을 완료하고 PATCH 요청
+                    if (e.keyCode == 13 && e.ctrlKey) { // Ctrl + Enter 키
+                        
+                    } else if (e.keyCode == 13) { // Enter 키만
+                        e.preventDefault(); // 기본 동작(줄바꿈)을 방지
+                        $(this).attr('contenteditable', 'false');
+                        var id = $(this).parent().data('id');
+                        var column = $(this).data('column');
+                        var value = $(this).text();
+
+                        var data = {};
+                        data[column] = value;
+                        $.ajax({
+                            url: '/api/customer/' + id,
+                            type: 'PATCH',
+                            contentType: 'application/json',
+                            data: JSON.stringify(data),
+                            success: function(response) {
+                                table.ajax.reload();
+                            }
+                        });
+                    }
+                });
+            });
+        },
         dom : 'Blfrtip',
         lengthChange : true,
         order : [[ 0, "desc" ]],
@@ -51,68 +83,102 @@ $(document).ready(function() {
             url: '/api/customer/',
             dataSrc: ''
         },
+        createdRow: function (row, data, dataIndex) {
+            $(row).attr('data-id', data.id);
+        },
         columns: [
-            { data: 'id' },
-            { data: 'importance' },
-            { data: 'move_in_date' },
-            { data: 'industry' },
-            { data: 'contact_info' },
-            { data: 'deposit' },
-            { data: 'rent' },
-            { data: 'size' },
-            { data: 'sector' },
-            { data: 'notes' },
-            { data: 'contact_person1' },
-            { data: 'contact_person2' },
-            { data: 'handling_person1' },
-            { data: 'handling_person2' },
-            { data: 'talk_person1' },
-            { data: 'talk_person2' },
-            { data: 'property_id' },
+            { data: 'id', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'id');
+                } 
+            },
+            { data: 'importance', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'importance');
+                } 
+            },
+            { data: 'contact_date', render: formatDateField,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'contact_date');
+                } 
+            },
+            { data: 'move_in_date', render: formatDateField,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'move_in_date');
+                } 
+            },
+            { data: 'industry', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'industry');
+                } 
+            },
+            { data: 'contact_info', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'contact_info');
+                } 
+            },
+            { data: 'notes', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'notes');
+                } 
+            },
+            { data: 'contact_person', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'contact_person');
+                } 
+            },
+            { data: 'head', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'head');
+                } 
+            },
+            { data: 'deputy', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'deputy');
+                } 
+            },
+            { data: 'customer_page', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'customer_page');
+                } 
+            },
             { data: 'id',
                 "render": function ( data, type, row ) { 
-                    console.log(data, type, row);
                     return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
         ]
     });
 
-    datatableEdit({
-        dataTable: table,
-        columnDefs: [
-            { targets: 1 },
-            { targets: 2 },
-            { targets: 3 },
-            { targets: 4 },
-            { targets: 5 },
-            { targets: 6 },
-            { targets: 7 },
-            { targets: 8 },
-            { targets: 9 },
-            { targets: 10 },
-            { targets: 11 },
-            { targets: 12 },
-            { targets: 13 },
-            { targets: 14 },
-            { targets: 15 },
-            { targets: 16 },
-        ],
-        onEdited: function (prev, changed, index, cell) {
-            var rowData = cell.row(index.row).data();
-            custom_datas(rowData);
-            $.ajax({
-                url: '/api/customer/' + rowData.id,
-                type: 'PUT',
-                accept: 'application/json',
-                contentType: 'application/json',
-                data: JSON.stringify(rowData),
-                success: function(response) {
-                    table.ajax.reload();
-                }
-            });
-        }
-    });
+    // datatableEdit({
+    //     dataTable: table,
+    //     columnDefs: [
+    //         { targets: 1 },
+    //         { targets: 2 },
+    //         { targets: 3 },
+    //         { targets: 4 },
+    //         { targets: 5 },
+    //         { targets: 6 },
+    //         { targets: 7 },
+    //         { targets: 8 },
+    //         { targets: 9 },
+    //         { targets: 10 },
+    //     ],
+    //     onEdited: function (prev, changed, index, cell) {
+    //         var rowData = cell.row(index.row).data();
+    //         $.ajax({
+    //             url: '/api/customer/' + rowData.id,
+    //             type: 'PUT',
+    //             accept: 'application/json',
+    //             contentType: 'application/json',
+    //             data: JSON.stringify(rowData),
+    //             success: function(response) {
+    //                 table.ajax.reload();
+    //             }
+    //         });
+    //     }
+    // });
+    
 
     $('#customerTable tbody').on('click', 'button.delete-btn', function () {
         var id = $(this).data('id');
@@ -132,31 +198,24 @@ $(document).ready(function() {
         }
     });
 
-    $("#close").click(function(){
-        $("#closeCustomerModal").modal("hide");
+    $("#closeCustomerModal").click(function(){
+        $("#addCustomerModal").modal("hide");
     });
 
     $('#addCustomerModal form').on('submit', function() {
         var form = $(this);
         var data = {
             importance: form.find('input[name="importance"]').val(),
+            contact_date: form.find('input[name="contact_date"]').val(),
             move_in_date: form.find('input[name="move_in_date"]').val(),
             industry: form.find('input[name="industry"]').val(),
             contact_info: form.find('input[name="contact_info"]').val(),
-            deposit: form.find('input[name="deposit"]').val(),
-            rent: form.find('input[name="rent"]').val(),
-            size: form.find('input[name="size"]').val(),
-            sector: form.find('input[name="sector"]').val(),
             notes: form.find('input[name="notes"]').val(),
-            contact_person1: form.find('input[name="contact_person1"]').val(),
-            contact_person2: form.find('input[name="contact_person2"]').val(),
-            handling_person1: form.find('input[name="handling_person1"]').val(),
-            handling_person2: form.find('input[name="handling_person2"]').val(),
-            talk_person1: form.find('input[name="talk_person1"]').val(),
-            talk_person2: form.find('input[name="talk_person2"]').val(),
-            property_id: form.find('input[name="property_id"]').val()
+            contact_person: form.find('input[name="contact_person"]').val(),
+            head: form.find('input[name="head"]').val(),
+            deputy: form.find('input[name="deputy"]').val(),
+            customer_page: form.find('input[name="customer_page"]').val(),
         };
-        custom_datas(data);
         $.ajax({
             type: 'POST',
             url: '/api/customer/',

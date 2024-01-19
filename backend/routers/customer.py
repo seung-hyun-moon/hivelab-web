@@ -17,3 +17,6 @@ class CustomerRouter(BaseCRUD):
 
     def update_item(self, item_id: int, item: CustomerUpdate, db: Session = Depends(get_db)):
         return super().update_item(item_id=item_id, item=item, db=db)
+    
+    def patch_item(self, item_id: int, item: CustomerUpdate, db: Session = Depends(get_db)):
+        return super().patch_item(item_id=item_id, item=item, db=db)

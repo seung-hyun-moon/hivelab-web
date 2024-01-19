@@ -27,6 +27,7 @@ class BaseCRUD(Generic[TGet, TCreate, TUpdate]):
         self.router.add_api_route("/{item_id}", self.get_item, response_model=self.get_schema, methods=["GET"])
         self.router.add_api_route("/{item_id}", self.update_item, response_model=self.get_schema, methods=["PUT"])
         self.router.add_api_route("/{item_id}", self.delete_item, methods=["DELETE"])
+        self.router.add_api_route("/{item_id}", self.patch_item, response_model=self.get_schema, methods=["PATCH"])
 
     def get_items(self, db: Session = Depends(get_db)):
         return db.query(self.model).all()
@@ -60,3 +61,14 @@ class BaseCRUD(Generic[TGet, TCreate, TUpdate]):
             db.delete(db_item)
             db.commit()
         return {"message": "Item deleted"}
+    
+    def patch_item(self, item_id: int, item: TUpdate, db: Session = Depends(get_db)):
+        db_item = db.query(self.model).get(item_id)
+        if db_item is None:
+            raise HTTPException(status_code=404, detail="Item not found")
+        for key, value in item.model_dump().items():
+            if value is not None:
+                setattr(db_item, key, value)
+        db.commit()
+        db.refresh(db_item)
+        return db_item
