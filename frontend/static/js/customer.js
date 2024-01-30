@@ -25,18 +25,29 @@ $(document).ready(function() {
                     // 더블 클릭하면 셀을 수정 가능
                     $(this).attr('contenteditable', 'true');
                 });
-    
+        
                 $(this).keydown(function(e) {
-                    // Enter를 누르면 수정을 완료하고 PATCH 요청
-                    if (e.keyCode == 13 && e.ctrlKey) { // Ctrl + Enter 키
-                        
+                    // Ctrl + Enter 키를 누르면 줄바꿈
+                    if (e.keyCode == 13 && e.ctrlKey) {
+                        e.preventDefault(); // 기본 동작(줄바꿈)을 방지
+                        var selection = window.getSelection();
+                        var range = selection.getRangeAt(0);
+                        var cursorPos = range.startOffset;
+                        var currentVal = $(this).text();
+                        var beforeCursor = currentVal.substring(0, cursorPos);
+                        var afterCursor = currentVal.substring(cursorPos);
+                        $(this).text(beforeCursor + "\n" + afterCursor);
+                        range.setStart(this.childNodes[0], cursorPos + 1);
+                        range.setEnd(this.childNodes[0], cursorPos + 1);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
                     } else if (e.keyCode == 13) { // Enter 키만
                         e.preventDefault(); // 기본 동작(줄바꿈)을 방지
                         $(this).attr('contenteditable', 'false');
                         var id = $(this).parent().data('id');
                         var column = $(this).data('column');
                         var value = $(this).text();
-
+        
                         var data = {};
                         data[column] = value;
                         $.ajax({
@@ -95,6 +106,31 @@ $(document).ready(function() {
             { data: 'importance', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'importance');
+                    switch(cellData) {
+                        case 'A':
+                            $(td).css('color', '#f12c17');
+                            $(td).css('font-weight', 'bold');
+                            break;
+                        case 'B':
+                            $(td).css('color', '#ffc000');
+                            break;
+                        case 'C':
+                            $(td).css('color', '#548235');
+                            break;
+                        case 'D':
+                            $(td).css('color', '#2f75b5');
+                            break;
+                        case 'F':
+                            $(td).css('color', '#f476e2');
+                            break;
+                        case 'X':
+                            $(td).css('color', '#757171');
+                            break;
+                        default:
+                            // 기본 색상 설정
+                            $(td).css('color', '#000000');
+                    }
+                    
                 } 
             },
             { data: 'contact_date', render: formatDateField,
