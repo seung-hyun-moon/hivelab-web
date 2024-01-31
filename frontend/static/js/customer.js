@@ -1,68 +1,54 @@
-function formatDateField(data, type) {
+function formatDateField(data, type, row) {
     if (type === 'display') {
         data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
         if (data.length === 6) {
-            return `${data.slice(0, 2)}년${data.slice(2, 4)}월${data.slice(4, 6)}일`;
+            // var retext = `${data.slice(0, 2)}년${data.slice(2, 4)}월${data.slice(4, 6)}일`;
+            return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';" ondblclick="this.readOnly = false;" onkeydown="handleKeyDown(event, this, \'' + row.id + '\')">' + data + '</textarea>';
         }
     }
     return data;
 }
 
-function formatData(data, type) {
+function formatData(data, type, row) {
     if (type === 'display') {
         data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
-        return String(data).replace(/ /g, '&nbsp;').replace(/\n/g, '<br/>');
+        // var retext = String(data).replace(/ /g, '&nbsp;').replace(/\n/g, '<br/>');
+        return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';" ondblclick="this.readOnly = false;" onkeydown="handleKeyDown(event, this, \'' + row.id + '\')">' + data + '</textarea>';
     }
     return data;
 }
 
+function handleKeyDown(e, textarea, id) {
+    if (e.keyCode == 13 && e.ctrlKey) {
+        e.preventDefault();
+        var cursorPos = textarea.selectionStart;
+        var currentVal = $(textarea).val();
+        var beforeCursor = currentVal.substring(0, cursorPos);
+        var afterCursor = currentVal.substring(cursorPos);
+        $(textarea).val(beforeCursor + "\n" + afterCursor);
+        textarea.selectionStart = textarea.selectionEnd = cursorPos + 1;
+    } else if (e.keyCode == 13) {
+        e.preventDefault();
+        var column = $(textarea).parent().data('column');
+        var value = $(textarea).val();
+
+        var data = {};
+        data[column] = value;
+        $.ajax({
+            url: '/api/customer/' + id,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                textarea.readOnly = true;
+                location.reload(); // 페이지 새로 고침
+            }
+        });
+    }
+}
+
 $(document).ready(function() {
     var table = $('#customerTable').DataTable({
-        initComplete: function() {
-            // 테이블의 모든 셀에 대해 이벤트 리스너를 추가
-            $('td').each(function() {
-                $(this).dblclick(function() {
-                    // 더블 클릭하면 셀을 수정 가능
-                    $(this).attr('contenteditable', 'true');
-                });
-        
-                $(this).keydown(function(e) {
-                    // Ctrl + Enter 키를 누르면 줄바꿈
-                    if (e.keyCode == 13 && e.ctrlKey) {
-                        e.preventDefault(); // 기본 동작(줄바꿈)을 방지
-                        var selection = window.getSelection();
-                        var range = selection.getRangeAt(0);
-                        var cursorPos = range.startOffset;
-                        var currentVal = $(this).text();
-                        var beforeCursor = currentVal.substring(0, cursorPos);
-                        var afterCursor = currentVal.substring(cursorPos);
-                        $(this).text(beforeCursor + "\n" + afterCursor);
-                        range.setStart(this.childNodes[0], cursorPos + 1);
-                        range.setEnd(this.childNodes[0], cursorPos + 1);
-                        selection.removeAllRanges();
-                        selection.addRange(range);
-                    } else if (e.keyCode == 13) { // Enter 키만
-                        e.preventDefault(); // 기본 동작(줄바꿈)을 방지
-                        $(this).attr('contenteditable', 'false');
-                        var id = $(this).parent().data('id');
-                        var column = $(this).data('column');
-                        var value = $(this).text();
-        
-                        var data = {};
-                        data[column] = value;
-                        $.ajax({
-                            url: '/api/customer/' + id,
-                            type: 'PATCH',
-                            contentType: 'application/json',
-                            data: JSON.stringify(data),
-                            success: function(response) {
-                                table.ajax.reload();
-                            }
-                        });
-                    }
-                });
-            });
-        },
         dom : 'Blfrtip',
         lengthChange : true,
         order : [[ 0, "desc" ]],
@@ -70,7 +56,32 @@ $(document).ready(function() {
             {
                 text: '추가',
                 action: function ( e, dt, node, config ) {
-                    $('#addCustomerModal').modal('show');
+                    var data = {
+                        importance: "",
+                        contact_date: "",
+                        move_in_date: "",
+                        industry: "",
+                        contact_info: "",
+                        notes: "",
+                        contact_person: "",
+                        head: "",
+                        deputy: "",
+                        customer_page: "",
+                    };
+                    $.ajax({
+                        type: 'POST',
+                        url: '/api/customer/',
+                        data: JSON.stringify(data),
+                        contentType: 'application/json',
+                        success: function(response) {
+                            console.log('Success:', response);
+                            $('#addCustomerModal').modal('hide');
+                            table.ajax.reload();
+                        },
+                        error: function(error) {
+                            console.error('Error:', error);
+                        }
+                    });
                 }
             }, 'copy', 'excel'
         ],
@@ -108,37 +119,37 @@ $(document).ready(function() {
                     $(td).attr('data-column', 'importance');
                     switch(cellData) {
                         case 'A':
-                            $(td).css('color', '#f12c17');
-                            $(td).css('font-weight', 'bold');
+                            $(td).children().css('color', '#f12c17');
+                            $(td).children().css('font-weight', 'bold');
                             break;
                         case 'B':
-                            $(td).css('color', '#ffc000');
+                            $(td).children().css('color', '#ffc000');
                             break;
                         case 'C':
-                            $(td).css('color', '#548235');
+                            $(td).children().css('color', '#548235');
                             break;
                         case 'D':
-                            $(td).css('color', '#2f75b5');
+                            $(td).children().css('color', '#2f75b5');
                             break;
                         case 'F':
-                            $(td).css('color', '#f476e2');
+                            $(td).children().css('color', '#f476e2');
                             break;
                         case 'X':
-                            $(td).css('color', '#757171');
+                            $(td).children().css('color', '#757171');
                             break;
                         default:
                             // 기본 색상 설정
-                            $(td).css('color', '#000000');
+                            $(td).children().css('color', '#000000');
                     }
                     
                 } 
             },
-            { data: 'contact_date', render: formatDateField,
+            { data: 'contact_date', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'contact_date');
                 } 
             },
-            { data: 'move_in_date', render: formatDateField,
+            { data: 'move_in_date', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'move_in_date');
                 } 
@@ -156,6 +167,7 @@ $(document).ready(function() {
             { data: 'notes', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'notes');
+                    $(td).children().css('resize', 'vertical');
                 } 
             },
             { data: 'contact_person', render: formatData,
@@ -185,36 +197,6 @@ $(document).ready(function() {
             },
         ]
     });
-
-    // datatableEdit({
-    //     dataTable: table,
-    //     columnDefs: [
-    //         { targets: 1 },
-    //         { targets: 2 },
-    //         { targets: 3 },
-    //         { targets: 4 },
-    //         { targets: 5 },
-    //         { targets: 6 },
-    //         { targets: 7 },
-    //         { targets: 8 },
-    //         { targets: 9 },
-    //         { targets: 10 },
-    //     ],
-    //     onEdited: function (prev, changed, index, cell) {
-    //         var rowData = cell.row(index.row).data();
-    //         $.ajax({
-    //             url: '/api/customer/' + rowData.id,
-    //             type: 'PUT',
-    //             accept: 'application/json',
-    //             contentType: 'application/json',
-    //             data: JSON.stringify(rowData),
-    //             success: function(response) {
-    //                 table.ajax.reload();
-    //             }
-    //         });
-    //     }
-    // });
-    
 
     $('#customerTable tbody').on('click', 'button.delete-btn', function () {
         var id = $(this).data('id');
