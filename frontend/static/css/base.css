@@ -79,15 +79,6 @@ label, span {
     height: 100%;
 }
 
-table.dataTable th {
-    text-align :center;
-    font-size: 0.8em;
-}
-
-table.dataTable td {
-    font-size: 0.8em;
-}
-
 table.dataTable thead>tr>th.sorting:after,
 table.dataTable thead>tr>th.sorting:after,
 table.dataTable thead>tr>th.sorting_asc:after,
@@ -120,7 +111,16 @@ table tbody td { min-width:10px;}
 }
 
 table.dataTable th {
-    font-size: 0.5em;
+    text-align :center;
+    font-size: 0.9em;
+}
+
+table.dataTable td {
+    font-size: 0.8em;
+}
+
+thead input {
+    width: 100%;
 }
 
 .nav-link {
