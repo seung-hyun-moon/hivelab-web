@@ -59,6 +59,12 @@ $(document).ready(function() {
         order : [[ 1, "asc" ],  [2, "asc"]],
         orderCellsTop: true,
         fixedHeader: true,
+        columnDefs: [
+            {
+                targets: [12], // 상태 열의 인덱스
+                visible: false,
+            }
+        ],
         initComplete: function () {
             var api = this.api();
 
@@ -315,11 +321,13 @@ $(document).ready(function() {
         return false;
     });
 
-    $('#customerTable_filter').prepend('<button id="discard" class="dt-button">폐기</button>');
-    $('#customerTable_filter').prepend('<button id="hold" class="dt-button">보류</button>');
-    $('#customerTable_filter').prepend('<button id="complete" class="dt-button">완료</button>');
-    $('#customerTable_filter').prepend('<button id="progress" class="dt-button">진행</button>');
-    $('#customerTable_filter').prepend('<button id="all" class="dt-button">전체보기</button>');
+    $('#customerTable_filter').prepend('<div id="custombtn" class="dt-buttons"></div>');
+    $('#custombtn').prepend('<button id="discard" class="dt-button">폐기</button>');
+    $('#custombtn').prepend('<button id="hold" class="dt-button">보류</button>');
+    $('#custombtn').prepend('<button id="complete" class="dt-button">완료</button>');
+    $('#custombtn').prepend('<button id="progress" class="dt-button">진행</button>');
+    $('#custombtn').prepend('<button id="all" class="dt-button">전체보기</button>');
+    
 
     // 버튼을 필터의 앞에 추가
     var dropdown = '<div class="btn-group">' +
@@ -328,17 +336,17 @@ $(document).ready(function() {
         '</button>' +
         '<ul class="dropdown-menu">' +
             '<li><a class="dropdown-item" href="#" data-status="0">진행</a></li>' +
-            '<li><a class="dropdown-item" href="#" data-status="1">보류</a></li>' +
-            '<li><a class="dropdown-item" href="#" data-status="2">완료</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="1">완료</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="2">보류</a></li>' +
             '<li><a class="dropdown-item" href="#" data-status="3">폐기</a></li>' +
         '</ul>' +
         '</div>';
-    $('#customerTable_filter').prepend(dropdown);
+    $('#custombtn').prepend(dropdown);
 
     // 버튼 클릭 이벤트 추가
-    $('#customerTable_filter .dt-button').on('click', function() {
+    $('#custombtn .dt-button').on('click', function() {
         // 모든 버튼에서 하이라이트 제거
-        $('#customerTable_filter .dt-button').removeClass('highlight');
+        $('#custombtn .dt-button').removeClass('highlight');
         // 클릭된 버튼에 하이라이트 추가
         $(this).addClass('highlight');
     });
@@ -410,6 +418,21 @@ $(document).ready(function() {
         selectedRows.forEach(function(id) {
             updateCustomerStatus(id, status);
         });
+    });
+
+
+    // 특정 헤더(예: 첫 번째 컬럼)에 HTML 콘텐츠를 포함한 툴팁 추가
+    $('#customerTable thead th').eq(2).attr('title', '<span style="color: #f12c17;">A : 매일</span><br><span style="color: #ffc000;">B : 주2회</span><br><span style="color: #548235;">C : 주1회</span><br><span style="color: #2f75b5;">D : 대기1</span><br><span style="color: #f476e2;">F : 대기2</span><br><span style="color: #757171;">X : 처분 후</span>').attr('data-html', 'true');
+
+    // Bootstrap 툴팁 초기화 및 HTML 옵션 활성화
+    $('[data-toggle="tooltip"]').tooltip({
+        html: true
+    });
+
+    // DataTables가 로드된 후 툴팁 활성화
+    $('#customerTable thead th').tooltip({
+        container: 'body', // 툴팁을 body 태그에 추가하여 포지셔닝 문제 방지
+        html: true // HTML 콘텐츠 해석 활성화
     });
 
 });

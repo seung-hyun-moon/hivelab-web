@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from backend.routers import auth, customer, property, contact, image
+from backend.routers import auth, customer, property, contact, image, download
 from backend.db.database import conn
 
 
@@ -39,6 +39,7 @@ app.include_router(auth.AuthHandler().router, tags=["oauth"], prefix="/oauth")
 app.include_router(customer.CustomerRouter().router, tags=["customer"], prefix="/api/customer")
 app.include_router(property.router, tags=["property"], prefix="/api/property")
 app.include_router(contact.ContactRouter().router, tags=["contact"], prefix="/api/contact")
+app.include_router(download.FileRouter().router, tags=["download"], prefix="/api/download")
 
 app.include_router(image.router, tags=["image"], prefix="/api/image")
 
@@ -65,6 +66,9 @@ async def move_contact(request: Request):
 async def move_property(request: Request):
     return templates.TemplateResponse("property.html", {"request": request})
 
+@app.get("/download")
+async def move_download(request: Request):
+    return templates.TemplateResponse("download.html", {"request": request})
 
 if __name__ == "__main__":
     uvicorn.run(f"{Path(__file__).stem}:app", host="0.0.0.0", port=80, reload=True)

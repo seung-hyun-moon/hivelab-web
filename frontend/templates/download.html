@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hive-container">
+    <table id="downloadTable" class="hover compact stripe cell-border" style="width:100%">
+        <colgroup>
+            <col width="15%" /><!-- 파일명 -->
+            <col width="20%" /><!-- 설명 -->
+            <col width="20%" /><!-- 생성일자 -->
+            <col width="20%" /><!-- 경로 -->
+            <col width="20%" /><!-- 다운로드 -->
+            <col width="3%" /><!-- 삭제 -->
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="align-middle">파일명</th>
+                <th class="align-middle">설명</th>
+                <th class="align-middle">생성일자</th>
+                <th class="align-middle">경로</th>
+                <th class="align-middle">다운로드</th>
+                <th class="align-middle">삭제</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<!-- 파일 업로드 모달 -->
+<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">파일 업로드</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="fileUpload">파일 선택</label>
+                        <input type="file" class="form-control-file" id="fileUpload" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">설명</label>
+                        <input type="text" class="form-control" id="description">
+                    </div>
+                    <button type="submit" class="btn btn-primary">업로드</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="{{ url_for('static', path='js/download.js') }}"></script>
+
+{% endblock %}
