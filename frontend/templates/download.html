@@ -4,17 +4,17 @@
 <div class="hive-container">
     <table id="downloadTable" class="hover compact stripe cell-border" style="width:100%">
         <colgroup>
-            <col width="15%" /><!-- 파일명 -->
-            <col width="20%" /><!-- 설명 -->
-            <col width="20%" /><!-- 생성일자 -->
+            <col width="50%" /><!-- 설명 -->
+            <col width="25%" /><!-- 파일명 -->
+            <col width="12%" /><!-- 생성일자 -->
             <col width="20%" /><!-- 경로 -->
-            <col width="20%" /><!-- 다운로드 -->
-            <col width="3%" /><!-- 삭제 -->
+            <col width="3%" /><!-- 다운로드 -->
+            <col width="0px" /><!-- 삭제 -->
         </colgroup>
         <thead>
             <tr>
-                <th class="align-middle">파일명</th>
                 <th class="align-middle">설명</th>
+                <th class="align-middle">파일명</th>
                 <th class="align-middle">생성일자</th>
                 <th class="align-middle">경로</th>
                 <th class="align-middle">다운로드</th>
@@ -27,24 +27,24 @@
 </div>
 
 <!-- 파일 업로드 모달 -->
-<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+<div class="modal fade" id="addDataModal" tabindex="-1" role="dialog" aria-labelledby="addDataModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="uploadModalLabel">파일 업로드</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title" id="addDataModalLabel">파일 업로드</h5>
+                <button type="button" class="btn btn-secondary" id="closeDataModal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="uploadForm">
+                <form onsubmit="return false;">
                     <div class="form-group">
-                        <label for="fileUpload">파일 선택</label>
-                        <input type="file" class="form-control-file" id="fileUpload" required>
+                        <label for="fileUpload">파일 선택 또는 드래그 앤 드롭</label>
+                        <div id="dropzone" style="border: 2px dashed #aaa; padding: 10px; text-align: center;">
+                            <input type="file" class="form-control-file" id="fileUpload" name="fileUpload" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="description">설명</label>
-                        <input type="text" class="form-control" id="description">
+                        <input type="text" class="form-control" id="description" name="description">
                     </div>
                     <button type="submit" class="btn btn-primary">업로드</button>
                 </form>

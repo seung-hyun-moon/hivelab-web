@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Depends
+from typing import Any
+
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from backend.schemas.contact import Contact, ContactCreate, ContactUpdate
 from backend.db.models import ContactModel

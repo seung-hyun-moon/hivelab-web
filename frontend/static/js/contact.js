@@ -10,11 +10,10 @@ function formatDate() {
 }
 
 $(document).ready(function() {
-    console.log('loading-icon');
     $('#loading-icon').show();
-    console.log('loading-icon');
     var table = $('#contactTable').DataTable({
         dom : 'Blfrtip',
+        serverSide: true,
         lengthChange : true,
         order : [[ 3, "asc" ]],
         "pageLength": 25,

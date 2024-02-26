@@ -89,5 +89,6 @@ class DataModel(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
-    file_path = Column(String, unique=True)
     description = Column(String, nullable=True)
+    registration_date = Column(String, nullable=True)
+    file_path = Column(String, unique=True)

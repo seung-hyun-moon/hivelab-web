@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
     conn()
     yield
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 auth_handler = auth.AuthHandler()
 
 

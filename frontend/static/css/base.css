@@ -154,3 +154,11 @@ textarea {
 .highlight {
     background-color: yellow;
 }
+
+.delete-btn {
+    width: 100%;
+}
+
+.down-btn {
+    width: 100%;
+}

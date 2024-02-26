@@ -56,7 +56,7 @@ $(document).ready(function() {
     var table = $('#customerTable').DataTable({
         dom : 'Blfrtip',
         lengthChange : true,
-        order : [[ 1, "asc" ],  [2, "asc"]],
+        order : [[ 2, "asc" ],  [3, "asc"]],
         orderCellsTop: true,
         fixedHeader: true,
         columnDefs: [
