@@ -46,7 +46,8 @@ class OAuthClient:
             async with session.post(url, data=payload) as resp:
                 return None if resp.status != 200 else await resp.json()
 
-    def get_oauth_login_url(self, state: str) -> str:
+    def get_oauth_login_url(self, state: str, redirect_uri: str) -> str:
+        self._redirect_uri = redirect_uri
         params = {
             "response_type": "code",
             "client_id": self._client_id,

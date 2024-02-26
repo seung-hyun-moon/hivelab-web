@@ -139,7 +139,7 @@ $(document).ready(function() {
                         }
                     });
                 }
-            }, 'copy', 'excel'
+            }, 'copy', 'excel',
         ],
         language: {
             emptyTable: "데이터가 없습니다.",
@@ -165,6 +165,12 @@ $(document).ready(function() {
             $(row).attr('data-id', data.id);
         },
         columns: [
+            { 
+                data: null,
+                render: function (data, type, row) {
+                    return '<input type="checkbox" class="row-checkbox" data-id="' + row.id + '">';
+                }
+            },            
             { data: 'id', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'id');
@@ -246,6 +252,7 @@ $(document).ready(function() {
                     $(td).attr('data-column', 'customer_page');
                 } 
             },
+            { data: 'status' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
                     return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
@@ -308,5 +315,101 @@ $(document).ready(function() {
         return false;
     });
 
-    // $("tr td:nth-child(1)").append("<input type='checkbox' />").addClass('class1').table.draw();
+    $('#customerTable_filter').prepend('<button id="discard" class="dt-button">폐기</button>');
+    $('#customerTable_filter').prepend('<button id="hold" class="dt-button">보류</button>');
+    $('#customerTable_filter').prepend('<button id="complete" class="dt-button">완료</button>');
+    $('#customerTable_filter').prepend('<button id="progress" class="dt-button">진행</button>');
+    $('#customerTable_filter').prepend('<button id="all" class="dt-button">전체보기</button>');
+
+    // 버튼을 필터의 앞에 추가
+    var dropdown = '<div class="btn-group">' +
+        '<button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">' +
+            '이동' +
+        '</button>' +
+        '<ul class="dropdown-menu">' +
+            '<li><a class="dropdown-item" href="#" data-status="0">진행</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="1">보류</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="2">완료</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="3">폐기</a></li>' +
+        '</ul>' +
+        '</div>';
+    $('#customerTable_filter').prepend(dropdown);
+
+    // 버튼 클릭 이벤트 추가
+    $('#customerTable_filter .dt-button').on('click', function() {
+        // 모든 버튼에서 하이라이트 제거
+        $('#customerTable_filter .dt-button').removeClass('highlight');
+        // 클릭된 버튼에 하이라이트 추가
+        $(this).addClass('highlight');
+    });
+
+    // 버튼 클릭 이벤트
+    $('#all').on('click', function() {
+        table.columns(12).search('').draw();
+    });
+
+    $('#progress').on('click', function() {
+        table.columns(12).search('0').draw();
+    });
+
+    $('#complete').on('click', function() {
+        table.columns(12).search('1').draw();
+    });
+
+    $('#hold').on('click', function() {
+        table.columns(12).search('2').draw();
+    });
+
+    $('#discard').on('click', function() {
+        table.columns(12).search('3').draw();
+    });
+
+    $('#progress').click();
+
+    // 전체 선택 체크박스 클릭 이벤트
+    $('#checkAll').on('click', function() {
+        $('.row-checkbox').prop('checked', $(this).prop('checked'));
+    });
+
+    // 각 행의 체크박스 클릭 이벤트
+    $('#customerTable tbody').on('click', '.row-checkbox', function() {
+        if (!$(this).prop('checked')) {
+            $('#checkAll').prop('checked', false);
+        }
+    });
+
+    // 선택된 각 항목에 대해 개별 PATCH 요청을 보내는 함수
+    function updateCustomerStatus(id, status) {
+        $.ajax({
+            url: '/api/customer/' + id,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify({ status: status }), // 상태 전송
+            success: function(response) {
+                console.log('Customer status update successful');
+                table.ajax.reload(); // 페이지 새로 고침
+            },
+            error: function(error) {
+                console.error('Error updating customer status:', error);
+            }
+        });
+    }
+
+    $('#customerTable_filter .dropdown-menu a').on('click', function() {
+        var status = $(this).data('status'); // 선택된 상태 추출
+        var selectedRows = $('.row-checkbox:checked').map(function() {
+            return $(this).data('id');
+        }).get();
+
+        if (selectedRows.length === 0) {
+            alert('선택된 항목이 없습니다.');
+            return;
+        }
+
+        // 선택된 각 항목에 대해 개별 PATCH 요청 보내기
+        selectedRows.forEach(function(id) {
+            updateCustomerStatus(id, status);
+        });
+    });
+
 });

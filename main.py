@@ -51,17 +51,7 @@ templates = Jinja2Templates(directory="frontend/templates")
 # Root endpoint
 @app.get("/")
 async def root(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
-# @app.get("/customer")
-# async def move_customer(request: Request, code: Optional[str] = None, state: Optional[str] = None):
-#     if code is None or state is None:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-#     oauth_client = auth_handler.get_oauth_client()
-#     token_response = await oauth_client.get_tokens(code, state)
-#     user_info = await oauth_client.get_user_info(access_token=token_response['access_token'])
-#     print(user_info)
-#     return templates.TemplateResponse("customer.html", {"request": request, "user_info": user_info})
+    return templates.TemplateResponse("login.html", {"request": request, "hide_buttons": True})
 
 @app.get("/customer")
 async def move_contact(request: Request):

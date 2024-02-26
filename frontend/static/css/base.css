@@ -150,3 +150,7 @@ textarea {
     overflow-y: hidden;
     resize: none;
 } 
+
+.highlight {
+    background-color: yellow;
+}

@@ -49,9 +49,16 @@ class AuthHandler(object):
         if not await oauth_client.is_authenticated(access_token):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    async def login_kakao(self, oauth_client=Depends(get_oauth_client)):
+    async def login_kakao(self, oauth_client=Depends(get_oauth_client), request: Request = None):
         state = secrets.token_urlsafe(32)
-        login_url = oauth_client.get_oauth_login_url(state=state)
+        
+        # 현재 요청의 호스트가 접속한 base url 확인
+        base_url = request.base_url
+        
+        # 동적으로 redirect_uri 생성
+        redirect_uri = f"{base_url}oauth/callback"
+        
+        login_url = oauth_client.get_oauth_login_url(state=state, redirect_uri=redirect_uri)
         return RedirectResponse(login_url)
 
     async def callback(self, code: str, state: Optional[str] = None, oauth_client=Depends(get_oauth_client)):
