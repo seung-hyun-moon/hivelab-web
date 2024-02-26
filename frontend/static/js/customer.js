@@ -18,6 +18,17 @@ function formatData(data, type, row) {
     return data;
 }
 
+function formatDate() {
+    var date = new Date();
+    var year = date.getFullYear().toString();
+    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+    var day = ('0' + date.getDate()).slice(-2);
+    var hour = ('0' + date.getHours()).slice(-2);
+    var minute = ('0' + date.getMinutes()).slice(-2);
+    var second = ('0' + date.getSeconds()).slice(-2);
+    return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
+}
+
 function handleKeyDown(e, textarea, id) {
     if (e.keyCode == 13 && e.ctrlKey) {
         e.preventDefault();
@@ -56,7 +67,7 @@ $(document).ready(function() {
     var table = $('#customerTable').DataTable({
         dom : 'Blfrtip',
         lengthChange : true,
-        order : [[ 2, "asc" ],  [3, "asc"]],
+        order : [[ 11, "desc" ], [ 2, "asc" ],  [3, "asc"]],
         orderCellsTop: true,
         fixedHeader: true,
         columnDefs: [
@@ -115,37 +126,44 @@ $(document).ready(function() {
                 });
         },
         buttons: [
+            // {
+            //     text: '추가',
+            //     action: function ( e, dt, node, config ) {
+            //         var data = {
+            //             importance: "",
+            //             contact_date: "",
+            //             move_in_date: "",
+            //             industry: "",
+            //             contact_info: "",
+            //             notes: "",
+            //             contact_person: "",
+            //             head: "",
+            //             deputy: "",
+            //             customer_page: "",
+            //         };
+            //         $.ajax({
+            //             type: 'POST',
+            //             url: '/api/customer/',
+            //             data: JSON.stringify(data),
+            //             contentType: 'application/json',
+            //             success: function(response) {
+            //                 console.log('Success:', response);
+            //                 $('#addCustomerModal').modal('hide');
+            //                 table.ajax.reload();
+            //             },
+            //             error: function(error) {
+            //                 console.error('Error:', error);
+            //             }
+            //         });
+            //     }
+            // }, 
             {
-                text: '추가',
+                text: "추가",
                 action: function ( e, dt, node, config ) {
-                    var data = {
-                        importance: "",
-                        contact_date: "",
-                        move_in_date: "",
-                        industry: "",
-                        contact_info: "",
-                        notes: "",
-                        contact_person: "",
-                        head: "",
-                        deputy: "",
-                        customer_page: "",
-                    };
-                    $.ajax({
-                        type: 'POST',
-                        url: '/api/customer/',
-                        data: JSON.stringify(data),
-                        contentType: 'application/json',
-                        success: function(response) {
-                            console.log('Success:', response);
-                            $('#addCustomerModal').modal('hide');
-                            table.ajax.reload();
-                        },
-                        error: function(error) {
-                            console.error('Error:', error);
-                        }
-                    });
+                    $('#addCustomerModal').modal('show');
                 }
-            }, 'copy', 'excel',
+            },
+            'copy', 'excel',
         ],
         language: {
             emptyTable: "데이터가 없습니다.",
@@ -177,7 +195,7 @@ $(document).ready(function() {
                     return '<input type="checkbox" class="row-checkbox" data-id="' + row.id + '">';
                 }
             },            
-            { data: 'id', render: formatData,
+            { data: 'id',
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'id');
                 } 
@@ -261,7 +279,7 @@ $(document).ready(function() {
             { data: 'status' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
-                    return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"></button>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
         ]
@@ -297,11 +315,11 @@ $(document).ready(function() {
             move_in_date: form.find('input[name="move_in_date"]').val(),
             industry: form.find('input[name="industry"]').val(),
             contact_info: form.find('input[name="contact_info"]').val(),
-            notes: form.find('input[name="notes"]').val(),
-            contact_person: form.find('input[name="contact_person"]').val(),
-            head: form.find('input[name="head"]').val(),
-            deputy: form.find('input[name="deputy"]').val(),
-            customer_page: form.find('input[name="customer_page"]').val(),
+            notes: form.find('textarea[name="notes"]').val(),
+            contact_person: form.find('textarea[name="contact_person"]').val(),
+            head: form.find('textarea[name="head"]').val(),
+            deputy: form.find('textarea[name="deputy"]').val(),
+            customer_page: formatDate(),
         };
         $.ajax({
             type: 'POST',
@@ -312,6 +330,7 @@ $(document).ready(function() {
                 console.log('Success:', response);
                 $('#addCustomerModal').modal('hide');
                 table.ajax.reload();
+                $('#addCustomerModal form').find('input, textarea').val('');
             },
             error: function(error) {
                 console.error('Error:', error);
@@ -321,17 +340,76 @@ $(document).ready(function() {
         return false;
     });
 
-    $('#customerTable_filter').prepend('<div id="custombtn" class="dt-buttons"></div>');
-    $('#custombtn').prepend('<button id="discard" class="dt-button">폐기</button>');
-    $('#custombtn').prepend('<button id="hold" class="dt-button">보류</button>');
-    $('#custombtn').prepend('<button id="complete" class="dt-button">완료</button>');
-    $('#custombtn').prepend('<button id="progress" class="dt-button">진행</button>');
-    $('#custombtn').prepend('<button id="all" class="dt-button">전체보기</button>');
+    $('#customerTable').on('click', '.edit-btn', function() {
+        var customerId = $(this).data('id');
     
+        $.ajax({ url: '/api/customer/' + customerId, success: function(customerData) {
+            $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry);
+            $('#modifyCustomerModal').find('input[name="importance"]').val(customerData.importance),
+            $('#modifyCustomerModal').find('input[name="contact_date"]').val(customerData.contact_date),
+            $('#modifyCustomerModal').find('input[name="move_in_date"]').val(customerData.move_in_date),
+            $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry),
+            $('#modifyCustomerModal').find('input[name="contact_info"]').val(customerData.contact_info),
+            $('#modifyCustomerModal').find('textarea[name="notes"]').val(customerData.notes),
+            $('#modifyCustomerModal').find('textarea[name="contact_person"]').val(customerData.contact_person),
+            $('#modifyCustomerModal').find('textarea[name="head"]').val(customerData.head),
+            $('#modifyCustomerModal').find('textarea[name="deputy"]').val(customerData.deputy)
+        }});
+    
+        // 모달 창 열기
+        $('#modifyCustomerModal').modal('show');
+
+        $('#modifyCustomerModal form').on('submit', function() {
+            var form = $(this);
+            var data = {
+                importance: form.find('input[name="importance"]').val(),
+                contact_date: form.find('input[name="contact_date"]').val(),
+                move_in_date: form.find('input[name="move_in_date"]').val(),
+                industry: form.find('input[name="industry"]').val(),
+                contact_info: form.find('input[name="contact_info"]').val(),
+                notes: form.find('textarea[name="notes"]').val(),
+                contact_person: form.find('textarea[name="contact_person"]').val(),
+                head: form.find('textarea[name="head"]').val(),
+                deputy: form.find('textarea[name="deputy"]').val(),
+                customer_page: formatDate(),
+            };
+            $.ajax({
+                type: 'PUT',
+                url: '/api/customer/'+customerId,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('Success:', response);
+                    $('#modifyCustomerModal').modal('hide');
+                    table.ajax.reload();
+                    $('#modifyCustomerModal form').find('input, textarea').val('');
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        
+            return false;
+        });
+
+    });
+
+    $("#closeModifyCustomerModal").click(function(){
+        $("#modifyCustomerModal").modal("hide");
+    });
+
+
+    $('#customerTable_filter').prepend('<div id="custombtn" class="btn-group" role="group" aria-label="Basic radio toggle button group"></div>');
+
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="progress" autocomplete="off" checked><label class="btn btn-sm btn-outline-secondary" for="progress">진행</label>');
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="complete" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="complete">완료</label>');
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="hold" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="hold">보류</label>');
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="discard" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="discard">폐기</label>');
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="all" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="all">전체보기</label>');
 
     // 버튼을 필터의 앞에 추가
     var dropdown = '<div class="btn-group">' +
-        '<button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">' +
+        '<button class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">' +
             '이동' +
         '</button>' +
         '<ul class="dropdown-menu">' +
@@ -341,15 +419,7 @@ $(document).ready(function() {
             '<li><a class="dropdown-item" href="#" data-status="3">폐기</a></li>' +
         '</ul>' +
         '</div>';
-    $('#custombtn').prepend(dropdown);
-
-    // 버튼 클릭 이벤트 추가
-    $('#custombtn .dt-button').on('click', function() {
-        // 모든 버튼에서 하이라이트 제거
-        $('#custombtn .dt-button').removeClass('highlight');
-        // 클릭된 버튼에 하이라이트 추가
-        $(this).addClass('highlight');
-    });
+    $('#customerTable_filter').prepend(dropdown);
 
     // 버튼 클릭 이벤트
     $('#all').on('click', function() {
@@ -371,8 +441,6 @@ $(document).ready(function() {
     $('#discard').on('click', function() {
         table.columns(12).search('3').draw();
     });
-
-    $('#progress').click();
 
     // 전체 선택 체크박스 클릭 이벤트
     $('#checkAll').on('click', function() {
@@ -434,5 +502,7 @@ $(document).ready(function() {
         container: 'body', // 툴팁을 body 태그에 추가하여 포지셔닝 문제 방지
         html: true // HTML 콘텐츠 해석 활성화
     });
+
+    $('#progress').click();
 
 });

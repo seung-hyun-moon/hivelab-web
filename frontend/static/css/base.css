@@ -151,14 +151,25 @@ textarea {
     resize: none;
 } 
 
-.highlight {
-    background-color: yellow;
-}
-
-.delete-btn {
+.delete-btn, .edit-btn, .down-btn {
     width: 100%;
 }
 
-.down-btn {
-    width: 100%;
+.grid-form .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.grid-form .form-group {
+    margin-bottom: 1rem;
+}
+
+/* '컨디션 및 진행사항' 필드를 위한 추가 스타일 */
+.grid-form .form-group textarea {
+    height: auto; /* 높이 자동 조정 */
+}
+
+.form-control {
+    font-size: 0.8rem;
 }

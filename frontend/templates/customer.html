@@ -5,7 +5,7 @@
     <table id="customerTable" class="hover compact stripe cell-border" style="width:100%">
         <colgroup>
             <col width="3%" /><!-- 체크박스 -->
-            <col width="0px" /><!-- 구분 -->
+            <col width="3%" /><!-- 구분 -->
             <col width="3%" /><!-- 중요도 -->
             <col width="8%" /><!-- 컨택일 -->
             <col width="8%" /><!-- 입주시기 -->
@@ -17,10 +17,10 @@
             <col width="5%" /><!-- 정 -->
             <col width="5%" /><!-- 부 -->
 
-            <col width="8%" /><!-- 고객페이지 -->
-            <col width="0px" /><!-- 상태 -->
+            <col width="4%" /><!-- 수정날짜 -->
+            <col width="4%" /><!-- 상태 -->
 
-            <col width="3%" /><!-- 삭제 -->
+            <col width="0" /><!-- 삭제 -->
         </colgroup>
         <thead>
             <tr>
@@ -35,9 +35,9 @@
                 <th class="align-middle">컨택</th>
                 <th class="align-middle">정</th>
                 <th class="align-middle">부</th>
-                <th class="align-middle">고객페이지</th>
+                <th class="align-middle">수정&#10;날짜</th>
                 <th class="align-middle">상태</th>
-                <th class="align-middle">삭제</th>
+                <th class="align-middle">변경</th>
             </tr>
         </thead>
         <tbody>
@@ -54,34 +54,68 @@
                 <button type="button" class="btn btn-secondary" id="closeCustomerModal">&times;</button>
             </div>
             <div class="modal-body">
-                <form onsubmit="return false;">
-                    <label for="importance">중요도</label>
-                    <input type="text" id="importance" name="importance" class="form-control">
-                    <label for="contact_date">컨택일</label>
-                    <input type="text" id="contact_date" name="contact_date" class="form-control">
-                    <label for="move_in_date">입주시기</label>
-                    <input type="text" id="move_in_date" name="move_in_date" class="form-control">
-                    <label for="industry">업종</label>
-                    <input type="text" id="industry" name="industry" class="form-control">
-                    <label for="contact_info">연락처</label>
-                    <input type="text" id="contact_info" name="contact_info" class="form-control">
-                    <label for="notes">비고</label>
-                    <input type="text" id="notes" name="notes" class="form-control">
-                    <label for="contact_person">컨택</label>
-                    <input type="text" id="contact_person" name="contact_person" class="form-control">
-                    <label for="head">정</label>
-                    <input type="text" id="head" name="head" class="form-control">
-                    <label for="deputy">부</label>
-                    <input type="text" id="deputy" name="deputy" class="form-control">
-                    <label for="customer_page">고객페이지</label>
-                    <input type="text" id="customer_page" name="customer_page" class="form-control">
-
-                    <button type="submit" class="btn btn-primary">고객정보 추가</button>
+                <form onsubmit="return false;" class="grid-form">
+                    <div class="row">
+                        <div class="form-group col-md-8"><label for="industry">업종</label><input type="text" id="industry" name="industry" class="form-control" placeholder="부동산회사 | 하이브"></div>
+                        <div class="form-group col-md-4"><label for="contact_info">연락처</label><input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678"></div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-2"><label for="importance">중요도</label><input type="text" id="importance" name="importance" class="form-control" placeholder="A"></div>
+                        <div class="form-group col-md-5"><label for="contact_date">컨택일</label><input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25"></div>
+                        <div class="form-group col-md-5"><label for="move_in_date">입주시기</label><input type="text" id="move_in_date" name="move_in_date" class="form-control" placeholder="△월/처분후/즉시"></div>
+                    </div>
+                    <div class="form-group"><label for="notes">컨디션 및 진행사항</label><textarea id="notes" name="notes" class="form-control" style="resize: vertical;overflow-y: visible;" rows="12" placeholder="5,000/500, 40평, 역삼역(동)&#10;&#10;- 컨디션 및 진행사항"></textarea></div>
+                    <div class="row">
+                        <div class="form-group col-md-4"><label for="contact_person">컨택</label><textarea id="contact_person" name="contact_person" class="form-control" placeholder="홍길동"></textarea></div>
+                        <div class="form-group col-md-4"><label for="head">정</label><textarea id="head" name="head" class="form-control" placeholder="홍길동&#10;심청이"></textarea></div>
+                        <div class="form-group col-md-4"><label for="deputy">부</label><textarea id="deputy" name="deputy" class="form-control" placeholder="홍길동&#10;심청이"></textarea></div>
+                    </div>
+                    <div class="form-group" hidden><label for="customer_page">고객페이지</label><input type="text" id="customer_page" name="customer_page" class="form-control" placeholder=""></div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">고객정보 추가</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modify Customer Modal -->
+<div class="modal fade" id="modifyCustomerModal" tabindex="-1" role="dialog" aria-labelledby="modifyCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modifyCustomerModalLabel">고객정보 수정</h5>
+                <button type="button" class="btn btn-secondary" id="closeModifyCustomerModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="return false;" class="grid-form">
+                    <div class="row">
+                        <div class="form-group col-md-8"><label for="industry">업종</label><input type="text" id="industry" name="industry" class="form-control" placeholder="부동산회사 | 하이브"></div>
+                        <div class="form-group col-md-4"><label for="contact_info">연락처</label><input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678"></div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-2"><label for="importance">중요도</label><input type="text" id="importance" name="importance" class="form-control" placeholder="A"></div>
+                        <div class="form-group col-md-5"><label for="contact_date">컨택일</label><input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25"></div>
+                        <div class="form-group col-md-5"><label for="move_in_date">입주시기</label><input type="text" id="move_in_date" name="move_in_date" class="form-control" placeholder="△월/처분후/즉시"></div>
+                    </div>
+                    <div class="form-group"><label for="notes">컨디션 및 진행사항</label><textarea id="notes" name="notes" class="form-control" style="resize: vertical;overflow-y: visible;" rows="12" placeholder="5,000/500, 40평, 역삼역(동)&#10;&#10;- 컨디션 및 진행사항"></textarea></div>
+                    <div class="row">
+                        <div class="form-group col-md-4"><label for="contact_person">컨택</label><textarea id="contact_person" name="contact_person" class="form-control" placeholder="홍길동"></textarea></div>
+                        <div class="form-group col-md-4"><label for="head">정</label><textarea id="head" name="head" class="form-control" placeholder="홍길동&#10;심청이"></textarea></div>
+                        <div class="form-group col-md-4"><label for="deputy">부</label><textarea id="deputy" name="deputy" class="form-control" placeholder="홍길동&#10;심청이"></textarea></div>
+                    </div>
+                    <div class="form-group" hidden><label for="customer_page">고객페이지</label><input type="text" id="customer_page" name="customer_page" class="form-control" placeholder=""></div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">고객정보 수정</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <script src="{{ url_for('static', path='js/customer.js') }}"></script>
 
