@@ -279,7 +279,7 @@ $(document).ready(function() {
             { data: 'status' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
-                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"></button>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + '></button>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
         ]
@@ -342,6 +342,7 @@ $(document).ready(function() {
 
     $('#customerTable').on('click', '.edit-btn', function() {
         var customerId = $(this).data('id');
+        var status = $(this).data('status');
     
         $.ajax({ url: '/api/customer/' + customerId, success: function(customerData) {
             $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry);
@@ -371,6 +372,7 @@ $(document).ready(function() {
                 contact_person: form.find('textarea[name="contact_person"]').val(),
                 head: form.find('textarea[name="head"]').val(),
                 deputy: form.find('textarea[name="deputy"]').val(),
+                status: status,
                 customer_page: formatDate(),
             };
             $.ajax({

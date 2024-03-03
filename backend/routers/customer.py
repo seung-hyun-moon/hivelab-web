@@ -32,5 +32,6 @@ class CustomerRouter(BaseCRUD):
             if customer:
                 customer.status = a["status"]
                 db.commit()
+                db.refresh(customer)
             else:
                 raise HTTPException(status_code=404, detail=f"Customer with id {id} not found")

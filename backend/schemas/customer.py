@@ -15,7 +15,7 @@ class CustomerBase(BaseModel):
     head : Optional[str] = None             # 정
     deputy : Optional[str] = None           # 부
 
-    status : int = 0           # 상태 (0: 진행, 1: 완료, 2: 보류, 3: 폐기)
+    status : Optional[int] = 0           # 상태 (0: 진행, 1: 완료, 2: 보류, 3: 폐기)
 
     customer_page : Optional[str] = None    # 고객페이지
 

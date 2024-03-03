@@ -13,7 +13,6 @@ $(document).ready(function() {
     $('#loading-icon').show();
     var table = $('#contactTable').DataTable({
         dom : 'Blfrtip',
-        serverSide: true,
         lengthChange : true,
         order : [[ 3, "asc" ]],
         "pageLength": 25,
