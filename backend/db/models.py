@@ -92,3 +92,14 @@ class DataModel(Base):
     description = Column(String, nullable=True)
     registration_date = Column(String, nullable=True)
     file_path = Column(String, unique=True)
+    # data_category_id = Column(Integer, ForeignKey("categories.id"))
+    data_category_id = Column(Integer)
+
+
+
+class DataCategoryModel(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    type = Column(Integer)

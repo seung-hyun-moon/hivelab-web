@@ -40,6 +40,7 @@ app.include_router(customer.CustomerRouter().router, tags=["customer"], prefix="
 app.include_router(property.router, tags=["property"], prefix="/api/property")
 app.include_router(contact.ContactRouter().router, tags=["contact"], prefix="/api/contact")
 app.include_router(download.FileRouter().router, tags=["download"], prefix="/api/download")
+app.include_router(download.DataCategoryRouter().router, tags=["data_category"], prefix="/api/data_category")
 
 app.include_router(image.router, tags=["image"], prefix="/api/image")
 
@@ -66,9 +67,15 @@ async def move_contact(request: Request):
 async def move_property(request: Request):
     return templates.TemplateResponse("property.html", {"request": request})
 
-@app.get("/download")
-async def move_download(request: Request):
-    return templates.TemplateResponse("download.html", {"request": request})
+# 파일 다운로드 형태 게시판
+@app.get("/download/file/{data_category_id}")
+async def move_download(request: Request, data_category_id: int):
+    return templates.TemplateResponse("download.html", {"data_category_id": data_category_id, "request": request})
+
+# 공지사항 형태 게시판
+@app.get("/download/board/{data_category_id}")
+async def move_download(request: Request, data_category_id: int):
+    return templates.TemplateResponse("download.html", {"data_category_id": data_category_id, "request": request})
 
 if __name__ == "__main__":
     uvicorn.run(f"{Path(__file__).stem}:app", host="0.0.0.0", port=80, reload=True)

@@ -173,3 +173,40 @@ textarea {
 .form-control {
     font-size: 0.8rem;
 }
+
+
+/* 다운로드 카테고리 */
+
+.category-list {
+    width: 10%;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 0;
+  }
+  .category-item {
+    list-style: none;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .category-icon {
+    background-color: #91d5ff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: white;
+  }
+  .category-name {
+    flex-grow: 1;
+    margin-left: 10px;
+  }

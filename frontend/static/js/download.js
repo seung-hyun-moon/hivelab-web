@@ -1,3 +1,11 @@
+var path = window.location.pathname; // 현재 페이지의 URL 경로를 가져옵니다.
+var parts = path.split('/'); // URL 경로를 '/'로 분할합니다.
+
+// '/download/' + categoryType + '/' + category.id 형식에 따르면, categoryType은 분할된 경로의 세 번째 부분입니다.
+var categoryType = parts[2];
+
+console.log(categoryType);
+
 function formatDate() {
     var date = new Date();
     var year = date.getFullYear().toString();
@@ -10,9 +18,55 @@ function formatDate() {
 }
 
 $(document).ready(function() {
+    var columnDefs = [];
+
+    if (categoryType === 'board') {
+        columnDefs.push(
+            { targets: [0, 3, 4, 6], visible: false }
+        );
+    } else if (categoryType === 'image') {
+        columnDefs.push(
+            { targets: [3, 6], visible: false }
+        );
+    } else if (categoryType === 'file') {
+        columnDefs.push(
+            { targets: [3, 6], visible: false }
+        );
+    }
+
+    $.ajax({
+        url: '/api/data_category/',
+        type: 'GET',
+        success: function(data) {
+            var categoryList = $('#category-list');
+
+            data.forEach(function(category) {
+                var categoryItem = $('<li></li>').addClass('category-item');
+                var categoryName = $('<span></span>').addClass('category-name').text(category.name);
+                categoryItem.append(categoryName);
+                categoryItem.on('click', function() {
+                    var categoryType;
+                    if (category.type === 0) {
+                        categoryType = 'file';
+                    } else if (category.type === 1) {
+                        categoryType = 'image';
+                    } else if (category.type === 2) {
+                        categoryType = 'board';
+                    }
+                    window.location.href = '/download/' + categoryType + '/' +category.id; // 카테고리 페이지로 이동
+                });
+                categoryList.append(categoryItem);
+            });
+        },
+        error: function(error) {
+            // 요청이 실패한 경우 에러 처리를 수행하십시오.
+            console.error(error);
+        }
+    });
     $('#loading-icon').show();
     var table = $('#downloadTable').DataTable({
-        dom : 'Blfrtip',
+        columnDefs: columnDefs,
+        dom : 'Blfrtp',
         lengthChange : true,
         order : [[ 1, "asc" ]],
         "pageLength": 25,
@@ -47,12 +101,6 @@ $(document).ready(function() {
             url: '/api/download/',
             dataSrc: ''
         },
-        columnDefs: [
-            {
-                targets: [3], // 상태 열의 인덱스
-                visible: false,
-            }
-        ],
         columns: [
             { data: 'description' },
             { data: 'filename' },
@@ -68,6 +116,7 @@ $(document).ready(function() {
                     return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
+            { data: 'data_category_id' },
         ],
     });
 
@@ -116,9 +165,13 @@ $(document).ready(function() {
         var data = new FormData();
         
         data.append('file', file);
-        data.append('description', form.find('input[name="description"]').val());
+        data.append('description', form.find('textarea[name="description"]').val());
         data.append('registration_date', formatDate());
-        
+        data.append('data_category_id', dataCategoryId);
+
+        for (var pair of data.entries()) {
+            console.log(pair[0]+ ', ' + pair[1]);
+        }
 
         $.ajax({
             type: 'POST',
@@ -132,7 +185,7 @@ $(document).ready(function() {
                 table.ajax.reload();
 
                 // 입력 필드를 비웁니다.
-                form.find('input[name="description"]').val('');
+                form.find('textarea[name="description"]').val('');
                 form.find('input[name="registration_date"]').val('');
                 fileInput.value = '';
             },
@@ -142,10 +195,6 @@ $(document).ready(function() {
         });
 
         return false;
-    });
-
-    $("#closeDataModal").click(function(){
-        $("#addDataModal").modal("hide");
     });
 
     var dropzone = document.getElementById('dropzone');
@@ -163,5 +212,159 @@ $(document).ready(function() {
         var file = e.dataTransfer.files[0];
         document.getElementById('fileUpload').files = e.dataTransfer.files;
     };
+
+    table.columns(6).search(dataCategoryId).draw();
+
+    // 카테고리 관리
+
+    var manageButton = $('<button></button>').text('카테고리 관리').addClass('btn btn-sm btn-secondary').attr('id', 'manage-category-btn');
+    $('#category-list').append(manageButton);
+    $('#manage-category-btn').on('click', function() {
+        $('#listDataCategoryModal').modal('show');
+        $.ajax({
+            url: '/api/data_category/',
+            type: 'GET',
+            success: function(data) {
+                var categoryList = $('#manage-category-list');
+                categoryList.empty();
+    
+                data.forEach(function(category) {
+                    var categoryItem = $('<li></li>').addClass('category-item');
+                    var categoryName = $('<span></span>').addClass('category-name',).text(category.name);
+                    var modifyButton = $('<button></button>').addClass('btn-outline-warning').addClass('category-edit-btn').text('수정').attr('data-id', category.id);
+                    var deleteButton = $('<button></button>').addClass('btn-outline-danger').addClass('category-delete-btn').text('삭제').attr('data-id', category.id);
+                    categoryItem.append(categoryName, modifyButton, deleteButton);
+                    categoryList.append(categoryItem);
+                });
+                    
+            },
+            error: function(error) {
+                // 요청이 실패한 경우 에러 처리를 수행하십시오.
+                console.error(error);
+            }
+        });
+    });
+
+    $('#add-category-btn').on('click', function() {
+        $('#addDataCategoryModal').modal('show');
+    });
+
+    $('#addDataCategoryModal form').on('submit', function() {
+        var form = $(this);
+        var name = form.find('input[name="category_name"]').val();
+        var type = form.find('input[name="category_type"]:checked').val();
+
+        // 이름과 타입이 모두 채워져 있는지 확인
+        if (!name || !type) {
+            alert('모든 필드를 채워주세요.');
+            return false;
+        }
+
+        var data = {
+            name: name,
+            type: type,
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: '/api/data_category',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function(response) {
+                console.log('Success:', response);
+                $('#addDataCategoryModal').modal('hide');
+                table.ajax.reload();
+                location.reload(true);
+                $('#addDataCategoryModal form').find('input').val('');
+            },
+            error: function(error) {
+                console.error('Error:', error);
+            }
+        });
+    
+        return false;
+    });
+
+    $("#closeDataCategoryModal").click(function(){
+        $("#addDataCategoryModal").modal("hide");
+    });
+
+    $("#closeModifyDataCategoryModal").click(function(){
+        $("#modifyDataCategoryModal").modal("hide");
+    });
+
+    $("#closelistDataCategoryModal").click(function(){
+        $("#listDataCategoryModal").modal("hide");
+    });
+
+    $(document).on('click', '#manage-category-list > li > .category-delete-btn', function () {
+        var id = $(this).data('id');
+        var confirmDelete = confirm('정말로 이 카테고리를 삭제하시겠습니까?');
+        if (confirmDelete) {
+            $.ajax({
+                url: '/api/data_category/' + id,
+                type: 'DELETE',
+                success: function(result) {
+                    table.ajax.reload();
+                    location.reload(true);
+                    console.log('File deleted successfully');
+                },
+                error: function(request, msg, error) {
+                    console.log('Failed to delete file');
+                }
+            });
+        }
+    });
+
+
+    $(document).on('click', '#manage-category-list > li > .category-edit-btn', function () {
+        var categoryId = $(this).data('id');
+    
+        $.ajax({ 
+            url: '/api/data_category/' + categoryId, 
+            success: function(categoryData) {
+                $('#modifyDataCategoryModal').find('input[name="category_name_modify"]').val(categoryData.name);
+                $('#modifyDataCategoryModal').find('input[name="category_type_modify"][value="' + categoryData.type + '"]').prop('checked', true);
+            }
+        });
+    
+        // 모달 창 열기
+        $('#modifyDataCategoryModal').modal('show');
+    
+        $('#modifyDataCategoryModal form').on('submit', function() {
+            var form = $(this);
+            var name = form.find('input[name="category_name"]').val();
+            var type = form.find('input[name="category_type"]:checked').val();
+
+            // 이름과 타입이 모두 채워져 있는지 확인
+            if (!name || !type) {
+                alert('모든 필드를 채워주세요.');
+                return false;
+            }
+
+            var data = {
+                name: name,
+                type: type,
+            };
+            $.ajax({
+                type: 'PUT',
+                url: '/api/data_category/'+categoryId,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('Success:', response);
+                    $('#modifyDataCategoryModal').modal('hide');
+                    table.ajax.reload();
+                    location.reload(true);
+                    $('#modifyDataCategoryModal form').find('input').val('');
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        
+            return false;
+        });
+    });
 
 });
