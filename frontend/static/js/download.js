@@ -122,7 +122,7 @@ $(document).ready(function() {
 
     $('#downloadTable tbody').on('click', 'button.delete-btn', function () {
         var id = $(this).data('id');
-        var confirmDelete = confirm('정말로 이 연락처를 삭제하시겠습니까?');
+        var confirmDelete = confirm('정말로 이 데이터를 삭제하시겠습니까?');
         if (confirmDelete) {
             $.ajax({
                 url: '/api/download/' + id,
@@ -154,18 +154,20 @@ $(document).ready(function() {
         });
     });
 
-    $("#closeDatatModal").click(function(){
-        $("#addDataModal").modal("hide");
-    });
-
     $('#addDataModal form').on('submit', function() {
         var form = $(this);
         var fileInput = $('#fileUpload')[0];
         var file = fileInput.files[0];
         var data = new FormData();
+        var description = form.find('textarea[name="description"]').val()
         
+        if (!description) {
+            alert('설명 부분을 채워주세요.');
+            return false;
+        }
+
         data.append('file', file);
-        data.append('description', form.find('textarea[name="description"]').val());
+        data.append('description', description);
         data.append('registration_date', formatDate());
         data.append('data_category_id', dataCategoryId);
 
@@ -295,6 +297,10 @@ $(document).ready(function() {
 
     $("#closelistDataCategoryModal").click(function(){
         $("#listDataCategoryModal").modal("hide");
+    });
+
+    $("#closeDataModal").click(function(){
+        $("#addDataModal").modal("hide");
     });
 
     $(document).on('click', '#manage-category-list > li > .category-delete-btn', function () {

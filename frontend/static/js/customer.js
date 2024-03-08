@@ -13,7 +13,7 @@ function formatData(data, type, row) {
     if (type === 'display') {
         data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
         // var retext = String(data).replace(/ /g, '&nbsp;').replace(/\n/g, '<br/>');
-        return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';" ondblclick="this.readOnly = false;" onkeydown="handleKeyDown(event, this, \'' + row.id + '\')">' + data + '</textarea>';
+        return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';" ondblclick="this.readOnly = false;" onkeydown="handleKeyDown(event, this, \'' + row.id + '\', \'' + row.status + '\')">' + data + '</textarea>';
     }
     return data;
 }
@@ -29,7 +29,7 @@ function formatDate() {
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
-function handleKeyDown(e, textarea, id) {
+function handleKeyDown(e, textarea, id, status) {
     if (e.keyCode == 13 && e.ctrlKey) {
         e.preventDefault();
         var cursorPos = textarea.selectionStart;
@@ -45,6 +45,7 @@ function handleKeyDown(e, textarea, id) {
 
         var data = {};
         data[column] = value;
+        data['status'] = status;
         $.ajax({
             url: '/api/customer/' + id,
             type: 'PATCH',
@@ -52,6 +53,7 @@ function handleKeyDown(e, textarea, id) {
             data: JSON.stringify(data),
             success: function(response) {
                 textarea.readOnly = true;
+                localStorage.setItem('status', status);
                 location.reload(); // 페이지 새로 고침
             }
         });
@@ -126,37 +128,6 @@ $(document).ready(function() {
                 });
         },
         buttons: [
-            // {
-            //     text: '추가',
-            //     action: function ( e, dt, node, config ) {
-            //         var data = {
-            //             importance: "",
-            //             contact_date: "",
-            //             move_in_date: "",
-            //             industry: "",
-            //             contact_info: "",
-            //             notes: "",
-            //             contact_person: "",
-            //             head: "",
-            //             deputy: "",
-            //             customer_page: "",
-            //         };
-            //         $.ajax({
-            //             type: 'POST',
-            //             url: '/api/customer/',
-            //             data: JSON.stringify(data),
-            //             contentType: 'application/json',
-            //             success: function(response) {
-            //                 console.log('Success:', response);
-            //                 $('#addCustomerModal').modal('hide');
-            //                 table.ajax.reload();
-            //             },
-            //             error: function(error) {
-            //                 console.error('Error:', error);
-            //             }
-            //         });
-            //     }
-            // }, 
             {
                 text: "추가",
                 action: function ( e, dt, node, config ) {
@@ -504,7 +475,19 @@ $(document).ready(function() {
         container: 'body', // 툴팁을 body 태그에 추가하여 포지셔닝 문제 방지
         html: true // HTML 콘텐츠 해석 활성화
     });
+    var status = localStorage.getItem('status');
 
-    $('#progress').click();
-
+    status = status ? status : '1';
+    // Clear the status value from localStorage
+    localStorage.removeItem('status');
+    // Use the status value in your function
+    if (status === '1') {
+        $('#progress').click();
+    } else if (status === '2') {
+        $('#hold').click();
+    } else if (status === '3') {
+        $('#discard').click();
+    } else {
+        $('#all').click();
+    }
 });

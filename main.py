@@ -72,10 +72,5 @@ async def move_property(request: Request):
 async def move_download(request: Request, data_category_id: int):
     return templates.TemplateResponse("download.html", {"data_category_id": data_category_id, "request": request})
 
-# 공지사항 형태 게시판
-@app.get("/download/board/{data_category_id}")
-async def move_download(request: Request, data_category_id: int):
-    return templates.TemplateResponse("download.html", {"data_category_id": data_category_id, "request": request})
-
 if __name__ == "__main__":
     uvicorn.run(f"{Path(__file__).stem}:app", host="0.0.0.0", port=80, reload=True)
