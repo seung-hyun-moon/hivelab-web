@@ -94,6 +94,7 @@ class DataModel(Base):
     file_path = Column(String, unique=True)
     # data_category_id = Column(Integer, ForeignKey("categories.id"))
     data_category_id = Column(Integer)
+    before_data_category_id = Column(Integer)
 
 
 

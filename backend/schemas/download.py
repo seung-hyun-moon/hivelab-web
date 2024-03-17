@@ -3,11 +3,12 @@ from typing import Optional
 
 # 파일 정보 스키마
 class DataBase(BaseModel):
-    filename: str
+    filename: Optional[str] = None
     description: Optional[str] = None
     registration_date: Optional[str] = None
-    file_path: str
-    data_category_id: int
+    file_path: Optional[str] = None
+    data_category_id: Optional[int] = None
+    before_data_category_id: Optional[int] = None
 
     class Config:
         from_attributes = True

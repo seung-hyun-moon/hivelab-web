@@ -3,8 +3,9 @@ var parts = path.split('/'); // URL 경로를 '/'로 분할합니다.
 
 // '/download/' + categoryType + '/' + category.id 형식에 따르면, categoryType은 분할된 경로의 세 번째 부분입니다.
 var categoryType = parts[2];
+var dataCategoryId = parts[3];
 
-console.log(categoryType);
+console.log(categoryType, dataCategoryId);
 
 function formatDate() {
     var date = new Date();
@@ -57,6 +58,14 @@ $(document).ready(function() {
                 });
                 categoryList.append(categoryItem);
             });
+            // 휴지통 카테고리 추가
+            var trashCategoryItem = $('<li></li>').addClass('category-item');
+            var trashCategoryName = $('<span></span>').addClass('category-name').text('휴지통');
+            trashCategoryItem.append(trashCategoryName);
+            trashCategoryItem.on('click', function() {
+                window.location.href = '/download/file/0'; // 휴지통 페이지로 이동
+            });
+            categoryList.append(trashCategoryItem);
         },
         error: function(error) {
             // 요청이 실패한 경우 에러 처리를 수행하십시오.
@@ -111,31 +120,19 @@ $(document).ready(function() {
                     return '<button class="down-btn btn btn-success" data-id="' + data + '"></button>'
                 }
             },
-            { data: 'id',
-                "render": function ( data, type, row ) { 
-                    return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+            {
+                data: 'id',
+                "render": function (data, type, row) {
+                    if (dataCategoryId !== '0') {
+                        return '<button class="change-btn btn btn-outline-warning" data-id="' + data + '" title="휴지통"></button>'
+                    } else {
+                        return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '" title="완전 삭제"></button>' +
+                               '<button class="restore-btn btn btn-outline-info" data-id="' + data + '" title="복원"></button>'
+                    }
                 }
             },
             { data: 'data_category_id' },
         ],
-    });
-
-    $('#downloadTable tbody').on('click', 'button.delete-btn', function () {
-        var id = $(this).data('id');
-        var confirmDelete = confirm('정말로 이 데이터를 삭제하시겠습니까?');
-        if (confirmDelete) {
-            $.ajax({
-                url: '/api/download/' + id,
-                type: 'DELETE',
-                success: function(result) {
-                    table.ajax.reload();
-                    console.log('File deleted successfully');
-                },
-                error: function(request, msg, error) {
-                    console.log('Failed to delete file');
-                }
-            });
-        }
     });
 
     $('#downloadTable tbody').on('click', 'button.down-btn', function () {
@@ -303,23 +300,73 @@ $(document).ready(function() {
         $("#addDataModal").modal("hide");
     });
 
-    $(document).on('click', '#manage-category-list > li > .category-delete-btn', function () {
+    $(document).on('click', '.delete-btn', function() {
         var id = $(this).data('id');
-        var confirmDelete = confirm('정말로 이 카테고리를 삭제하시겠습니까?');
+        var password = prompt('비밀번호를 입력하세요.');
+        if (password === '5125') {
+            var confirmDelete = confirm('정말로 이 데이터를 삭제하시겠습니까?');
+            if (confirmDelete) {
+                $.ajax({
+                    url: '/api/download/' + id,
+                    type: 'DELETE',
+                    success: function(result) {
+                        table.ajax.reload();
+                        location.reload(true);
+                        console.log('File deleted successfully');
+                    },
+                    error: function(request, msg, error) {
+                        console.log('Failed to delete file');
+                    }
+                });
+            }
+        } else {
+            alert('비밀번호가 틀렸습니다.');
+        }
+    });
+
+    $(document).on('click', '.change-btn', function() {
+        var id = $(this).data('id');
+        var confirmDelete = confirm('이 데이터를 휴지통으로 보내시겠습니까?');
+        if (confirmDelete) {
+            updateCategoryStatus(id, 0);
+        }
+    });
+
+    function updateCategoryStatus(id, data_category_id) {
+        $.ajax({
+            url: '/api/download/' + id,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify({ "data_category_id": data_category_id }), // 상태 전송
+            success: function(response) {
+                console.log('Category status update successful');
+                table.ajax.reload(); // 페이지 새로 고침
+            },
+            error: function(error) {
+                console.error('Error updating category status:', error);
+            }
+        });
+    }
+
+    $(document).on('click', '.restore-btn', function() {
+        var id = $(this).data('id');
+        var confirmDelete = confirm('이 데이터를 복원하시겠습니까?');
         if (confirmDelete) {
             $.ajax({
-                url: '/api/data_category/' + id,
-                type: 'DELETE',
+                url: '/api/download/info/' + id,
+                type: 'GET',
                 success: function(result) {
-                    table.ajax.reload();
-                    location.reload(true);
-                    console.log('File deleted successfully');
+                    var before_data_category_id = result.before_data_category_id;
+                    console.log(result)
+                    console.log('before_data_category_id:', before_data_category_id);
+                    updateCategoryStatus(id, before_data_category_id);
                 },
                 error: function(request, msg, error) {
-                    console.log('Failed to delete file');
+                    console.log('Failed to get before_data_category_id');
                 }
             });
         }
+        
     });
 
 

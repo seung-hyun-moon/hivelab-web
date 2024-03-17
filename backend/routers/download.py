@@ -18,7 +18,18 @@ class FileRouter(BaseCRUD):
         self.router = APIRouter()
         super().__init__(get_schema=Data, post_schema=DataCreate, put_schema=DataUpdate, model=DataModel)
         self.files_directory = BASE_DIR / "uploaded_files"
+        self.router.add_api_route("/info/{item_id}", self.get_info, methods=["GET"])
+    #     self.register_routes()
 
+    # def register_routes(self):
+    #     self.router.add_api_route("/info/{item_id}", self.get_info, methods=["GET"])
+
+    def get_info(self, item_id: int, db: Session = Depends(get_db)):
+        item = db.query(self.model).filter(self.model.id == item_id).first()
+        if item is None:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return item
+    
     def create_item(
             self, 
             file: UploadFile = File(None), 
@@ -31,7 +42,8 @@ class FileRouter(BaseCRUD):
         db_item = self.model(filename=file.filename if file else None, 
                              description=description, 
                              registration_date=registration_date,
-                             data_category_id=data_category_id)
+                             data_category_id=data_category_id,
+                             before_data_category_id=data_category_id)
         db.add(db_item)
         db.commit()
         db.refresh(db_item)
@@ -70,6 +82,9 @@ class FileRouter(BaseCRUD):
         db.delete(db_item)
         db.commit()
         return {"detail": "File deleted"}
+    
+    def patch_item(self, item_id: int, item: DataUpdate, db: Session = Depends(get_db)):
+        return super().patch_item(item_id=item_id, item=item, db=db)
     
 
 class DataCategoryRouter(BaseCRUD):

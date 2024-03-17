@@ -331,7 +331,7 @@ $(document).ready(function() {
         // 모달 창 열기
         $('#modifyCustomerModal').modal('show');
 
-        $('#modifyCustomerModal form').on('submit', function() {
+        $('#modifyCustomerModal form').off('submit').on('submit', function() {
             var form = $(this);
             var data = {
                 importance: form.find('input[name="importance"]').val(),
@@ -346,6 +346,7 @@ $(document).ready(function() {
                 status: status,
                 customer_page: formatDate(),
             };
+            
             $.ajax({
                 type: 'PUT',
                 url: '/api/customer/'+customerId,
