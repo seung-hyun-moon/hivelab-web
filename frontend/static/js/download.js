@@ -5,8 +5,6 @@ var parts = path.split('/'); // URL 경로를 '/'로 분할합니다.
 var categoryType = parts[2];
 var dataCategoryId = parts[3];
 
-console.log(categoryType, dataCategoryId);
-
 function formatDate() {
     var date = new Date();
     var year = date.getFullYear().toString();
@@ -39,12 +37,12 @@ $(document).ready(function() {
         url: '/api/data_category/',
         type: 'GET',
         success: function(data) {
-            var categoryList = $('#category-list');
-
-            data.forEach(function(category) {
-                var categoryItem = $('<li></li>').addClass('category-item');
-                var categoryName = $('<span></span>').addClass('category-name').text(category.name);
-                categoryItem.append(categoryName);
+            var categoryList = $('#category-list').addClass('btn-group-vertical');
+    
+            data.forEach(function(category, index) {
+                var categoryItem = $('<input type="radio" class="btn-check" name="btnradio" autocomplete="off">').attr('id', 'btnradio' + (index+1));
+                var categoryName = $('<label class="btn btn-outline-secondary"></label>').attr('for', 'btnradio' + (index+1)).text(category.name);
+                
                 categoryItem.on('click', function() {
                     var categoryType;
                     if (category.type === 0) {
@@ -56,22 +54,36 @@ $(document).ready(function() {
                     }
                     window.location.href = '/download/' + categoryType + '/' +category.id; // 카테고리 페이지로 이동
                 });
-                categoryList.append(categoryItem);
+    
+                // dataCategoryId 값과 카테고리의 id 값이 일치하면 해당 카테고리를 선택된 상태로 만듭니다.
+                if ((category.id).toString() === dataCategoryId) {
+                    categoryItem.prop('checked', true);
+                }
+    
+                categoryList.append(categoryItem, categoryName);
             });
             // 휴지통 카테고리 추가
-            var trashCategoryItem = $('<li></li>').addClass('category-item');
-            var trashCategoryName = $('<span></span>').addClass('category-name').text('휴지통');
-            trashCategoryItem.append(trashCategoryName);
+            var trashCategoryItem = $('<input type="radio" class="btn-check" name="btnradio" autocomplete="off">').attr('id', 'btnradioTrash');
+            var trashCategoryName = $('<label class="btn btn-outline-secondary"></label>').attr('for', 'btnradioTrash').text('휴지통');
+            
             trashCategoryItem.on('click', function() {
                 window.location.href = '/download/file/0'; // 휴지통 페이지로 이동
             });
-            categoryList.append(trashCategoryItem);
+    
+            // dataCategoryId 값이 0이면 휴지통 카테고리를 선택된 상태로 만듭니다.
+            if (dataCategoryId === '0') {
+                trashCategoryItem.prop('checked', true);
+            }
+    
+            categoryList.append(trashCategoryItem, trashCategoryName);
         },
         error: function(error) {
             // 요청이 실패한 경우 에러 처리를 수행하십시오.
             console.error(error);
         }
     });
+
+
     $('#loading-icon').show();
     var table = $('#downloadTable').DataTable({
         columnDefs: columnDefs,
@@ -216,7 +228,7 @@ $(document).ready(function() {
 
     // 카테고리 관리
 
-    var manageButton = $('<button></button>').text('카테고리 관리').addClass('btn btn-sm btn-secondary').attr('id', 'manage-category-btn');
+    var manageButton = $('<button></button>').text('카테고리 관리').addClass('btn btn-sm btn-dark').attr('id', 'manage-category-btn');
     $('#category-list').append(manageButton);
     $('#manage-category-btn').on('click', function() {
         $('#listDataCategoryModal').modal('show');

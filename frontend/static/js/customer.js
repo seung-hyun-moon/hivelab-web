@@ -1,19 +1,7 @@
-function formatDateField(data, type, row) {
-    if (type === 'display') {
-        data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
-        if (data.length === 6) {
-            // var retext = `${data.slice(0, 2)}년${data.slice(2, 4)}월${data.slice(4, 6)}일`;
-            return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';" ondblclick="this.readOnly = false;" onkeydown="handleKeyDown(event, this, \'' + row.id + '\')">' + data + '</textarea>';
-        }
-    }
-    return data;
-}
-
 function formatData(data, type, row) {
     if (type === 'display') {
         data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
-        // var retext = String(data).replace(/ /g, '&nbsp;').replace(/\n/g, '<br/>');
-        return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';" ondblclick="this.readOnly = false;" onkeydown="handleKeyDown(event, this, \'' + row.id + '\', \'' + row.status + '\')">' + data + '</textarea>';
+        return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';">' + data + '</textarea>';
     }
     return data;
 }
@@ -27,37 +15,6 @@ function formatDate() {
     var minute = ('0' + date.getMinutes()).slice(-2);
     var second = ('0' + date.getSeconds()).slice(-2);
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
-}
-
-function handleKeyDown(e, textarea, id, status) {
-    if (e.keyCode == 13 && e.ctrlKey) {
-        e.preventDefault();
-        var cursorPos = textarea.selectionStart;
-        var currentVal = $(textarea).val();
-        var beforeCursor = currentVal.substring(0, cursorPos);
-        var afterCursor = currentVal.substring(cursorPos);
-        $(textarea).val(beforeCursor + "\n" + afterCursor);
-        textarea.selectionStart = textarea.selectionEnd = cursorPos + 1;
-    } else if (e.keyCode == 13) {
-        e.preventDefault();
-        var column = $(textarea).parent().data('column');
-        var value = $(textarea).val();
-
-        var data = {};
-        data[column] = value;
-        data['status'] = status;
-        $.ajax({
-            url: '/api/customer/' + id,
-            type: 'PATCH',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function(response) {
-                textarea.readOnly = true;
-                localStorage.setItem('status', status);
-                location.reload(); // 페이지 새로 고침
-            }
-        });
-    }
 }
 
 $(document).ready(function() {
