@@ -91,6 +91,12 @@ $(document).ready(function() {
                     $('#addCustomerModal').modal('show');
                 }
             },
+            {
+                text: "통계",
+                attr: {
+                    id: "showStatisticsModal",
+                },
+            },
             'copy', 'excel',
         ],
         language: {
@@ -329,6 +335,156 @@ $(document).ready(function() {
         $("#modifyCustomerModal").modal("hide");
     });
 
+    $("#closestatisticsModal").click(function(){
+        $("#statisticsModal").modal("hide");
+    });
+
+    // 통계 모달을 보여주는 버튼 클릭 이벤트
+    $("#showStatisticsModal").click(function() {
+        var names = ["송재민", "길민제", "이경주", "노현정", "이선복", "김시나"];
+        var counts = {
+            contact_person: {},
+            head: {},
+            deputy: {}
+        };
+        names.forEach(name => {
+            counts.contact_person[name] = 0;
+            counts.head[name] = 0;
+            counts.deputy[name] = 0;
+        });
+
+        // DataTables API를 사용하여 필터링된 테이블의 데이터를 가져옵니다.
+        var data = $('#customerTable').DataTable().rows({ search: 'applied' }).data();
+
+        data.each(function (item) {
+            // 각 역할별로 이름을 처리
+            ['contact_person', 'head', 'deputy'].forEach(function(role) {
+                if (item[role]) {
+                    var roleNames = item[role].split(/\n|,/); // 쉼표와 개행으로 분리
+                    roleNames.forEach(function(roleName) {
+                        roleName = roleName.trim(); // 공백 제거
+                        if (names.includes(roleName)) {
+                            counts[role][roleName]++;
+                        }
+                    });
+                }
+            });
+        });
+
+        // HTML 테이블 구성 코드는 이전과 동일
+        var tableHtml = '<table>';
+        tableHtml += '<thead><tr><th>담당 통계</th>';
+        names.forEach(name => {
+            tableHtml += '<th>' + name + '</th>';
+        });
+        tableHtml += '</tr></thead>';
+
+        var fieldNames = ['컨택', '정', '부'];
+        var fields = ['contact_person', 'head', 'deputy'];
+
+        fields.forEach((field, index) => {
+            tableHtml += '<tr><td>' + fieldNames[index] + '</td>';
+            names.forEach(name => {
+                var count = counts[field][name];
+                var color = '';
+                if (count === Math.max(...Object.values(counts[field]))) {
+                    color = ' style="color: red;"';
+                }
+                tableHtml += '<td' + color + '>' + count + '</td>';
+            });
+            tableHtml += '</tr>';
+        });
+
+        tableHtml += '<tr><td>계</td>';
+        names.forEach(name => {
+            var total = counts.contact_person[name] + counts.head[name] + counts.deputy[name];
+            tableHtml += '<td>' + total + '</td>';
+        });
+        tableHtml += '</tr>';
+        tableHtml += '</table>';
+
+        $('#statisticsModal .modal-body').html(tableHtml);
+
+        // 마케팅 통계
+        // DataTables API를 사용하여 테이블의 모든 데이터를 가져옵니다.
+        var data = $('#customerTable').DataTable().rows().data();
+
+
+        var fields = ['contact_person'];
+        var statuses = ['진행', '완료', '보류', '폐기', '전체'];
+        var counts = {};
+
+
+        data.each(function (item) {
+            fields.forEach(function(field) {
+                var fieldNames = item[field].split(/\n|,/); // 쉼표와 개행으로 분리
+                fieldNames.forEach(function(fieldName) {
+                    fieldName = fieldName.replace(/\s/g, ''); // 모든 공백 제거
+                    if (fieldName !== '') {
+                        if (!counts[fieldName]) {
+                            counts[fieldName] = { '진행': 0, '완료': 0, '보류': 0, '폐기': 0, '전체': 0 };
+                        }
+                        switch(item.status) {
+                            case 0:
+                                counts[fieldName]['진행']++;
+                                break;
+                            case 1:
+                                counts[fieldName]['완료']++;
+                                break;
+                            case 2:
+                                counts[fieldName]['보류']++;
+                                break;
+                            case 3:
+                                counts[fieldName]['폐기']++;
+                                break;
+                        }
+                        counts[fieldName]['전체']++;
+                    }
+                });
+            });
+        });
+
+        // 원하는 헤더 순서
+        var headerOrder = ['블로그', '네모', '대표콜', '현수막', '송재민', '길민제', '이경주', '노현정', '이선복', '김시나'];
+
+        // counts 객체의 키를 원하는 순서대로 정렬
+        var sortedNames = headerOrder.concat(Object.keys(counts).filter(name => !headerOrder.includes(name)));
+
+        // HTML 테이블 생성
+        var tableHtml = '<table>';
+        tableHtml += '<thead><tr><th>마케팅 통계</th>';
+        statuses.forEach(status => {
+            tableHtml += '<th>' + status + '</th>';
+        });
+        tableHtml += '</tr></thead>';
+
+        var maxCounts = {};
+        statuses.forEach(status => {
+            maxCounts[status] = Math.max(...Object.values(counts).map(obj => obj[status] || 0));
+        });
+
+        // 정렬된 키를 사용하여 테이블 생성
+        sortedNames.forEach(name => {
+            if (counts[name]) { // 항목이 없는 경우 테이블에 추가하지 않음
+                tableHtml += '<tr><td>' + name + '</td>';
+                statuses.forEach(status => {
+                    var count = counts[name][status];
+                    var color = '';
+                    if (count === maxCounts[status]) {
+                        color = ' style="color: red;"';
+                    }
+                    tableHtml += '<td' + color + '>' + count + '</td>';
+                });
+                tableHtml += '</tr>';
+            }
+        });
+        tableHtml += '</table>';
+
+        $('#statisticsModal .modal-body').append('<br><br>'+tableHtml);
+
+
+        $('#statisticsModal').modal('show');
+    });
 
     $('#customerTable_filter').prepend('<div id="custombtn" class="btn-group" role="group" aria-label="Basic radio toggle button group"></div>');
 

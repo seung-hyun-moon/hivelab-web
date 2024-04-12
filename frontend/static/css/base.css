@@ -216,3 +216,32 @@ textarea {
     flex: none;
     width: 90%;
 }
+
+#statisticsModal table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+}
+
+#statisticsModal table th {
+    background-color: #e9cc4a;
+}
+
+#statisticsModal table tr {
+    height: 2em;
+}
+
+#statisticsModal table tr:last-child {
+    background-color: #f7cc0c;
+    font-weight: bold;
+}
+
+#statisticsModal table td, #statisticsModal table th {
+    border: 1px solid black;
+    text-align: center;
+}
+
+#statisticsModal table th:first-child,
+#statisticsModal table td:first-child {
+    width: 100px; /* 첫 열의 너비를 설정합니다. 필요에 따라 이 값을 조정하세요. */
+}
