@@ -9,7 +9,8 @@ $(document).ready(function() {
                 action: function ( e, dt, node, config ) {
                     $('#addPropertyModal').modal('show');
                 }
-            }, 'copy', 'excel'
+            },
+//            'copy', 'excel'
         ],
         language: {
             emptyTable: "데이터가 없습니다.",

@@ -34,7 +34,10 @@ class CustomerModel(Base):
 
     status = Column(Integer)                            # 상태 (0: 진행, 1: 완료, 2: 보류, 3: 폐기)
 
-    customer_page = Column(String)                      # 고객페이지
+    # customer_page = Column(String)                    # 고객페이지
+    edit_date = Column(String)                          # 수정 날짜
+    create_date = Column(String)                        # 만든 날짜
+    marketing = Column(String)                          # 마케팅
 
     # property_id = Column(Integer, ForeignKey("properties.id"))
     # user_id = Column(Integer, ForeignKey("users.id"))

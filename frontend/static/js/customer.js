@@ -6,6 +6,14 @@ function formatData(data, type, row) {
     return data;
 }
 
+function formatYYMMDD() {
+    var date = new Date();
+    var year = date.getFullYear().toString().slice(-2);
+    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+    var day = ('0' + date.getDate()).slice(-2);
+    return year + '.' + month + '.' + day;
+}
+
 function formatDate() {
     var date = new Date();
     var year = date.getFullYear().toString();
@@ -31,7 +39,7 @@ $(document).ready(function() {
         fixedHeader: true,
         columnDefs: [
             {
-                targets: [12], // 상태 열의 인덱스
+                targets: [12, 13, 14], // 상태 열의 인덱스
                 visible: false,
             }
         ],
@@ -97,7 +105,7 @@ $(document).ready(function() {
                     id: "showStatisticsModal",
                 },
             },
-            'copy', 'excel',
+//            'copy', 'excel',
         ],
         language: {
             emptyTable: "데이터가 없습니다.",
@@ -205,15 +213,37 @@ $(document).ready(function() {
                     $(td).attr('data-column', 'deputy');
                 } 
             },
-            { data: 'customer_page', render: formatData,
+            { data: 'edit_date', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
-                    $(td).attr('data-column', 'customer_page');
+                    var date = new Date(cellData);
+                    var year = date.getFullYear().toString().slice(-2);
+                    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+                    var day = ('0' + date.getDate()).slice(-2);
+                    var formattedDate = year + '.' + month + '.' + day;
+                    $(td).attr('data-column', 'edit_date');
+                    if (rowData.create_date) {
+                        var createDateParts = rowData.create_date.split(' ');
+                        var timeParts = createDateParts[1].split(':');
+                        var formattedCreateDate = '등록일\n' + createDateParts[0] + '\n' + timeParts[0] + ':' + timeParts[1];
+                        $(td).attr('title', formattedCreateDate);
+                    }
+                    $(td).html(formattedDate);
                 } 
+            },
+            { data: 'create_date', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'create_date');
+                }
+            },
+            { data: 'marketing', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'marketing');
+                }
             },
             { data: 'status' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
-                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + '></button>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + ' data-create_date="' + row.create_date + '"></button>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
         ]
@@ -241,11 +271,25 @@ $(document).ready(function() {
         $("#addCustomerModal").modal("hide");
     });
 
+    $('#addCustomerModal').on('show.bs.modal', function() {
+        var currentDate = formatYYMMDD();
+        $(this).find('input[name="contact_date"]').val(currentDate);
+    });
+
     $('#addCustomerModal form').on('submit', function() {
         var form = $(this);
+        var contact_date = form.find('input[name="contact_date"]').val();
+
+        // contact_date가 YY.MM.DD 형식인지 확인
+        var datePattern = /^\d{2}\.\d{2}\.\d{2}$/;
+        if (!datePattern.test(contact_date)) {
+            alert("컨택일은 YY.MM.DD 형식이어야 합니다.");
+            return false; // AJAX 요청 중단
+        }
+
         var data = {
             importance: form.find('input[name="importance"]').val(),
-            contact_date: form.find('input[name="contact_date"]').val(),
+            contact_date: contact_date,
             move_in_date: form.find('input[name="move_in_date"]').val(),
             industry: form.find('input[name="industry"]').val(),
             contact_info: form.find('input[name="contact_info"]').val(),
@@ -253,7 +297,9 @@ $(document).ready(function() {
             contact_person: form.find('textarea[name="contact_person"]').val(),
             head: form.find('textarea[name="head"]').val(),
             deputy: form.find('textarea[name="deputy"]').val(),
-            customer_page: formatDate(),
+            edit_date: formatDate(),
+            create_date: formatDate(),
+            marketing: ""
         };
         $.ajax({
             type: 'POST',
@@ -277,6 +323,7 @@ $(document).ready(function() {
     $('#customerTable').on('click', '.edit-btn', function() {
         var customerId = $(this).data('id');
         var status = $(this).data('status');
+        var create_date = $(this).data('create_date');
     
         $.ajax({ url: '/api/customer/' + customerId, success: function(customerData) {
             $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry);
@@ -296,9 +343,17 @@ $(document).ready(function() {
 
         $('#modifyCustomerModal form').off('submit').on('submit', function() {
             var form = $(this);
+            var contact_date = form.find('input[name="contact_date"]').val();
+
+            // contact_date가 YY.MM.DD 형식인지 확인
+            var datePattern = /^\d{2}\.\d{2}\.\d{2}$/;
+            if (!datePattern.test(contact_date)) {
+                alert("컨택일은 YY.MM.DD 형식이어야 합니다.");
+                return false; // AJAX 요청 중단
+            }
             var data = {
                 importance: form.find('input[name="importance"]').val(),
-                contact_date: form.find('input[name="contact_date"]').val(),
+                contact_date: contact_date,
                 move_in_date: form.find('input[name="move_in_date"]').val(),
                 industry: form.find('input[name="industry"]').val(),
                 contact_info: form.find('input[name="contact_info"]').val(),
@@ -307,7 +362,9 @@ $(document).ready(function() {
                 head: form.find('textarea[name="head"]').val(),
                 deputy: form.find('textarea[name="deputy"]').val(),
                 status: status,
-                customer_page: formatDate(),
+                edit_date: formatDate(),
+                create_date: create_date,
+                marketing: ""
             };
             
             $.ajax({
@@ -510,23 +567,23 @@ $(document).ready(function() {
 
     // 버튼 클릭 이벤트
     $('#all').on('click', function() {
-        table.columns(12).search('').draw();
+        table.columns(14).search('').draw();
     });
 
     $('#progress').on('click', function() {
-        table.columns(12).search('0').draw();
+        table.columns(14).search('0').draw();
     });
 
     $('#complete').on('click', function() {
-        table.columns(12).search('1').draw();
+        table.columns(14).search('1').draw();
     });
 
     $('#hold').on('click', function() {
-        table.columns(12).search('2').draw();
+        table.columns(14).search('2').draw();
     });
 
     $('#discard').on('click', function() {
-        table.columns(12).search('3').draw();
+        table.columns(14).search('3').draw();
     });
 
     // 전체 선택 체크박스 클릭 이벤트

@@ -23,7 +23,7 @@ $(document).ready(function() {
                     $('#addContactModal').modal('show');
                 }
             },
-            'copy', 'excel'
+//            'copy', 'excel'
         ],
         "initComplete": function(settings, json) {
             $('#loading-icon').hide();

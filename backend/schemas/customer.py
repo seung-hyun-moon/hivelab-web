@@ -17,7 +17,9 @@ class CustomerBase(BaseModel):
 
     status : Optional[int] = 0           # 상태 (0: 진행, 1: 완료, 2: 보류, 3: 폐기)
 
-    customer_page : Optional[str] = None    # 고객페이지
+    edit_date : Optional[str] = None    # 수정 날짜
+    create_date : Optional[str] = None  # 만든 날짜
+    marketing : Optional[str] = None    # 마케팅
 
 class CustomerCreate(CustomerBase):
     pass
