@@ -381,6 +381,30 @@ $(document).ready(function() {
         
     });
 
+    $(document).on('click', '#manage-category-list > li > .category-delete-btn', function() {
+        var id = $(this).data('id');
+        var password = prompt('비밀번호를 입력하세요.');
+        if (password === '5125') {
+            var confirmDelete = confirm('정말로 이 데이터를 삭제하시겠습니까?');
+            if (confirmDelete) {
+                $.ajax({
+                    url: '/api/data_category/' + id,
+                    type: 'DELETE',
+                    success: function(result) {
+                        table.ajax.reload();
+                        location.reload(true);
+                        console.log('File deleted successfully');
+                    },
+                    error: function(request, msg, error) {
+                        console.log('Failed to delete file');
+                    }
+                });
+            }
+        } else {
+            alert('비밀번호가 틀렸습니다.');
+        }
+    });
+
 
     $(document).on('click', '#manage-category-list > li > .category-edit-btn', function () {
         var categoryId = $(this).data('id');
