@@ -19,10 +19,6 @@ class FileRouter(BaseCRUD):
         super().__init__(get_schema=Data, post_schema=DataCreate, put_schema=DataUpdate, model=DataModel)
         self.files_directory = BASE_DIR / "uploaded_files"
         self.router.add_api_route("/info/{item_id}", self.get_info, methods=["GET"])
-    #     self.register_routes()
-
-    # def register_routes(self):
-    #     self.router.add_api_route("/info/{item_id}", self.get_info, methods=["GET"])
 
     def get_info(self, item_id: int, db: Session = Depends(get_db)):
         item = db.query(self.model).filter(self.model.id == item_id).first()
@@ -31,15 +27,16 @@ class FileRouter(BaseCRUD):
         return item
     
     def create_item(
-            self, 
-            file: UploadFile = File(None), 
+            self,
+            file: UploadFile = File(None),
+            title: str = Form(...),
             description: str = Form(...), 
             registration_date: str = Form(...), 
             data_category_id: int = Form(...),
-            db: Session = Depends(get_db)):
-        # 먼저 아이템을 데이터베이스에 저장합니다.
-        print(description, registration_date, data_category_id)
-        db_item = self.model(filename=file.filename if file else None, 
+            db: Session = Depends(get_db)
+    ):
+        db_item = self.model(filename=file.filename if file else None,
+                             title=title,
                              description=description, 
                              registration_date=registration_date,
                              data_category_id=data_category_id,
@@ -49,7 +46,7 @@ class FileRouter(BaseCRUD):
         db.refresh(db_item)
 
         # 파일이 제공된 경우에만 파일을 저장합니다.
-        if file:
+        if file and file.filename:
             file_location = self.files_directory / str(db_item.id) / file.filename
             file_location.parent.mkdir(parents=True, exist_ok=True)
             with open(file_location, "wb+") as file_object:

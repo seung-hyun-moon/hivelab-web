@@ -21,11 +21,11 @@ $(document).ready(function() {
 
     if (categoryType === 'board') {
         columnDefs.push(
-            { targets: [0, 3, 4, 6], visible: false }
+//            { targets: [0, 3, 4, 6], visible: false }
         );
     } else if (categoryType === 'image') {
         columnDefs.push(
-            { targets: [3, 6], visible: false }
+//            { targets: [3, 6], visible: false }
         );
     } else if (categoryType === 'file') {
         columnDefs.push(
@@ -89,7 +89,7 @@ $(document).ready(function() {
         columnDefs: columnDefs,
         dom : 'Blfrtp',
         lengthChange : true,
-        order : [[ 1, "asc" ]],
+        order : [[ 0, "asc" ]],
         "pageLength": 25,
         buttons: [
             {
@@ -123,7 +123,8 @@ $(document).ready(function() {
             dataSrc: ''
         },
         columns: [
-            { data: 'description' },
+            { data: 'title' },
+//            { data: 'description' },
             { data: 'filename' },
             { data: 'registration_date' },
             { data: 'file_path' },
@@ -168,14 +169,15 @@ $(document).ready(function() {
         var fileInput = $('#fileUpload')[0];
         var file = fileInput.files[0];
         var data = new FormData();
+        var title = form.find('textarea[name="title"]').val()
         var description = form.find('textarea[name="description"]').val()
         
-        if (!description) {
-            alert('설명 부분을 채워주세요.');
+        if (!title) {
+            alert('제목을 채워주세요.');
             return false;
         }
-
         data.append('file', file);
+        data.append('title', title);
         data.append('description', description);
         data.append('registration_date', formatDate());
         data.append('data_category_id', dataCategoryId);
@@ -196,6 +198,7 @@ $(document).ready(function() {
                 table.ajax.reload();
 
                 // 입력 필드를 비웁니다.
+                form.find('textarea[name="title"]').val('');
                 form.find('textarea[name="description"]').val('');
                 form.find('input[name="registration_date"]').val('');
                 fileInput.value = '';

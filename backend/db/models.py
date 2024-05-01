@@ -91,10 +91,11 @@ class ContactModel(Base):
 class DataModel(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=True)
     filename = Column(String, index=True)
     description = Column(String, nullable=True)
     registration_date = Column(String, nullable=True)
-    file_path = Column(String, unique=True)
+    file_path = Column(String)
     # data_category_id = Column(Integer, ForeignKey("categories.id"))
     data_category_id = Column(Integer)
     before_data_category_id = Column(Integer)

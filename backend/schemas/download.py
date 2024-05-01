@@ -4,6 +4,7 @@ from typing import Optional
 # 파일 정보 스키마
 class DataBase(BaseModel):
     filename: Optional[str] = None
+    title: Optional[str] = None
     description: Optional[str] = None
     registration_date: Optional[str] = None
     file_path: Optional[str] = None

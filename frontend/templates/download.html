@@ -5,17 +5,19 @@
     <div id="category-list" style="width: 15%;text-align: center;"></div>
     <table id="downloadTable" class="hover compact stripe cell-border" style="width:100%">
         <colgroup>
-            <col /><!-- 설명 -->
-            <col  /><!-- 파일명 -->
-            <col  /><!-- 생성일자 -->
-            <col  /><!-- 경로 -->
-            <col  /><!-- 다운로드 -->
-            <col  /><!-- 삭제 -->
-            <col  /><!-- 카테고리 -->
+            <col width="50%" /><!-- 제목 -->
+<!--            <col width="5%" />&lt;!&ndash; 설명 &ndash;&gt;-->
+            <col width="15%" /><!-- 파일명 -->
+            <col width="15%" /><!-- 생성일자 -->
+            <col width="10%" /><!-- 경로 -->
+            <col width="10%" /><!-- 다운로드 -->
+            <col width="15%" /><!-- 이동 -->
+            <col width="5%" /><!-- 카테고리 -->
         </colgroup>
         <thead>
             <tr>
-                <th class="align-middle">설명</th>
+                <th class="align-middle">제목</th>
+<!--                <th class="align-middle">설명</th>-->
                 <th class="align-middle">파일명</th>
                 <th class="align-middle">생성일자</th>
                 <th class="align-middle">경로</th>
@@ -46,9 +48,12 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="description">설명</label>
-                        <textarea id="description" name="description" class="form-control" style="resize: vertical;overflow-y: visible;"></textarea>
-                        <!-- <input type="text" class="form-control" id="description" name="description"> -->
+                        <label for="title">제목</label>
+                        <textarea id="title" name="title" class="form-control" style="resize: vertical;overflow-y: visible;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">내용</label>
+                        <textarea id="description" name="description" class="form-control" style="resize: vertical;overflow-y: visible;" rows="12"></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">업로드</button>
                 </form>
