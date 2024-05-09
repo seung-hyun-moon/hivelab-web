@@ -68,9 +68,13 @@ async def move_property(request: Request):
     return templates.TemplateResponse("property.html", {"request": request})
 
 # 파일 다운로드 형태 게시판
-@app.get("/download/file/{data_category_id}")
-async def move_download(request: Request, data_category_id: int):
+@app.get("/download/{category}/{data_category_id}")
+async def move_download(request: Request, category: str, data_category_id: int):
     return templates.TemplateResponse("download.html", {"data_category_id": data_category_id, "request": request})
+
+@app.get("/download/{category}/{data_category_id}/{board_id}")
+async def move_board(request: Request, category: str, data_category_id: int, board_id: int):
+    return templates.TemplateResponse("board.html", {"data_category_id": data_category_id, "board_id": board_id, "request": request})
 
 if __name__ == "__main__":
     uvicorn.run(f"{Path(__file__).stem}:app", host="0.0.0.0", port=80, reload=True)

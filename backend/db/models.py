@@ -108,3 +108,14 @@ class DataCategoryModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     type = Column(Integer)
+
+
+class EventModel(Base):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    start = Column(DateTime, nullable=False)
+    end = Column(DateTime, nullable=False)
+    location = Column(String, nullable=True)
+    description = Column(String, nullable=True)

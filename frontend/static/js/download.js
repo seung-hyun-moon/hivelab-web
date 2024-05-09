@@ -17,15 +17,35 @@ function formatDate() {
 }
 
 $(document).ready(function() {
+
+    const { Editor } = toastui;
+    const { colorSyntax } = Editor.plugin;
+    var editor = new Editor({
+        el: document.querySelector('#editor'),
+        toolbarItems: [
+            ['heading', 'bold', 'italic', 'strike'],
+            ['hr', 'quote'],
+            ['ul', 'ol', 'task', 'indent', 'outdent'],
+            ['table', 'image', 'link'],
+            ['code', 'codeblock'],
+            ['scrollSync'],
+        ],
+        height: '500px',
+        initialEditType: 'wysiwyg',
+        previewStyle: 'vertical',
+        plugins: [colorSyntax],
+        language: 'ko-kr',
+    });
+
     var columnDefs = [];
 
     if (categoryType === 'board') {
         columnDefs.push(
-//            { targets: [0, 3, 4, 6], visible: false }
+            { targets: [3, 6], visible: false }
         );
     } else if (categoryType === 'image') {
         columnDefs.push(
-//            { targets: [3, 6], visible: false }
+            { targets: [3, 6], visible: false }
         );
     } else if (categoryType === 'file') {
         columnDefs.push(
@@ -95,6 +115,7 @@ $(document).ready(function() {
             {
                 text: '추가',
                 action: function ( e, dt, node, config ) {
+                    editor.setMarkdown('');
                     $('#addDataModal').modal('show');
                 }
             }
@@ -130,7 +151,11 @@ $(document).ready(function() {
             { data: 'file_path' },
             { data: 'id',
                 "render": function ( data, type, row ) {
-                    return '<button class="down-btn btn btn-success" data-id="' + data + '"></button>'
+                    if (row.filename) { // filename 필드가 있는지 확인
+                        return '<button class="down-btn btn btn-success" data-id="' + data + '"></button>';
+                    } else {
+                        return ''; // filename이 없는 경우, 빈 문자열 반환
+                    }
                 }
             },
             {
@@ -146,6 +171,12 @@ $(document).ready(function() {
             },
             { data: 'data_category_id' },
         ],
+        "createdRow": function ( row, data, index ) {
+            $('td', row).eq(0).on('click', function () {
+                var id = data.id;
+                window.location.href = window.location.pathname + '/' + id;
+            });
+        },
     });
 
     $('#downloadTable tbody').on('click', 'button.down-btn', function () {
@@ -168,10 +199,12 @@ $(document).ready(function() {
         var form = $(this);
         var fileInput = $('#fileUpload')[0];
         var file = fileInput.files[0];
+        var file = fileInput.files.length > 0 ? fileInput.files[0] : ""; // 파일이 선택되지 않았을 때 null 값을 사용
         var data = new FormData();
         var title = form.find('textarea[name="title"]').val()
-        var description = form.find('textarea[name="description"]').val()
-        
+//        var description = form.find('textarea[name="description"]').val()
+        var description = editor.getMarkdown();
+
         if (!title) {
             alert('제목을 채워주세요.');
             return false;
