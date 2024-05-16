@@ -36,6 +36,22 @@ $(document).ready(function() {
         plugins: [colorSyntax],
         language: 'ko-kr',
     });
+    var editor2 = new Editor({
+        el: document.querySelector('#editor2'),
+        toolbarItems: [
+            ['heading', 'bold', 'italic', 'strike'],
+            ['hr', 'quote'],
+            ['ul', 'ol', 'task', 'indent', 'outdent'],
+            ['table', 'image', 'link'],
+            ['code', 'codeblock'],
+            ['scrollSync'],
+        ],
+        height: '500px',
+        initialEditType: 'wysiwyg',
+        previewStyle: 'vertical',
+        plugins: [colorSyntax],
+        language: 'ko-kr',
+    });
 
     var columnDefs = [];
 
@@ -162,7 +178,16 @@ $(document).ready(function() {
                 data: 'id',
                 "render": function (data, type, row) {
                     if (dataCategoryId !== '0') {
-                        return '<button class="change-btn btn btn-outline-warning" data-id="' + data + '" title="휴지통"></button>'
+                        return '<button class="edit-btn btn btn-outline-warning" ' +
+                                'data-id="' + data + '" ' +
+                                'data-title="' + row.title + '" ' +
+                                'data-before_data_category_id="' + row.before_data_category_id + '" ' +
+                                'data-data_category_id="' + row.data_category_id + '" ' +
+                                'data-file_path="' + row.file_path + '" ' +
+                                'data-filename="' + row.filename + '" ' +
+                                'data-registration_date="' + row.registration_date + '" ' +
+                                'title="수정"></button>' +
+                               '<button class="change-btn btn btn-outline-danger" data-id="' + data + '" title="휴지통"></button>'
                     } else {
                         return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '" title="완전 삭제"></button>' +
                                '<button class="restore-btn btn btn-outline-info" data-id="' + data + '" title="복원"></button>'
@@ -197,12 +222,11 @@ $(document).ready(function() {
 
     $('#addDataModal form').on('submit', function() {
         var form = $(this);
-        var fileInput = $('#fileUpload')[0];
+        var fileInput = $('#fileUpload1')[0];
         var file = fileInput.files[0];
         var file = fileInput.files.length > 0 ? fileInput.files[0] : ""; // 파일이 선택되지 않았을 때 null 값을 사용
         var data = new FormData();
         var title = form.find('textarea[name="title"]').val()
-//        var description = form.find('textarea[name="description"]').val()
         var description = editor.getMarkdown();
 
         if (!title) {
@@ -214,10 +238,6 @@ $(document).ready(function() {
         data.append('description', description);
         data.append('registration_date', formatDate());
         data.append('data_category_id', dataCategoryId);
-
-        for (var pair of data.entries()) {
-            console.log(pair[0]+ ', ' + pair[1]);
-        }
 
         $.ajax({
             type: 'POST',
@@ -244,20 +264,100 @@ $(document).ready(function() {
         return false;
     });
 
-    var dropzone = document.getElementById('dropzone');
-    dropzone.ondragover = function() {
+    $('#downloadTable').on('click', '.edit-btn', function() {
+        var boardID = $(this).data('id');
+        var title = $(this).data('title');
+        var before_data_category_id = $(this).data('before_data_category_id');
+        var data_category_id = $(this).data('data_category_id');
+        var file_path = $(this).data('file_path');
+        var filename = $(this).data('filename');
+        var registration_date = $(this).data('registration_date');
+
+        $.ajax({ url: '/api/download/info/' + boardID, success: function(data) {
+            $('#upload-name2').val(data.filename);
+            $('#modifyDataModal').find('textarea[name="title"]').val(title);
+            editor2.setMarkdown(data.description);
+        }});
+
+        $('#modifyDataModal').modal('show');
+
+        $('#modifyDataModal form').off('submit').on('submit', function() {
+            var data = {
+                title: $(this).find('textarea[name="title"]').val(),
+                description: editor2.getMarkdown(),
+                registration_date: registration_date,
+                data_category_id: parseInt(data_category_id),
+                before_data_category_id: parseInt(before_data_category_id),
+                file_path: file_path,
+                filename: filename,
+            };
+
+            $.ajax({
+                type: 'PUT',
+                url: '/api/download/'+boardID,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('Success:', response);
+                    $('#modifyDataModal').modal('hide');
+                    table.ajax.reload();
+                    $('#modifyDataModal form').find('input, textarea').val('');
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    });
+
+
+
+    $("#closeModifyDataModal").click(function(){
+        $("#modifyDataModal").modal("hide");
+    });
+
+    $("#fileUpload1").on('change',function(){
+        var fileName = $("#fileUpload1").val();
+        fileName = fileName.replace("C:\\fakepath\\", ""); // C:\fakepath\를 제거
+        $(".upload-name1").val(fileName);
+    });
+
+    $("#fileUpload2").on('change',function(){
+        var fileName = $("#fileUpload2").val();
+        fileName = fileName.replace("C:\\fakepath\\", ""); // C:\fakepath\를 제거
+        $(".upload-name2").val(fileName);
+    });
+
+    var dropzone1 = document.getElementsByClassName('dropzone1');
+    dropzone1.ondragover = function() {
         this.className = 'dragover';
         return false;
     };
-    dropzone.ondragleave = function() {
+    dropzone1.ondragleave = function() {
         this.className = '';
         return false;
     };
-    dropzone.ondrop = function(e) {
+    dropzone1.ondrop = function(e) {
         e.preventDefault();
         this.className = '';
         var file = e.dataTransfer.files[0];
-        document.getElementById('fileUpload').files = e.dataTransfer.files;
+        document.getElementById('fileUpload1').files = e.dataTransfer.files;
+    };
+
+    var dropzone2 = document.getElementsByClassName('dropzone2');
+    dropzone2.ondragover = function() {
+        this.className = 'dragover';
+        return false;
+    };
+    dropzone2.ondragleave = function() {
+        this.className = '';
+        return false;
+    };
+    dropzone2.ondrop = function(e) {
+        e.preventDefault();
+        this.className = '';
+        var file = e.dataTransfer.files[0];
+        document.getElementById('fileUpload2').files = e.dataTransfer.files;
     };
 
     table.columns(6).search(dataCategoryId).draw();

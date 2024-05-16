@@ -36,15 +36,16 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addDataModalLabel">파일 업로드</h5>
+                <h5 class="modal-title" id="addDataModalLabel">게시판 등록</h5>
                 <button type="button" class="btn btn-secondary" id="closeDataModal">&times;</button>
             </div>
             <div class="modal-body">
                 <form onsubmit="return false;">
                     <div class="form-group">
-                        <label for="fileUpload">파일 선택 또는 드래그 앤 드롭</label>
-                        <div id="dropzone" style="border: 2px dashed #aaa; padding: 10px; text-align: center;">
-                            <input type="file" class="form-control-file" id="fileUpload" name="fileUpload">
+                        <div class="dropzone1" style="border: 2px dashed #aaa; padding: 10px; text-align: center;">
+                            <input class="upload-name1" value="첨부파일" placeholder="첨부파일" id="upload-name1">
+                            <label for="fileUpload1">파일찾기</label>
+                            <input type="file" class="form-control-file" id="fileUpload1" name="fileUpload">
                         </div>
                     </div>
                     <div class="form-group">
@@ -53,8 +54,38 @@
                     </div>
                     <div class="form-group">
                         <label for="description">내용</label>
-<!--                        <textarea id="description" name="description" class="form-control" style="resize: vertical;overflow-y: visible;" rows="12"></textarea>-->
                         <div id="editor"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">업로드</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modifyDataModal" tabindex="-1" role="dialog" aria-labelledby="modifyDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modifyDataModalLabel">게시판 수정</h5>
+                <button type="button" class="btn btn-secondary" id="closeModifyDataModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="return false;">
+                    <div class="form-group">
+                        <div class="dropzone2" style="border: 2px dashed #aaa; padding: 10px; text-align: center;">
+                            <input class="upload-name2" value="첨부파일" placeholder="첨부파일" id="upload-name2" disabled>
+                            <label for="fileUpload2">파일찾기</label>
+                            <input type="file" class="form-control-file" id="fileUpload2" name="fileUpload" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="title">제목</label>
+                        <textarea id="title" name="title" class="form-control" style="resize: vertical;overflow-y: visible;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">내용</label>
+                        <div id="editor2"></div>
                     </div>
                     <button type="submit" class="btn btn-primary">업로드</button>
                 </form>
