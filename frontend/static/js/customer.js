@@ -29,7 +29,7 @@ $(document).ready(function() {
     $('#customerTable thead tr')
         .clone(true)
         .addClass('filters')
-        .appendTo('#customerTable thead');
+        .appendTo('#customerTable thead').hide();
 
     var table = $('#customerTable').DataTable({
         dom : 'Blfrtip',
@@ -45,7 +45,7 @@ $(document).ready(function() {
         ],
         initComplete: function () {
             var api = this.api();
-
+            $('#customerTable thead .filters').show();
             // For each column
             api
                 .columns()
@@ -68,7 +68,6 @@ $(document).ready(function() {
                             // Get the search value
                             $(this).attr('title', $(this).val());
                             var regexr = '({search})'; //$(this).parents('th').find('select').val();
-
                             var cursorPosition = this.selectionStart;
                             // Search the column for that value
                             api
