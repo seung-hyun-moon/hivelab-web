@@ -27,7 +27,7 @@ body {
     display: flex;
     flex-direction: column;
     font-family: NanumBarunGothic sans-serif;
-    line-height: 1;
+    line-height: 1.48;
     background-color: #ffffff;
     /* color: #1a1a1a; */
 }
