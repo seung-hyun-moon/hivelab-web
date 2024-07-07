@@ -283,6 +283,10 @@ textarea {
     color: #999999;
 }
 
+.modal {
+    z-index: 99999;
+}
+
 .modal label {
     display: inline-block;
     padding: 10px 20px;
@@ -295,7 +299,7 @@ textarea {
 }
 
 #id_btn_toggle_sidebar {
-    z-index: 60; /* 햄버거 버튼이 사이드바 위에 표시되도록 설정 */
+    z-index: 51; /* 햄버거 버튼이 사이드바 위에 표시되도록 설정 */
 }
 
 #id_sidebar {
