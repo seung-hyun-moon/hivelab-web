@@ -33,22 +33,22 @@
     var randomEvents;
 
     cal.clear();
-//    randomEvents = generateRandomEvents(
-//      cal.getViewName(),
-//      cal.getDateRangeStart(),
-//      cal.getDateRangeEnd()
-//    );
-//    cal.createEvents(randomEvents);
+    randomEvents = generateRandomEvents(
+      cal.getViewName(),
+      cal.getDateRangeStart(),
+      cal.getDateRangeEnd()
+    );
+    cal.createEvents(randomEvents);
   }
 
   function getReadableViewName(viewType) {
     switch (viewType) {
       case 'month':
-        return '월별';
+        return 'Monthly';
       case 'week':
-        return '주별';
+        return 'Weekly';
       case 'day':
-        return '일별';
+        return 'Daily';
       default:
         throw new Error('no view type');
     }
@@ -63,7 +63,6 @@
 
   function setDropdownTriggerText() {
     var viewName = cal.getViewName();
-    console.log(viewName);
     var buttonText = document.querySelector('.dropdown .button-text');
     buttonText.textContent = getReadableViewName(viewName);
   }
@@ -250,12 +249,9 @@
   // Calendar instance with options
   // eslint-disable-next-line no-undef
   cal = new Calendar('#app', {
-    usageStatistics: false,
     calendars: MOCK_CALENDARS,
-    defaultView: 'month',
     useFormPopup: true,
     useDetailPopup: true,
-    popupDetailAttendees: true,
     eventFilter: function (event) {
       var currentView = cal.getViewName();
       if (currentView === 'month') {
@@ -270,24 +266,6 @@
       },
       time: function (event) {
         return getEventTemplate(event, false);
-      },
-      popupUpdate() {
-        return '반영';
-      },
-      popupEdit() {
-        return '수정';
-      },
-      popupDelete() {
-        return '삭제';
-      },
-      popupSave() {
-        return '추가';
-      },
-      locationPlaceholder() {
-        return '위치';
-      },
-      popupIsAllday() {
-        return '종일';
       },
     },
   });

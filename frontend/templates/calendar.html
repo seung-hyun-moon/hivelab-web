@@ -1,9 +1,81 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="p-4">
-    <div class="mt-14">
-        <div id="calendar" style="width:100%;height:80vh;"></div>
+<div>
+    <div class="mt-4">
+        <article class="content">
+        <aside class="sidebar">
+          <div class="sidebar-item">
+            <input class="checkbox-all" type="checkbox" id="all" value="all" checked="">
+            <label class="checkbox checkbox-all" for="all">모두 보기</label>
+          </div>
+          <hr>
+          <div class="sidebar-item">
+            <input type="checkbox" id="1" value="1" checked="">
+            <label class="checkbox checkbox-calendar checkbox-1" for="1">워크</label>
+          </div>
+          <div class="sidebar-item">
+            <input type="checkbox" id="2" value="2" checked="">
+            <label class="checkbox checkbox-calendar checkbox-2" for="2">임장</label>
+          </div>
+          <div class="sidebar-item">
+            <input type="checkbox" id="3" value="3" checked="">
+            <label class="checkbox checkbox-calendar checkbox-3" for="3">계약</label>
+          </div>
+          <div class="sidebar-item">
+            <input type="checkbox" id="4" value="4" checked="">
+            <label class="checkbox checkbox-calendar checkbox-4" for="4">반/월차</label>
+          </div>
+          <div class="sidebar-item">
+            <input type="checkbox" id="5" value="5" checked="">
+            <label class="checkbox checkbox-calendar checkbox-5" for="5">휴가</label>
+          </div>
+          <div class="sidebar-item">
+            <input type="checkbox" id="6" value="6" checked="">
+            <label class="checkbox checkbox-calendar checkbox-6" for="6">휴무</label>
+          </div>
+          <hr>
+        </aside>
+        <section class="app-column">
+          <nav class="navbar">
+            <div class="dropdown">
+              <div class="dropdown-trigger">
+                <button class="button is-rounded" aria-haspopup="true" aria-controls="dropdown-menu">
+                  <span class="button-text"></span>
+                  <span class="dropdown-icon toastui-calendar-icon toastui-calendar-ic-dropdown-arrow"></span>
+                </button>
+              </div>
+              <div class="dropdown-menu">
+                <div class="dropdown-content">
+                  <a href="#" class="dropdown-item" data-view-name="month">월별</a>
+                  <a href="#" class="dropdown-item" data-view-name="week">주별</a>
+                  <a href="#" class="dropdown-item" data-view-name="day">일별</a>
+                </div>
+              </div>
+            </div>
+            <button class="button is-rounded today">오늘</button>
+            <button class="button is-rounded prev">
+
+              <img alt="prev" src="{{ url_for('static', path='3rd-party/calendar/images/ic-arrow-line-left.png') }}" srcset="
+                  ./images/ic-arrow-line-left@2x.png 2x,
+                  ./images/ic-arrow-line-left@3x.png 3x
+                ">
+            </button>
+            <button class="button is-rounded next">
+              <img alt="prev" src="{{ url_for('static', path='3rd-party/calendar/images/ic-arrow-line-right.png') }}" srcset="
+                  ./images/ic-arrow-line-right@2x.png 2x,
+                  ./images/ic-arrow-line-right@3x.png 3x
+                ">
+            </button>
+            <span class="navbar--range"></span>
+            <div class="nav-checkbox">
+              <input class="checkbox-collapse" type="checkbox" id="collapse" value="collapse" disabled>
+              <label for="collapse">중복 일정 축소 및 세부정보 팝업 비활성화</label>
+            </div>
+          </nav>
+          <main id="app" style="height:80vh"></main>
+        </section>
+      </article>
     </div>
 </div>
 <script src="{{ url_for('static', path='js/calendar.js') }}"></script>
