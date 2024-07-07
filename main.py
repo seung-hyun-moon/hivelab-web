@@ -76,5 +76,9 @@ async def move_download(request: Request, category: str, data_category_id: int):
 async def move_board(request: Request, category: str, data_category_id: int, board_id: int):
     return templates.TemplateResponse("board.html", {"data_category_id": data_category_id, "board_id": board_id, "request": request})
 
+@app.get("/calendar")
+async def move_calendar(request: Request):
+    return templates.TemplateResponse("calendar.html", {"request": request})
+
 if __name__ == "__main__":
     uvicorn.run(f"{Path(__file__).stem}:app", host="0.0.0.0", port=80, reload=True)

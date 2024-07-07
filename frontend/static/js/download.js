@@ -69,56 +69,6 @@ $(document).ready(function() {
         );
     }
 
-    $.ajax({
-        url: '/api/data_category/',
-        type: 'GET',
-        success: function(data) {
-            var categoryList = $('#category-list').addClass('btn-group-vertical');
-    
-            data.forEach(function(category, index) {
-                var categoryItem = $('<input type="radio" class="btn-check" name="btnradio" autocomplete="off">').attr('id', 'btnradio' + (index+1));
-                var categoryName = $('<label class="btn btn-outline-secondary"></label>').attr('for', 'btnradio' + (index+1)).text(category.name);
-                
-                categoryItem.on('click', function() {
-                    var categoryType;
-                    if (category.type === 0) {
-                        categoryType = 'file';
-                    } else if (category.type === 1) {
-                        categoryType = 'image';
-                    } else if (category.type === 2) {
-                        categoryType = 'board';
-                    }
-                    window.location.href = '/download/' + categoryType + '/' +category.id; // 카테고리 페이지로 이동
-                });
-    
-                // dataCategoryId 값과 카테고리의 id 값이 일치하면 해당 카테고리를 선택된 상태로 만듭니다.
-                if ((category.id).toString() === dataCategoryId) {
-                    categoryItem.prop('checked', true);
-                }
-    
-                categoryList.append(categoryItem, categoryName);
-            });
-            // 휴지통 카테고리 추가
-            var trashCategoryItem = $('<input type="radio" class="btn-check" name="btnradio" autocomplete="off">').attr('id', 'btnradioTrash');
-            var trashCategoryName = $('<label class="btn btn-outline-secondary"></label>').attr('for', 'btnradioTrash').text('휴지통');
-            
-            trashCategoryItem.on('click', function() {
-                window.location.href = '/download/file/0'; // 휴지통 페이지로 이동
-            });
-    
-            // dataCategoryId 값이 0이면 휴지통 카테고리를 선택된 상태로 만듭니다.
-            if (dataCategoryId === '0') {
-                trashCategoryItem.prop('checked', true);
-            }
-    
-            categoryList.append(trashCategoryItem, trashCategoryName);
-        },
-        error: function(error) {
-            // 요청이 실패한 경우 에러 처리를 수행하십시오.
-            console.error(error);
-        }
-    });
-
 
     $('#loading-icon').show();
     var table = $('#downloadTable').DataTable({

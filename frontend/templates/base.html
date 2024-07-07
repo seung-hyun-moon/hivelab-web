@@ -8,6 +8,9 @@
     <!-- Favicon.ico -->
     <link rel="shortcut icon" href="{{ url_for('static', path='icon/favicon.ico') }}">
 
+    <!--tailwindcss CSS-->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/bootstrap/css/bootstrap.min.css') }}">
     <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='3rd-party/bootstrap/css/bootstrap-switch.css') }}"> -->
@@ -22,6 +25,9 @@
     <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
     <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
     <link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css" />
+
+    <!--Toast Calendar CSS-->
+    <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
 
     <!-- Custom CSS -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='css/base.css') }}">
@@ -69,16 +75,19 @@
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
     <!-- Editor's Plugin -->
     <script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
+    <!--Calendar-->
+    <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
 
     <title>HiveMate DB</title>
 </head>
 <body>
-    {% include "header.html" %}
+    {% include "sidebar.html" %}
     <div id="loading-icon" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);z-index: 9999;">
         <img src="{{ url_for('static', path='images/loading.svg') }}" alt="Loading...">
     </div>
-    {% block content %}
-    {% endblock %}
-    {% include "footer.html" %}
+    <div id="id_main_content" class="ml-64 p-6">
+        {% block content %}
+        {% endblock %}
+    </div>
 </body>
 </html>

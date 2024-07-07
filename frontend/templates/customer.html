@@ -1,52 +1,54 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="hive-container">
-    <table id="customerTable" class="hover compact stripe cell-border" style="width:100%">
-        <colgroup>
-            <col width="3%" /><!-- 체크박스 -->
-            <col width="3%" /><!-- 구분 -->
-            <col width="3%" /><!-- 중요도 -->
-            <col width="8%" /><!-- 컨택일 -->
-            <col width="8%" /><!-- 입주시기 -->
-            <col width="10%" /><!-- 업종 -->
-            <col width="10%" /><!-- 연락처 -->
-            <col width="32%" /><!-- 비고 -->
+<div class="p-4">
+    <div class="mt-14">
+        <table id="customerTable" class="hover compact stripe cell-border" style="width:100%">
+            <colgroup>
+                <col width="3%" /><!-- 체크박스 0 -->
+                <col width="3%" /><!-- 구분 1 -->
+                <col width="3%" /><!-- 중요도 2-->
+                <col width="8%" /><!-- 컨택일 3-->
+                <col width="8%" /><!-- 입주시기 4-->
+                <col width="10%" /><!-- 업종 5-->
+                <col width="8%" /><!-- 연락처 6-->
+                <col width="34%" /><!-- 비고 7-->
 
-            <col width="5%" /><!-- 컨택 -->
-            <col width="5%" /><!-- 정 -->
-            <col width="5%" /><!-- 부 -->
+                <col width="5%" /><!-- 컨택 8-->
+                <col width="5%" /><!-- 정 9-->
+                <col width="5%" /><!-- 부 10-->
 
-            <col width="4%" /><!-- 수정날짜 -->
-            <col width="4%" /><!-- 만든날짜 -->
-            <col width="4%" /><!-- 마케팅 -->
-            <col width="4%" /><!-- 상태 -->
+                <col width="4%" /><!-- 수정날짜 11-->
+                <col width="4%" /><!-- 만든날짜 12-->
+                <col width="0" /><!-- 마케팅 13-->
+                <col width="0" /><!-- 상태 14-->
 
-            <col width="0" /><!-- 삭제 -->
-        </colgroup>
-        <thead>
-            <tr>
-                <th><input type="checkbox" id="checkAll"></th>
-                <th class="align-middle">구분</th>
-                <th class="align-middle">중요</th>
-                <th class="align-middle">컨택일</th>
-                <th class="align-middle">입주시기</th>
-                <th class="align-middle">업종 | 회사명</th>
-                <th class="align-middle">연락처</th>
-                <th class="align-middle">컨디션 및 진행상황</th>
-                <th class="align-middle">컨택</th>
-                <th class="align-middle">정</th>
-                <th class="align-middle">부</th>
-                <th class="align-middle">수정일</th>
-                <th class="align-middle">만든일</th>
-                <th class="align-middle">마케팅</th>
-                <th class="align-middle">상태</th>
-                <th class="align-middle">변경</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+                <col width="0" /><!-- 삭제 15-->
+            </colgroup>
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="checkAll"></th>
+                    <th class="align-middle">구분</th>
+                    <th class="align-middle">중요</th>
+                    <th class="align-middle">컨택일</th>
+                    <th class="align-middle">입주시기</th>
+                    <th class="align-middle">업종 | 회사명</th>
+                    <th class="align-middle">연락처</th>
+                    <th class="align-middle">컨디션 및 진행상황</th>
+                    <th class="align-middle">컨택</th>
+                    <th class="align-middle">정</th>
+                    <th class="align-middle">부</th>
+                    <th class="align-middle">수정일</th>
+                    <th class="align-middle">만든일</th>
+                    <th class="align-middle">마케팅</th>
+                    <th class="align-middle">상태</th>
+                    <th class="align-middle">변경</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Add Customer Modal -->

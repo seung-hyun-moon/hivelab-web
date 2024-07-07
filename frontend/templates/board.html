@@ -1,25 +1,27 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="hive-container" style="display: flex;">
-    <div id="category-list" style="width: 15%;text-align: center;"></div>
-    <table id="data-table" style="width:100%;height:100%;">
-        <thead>
-            <tr>
-                <th>제목</th>
-                <th colspan="3" id="title"></th>
-            </tr>
-            <tr>
-                <th>등록일자</th>
-                <th id="registration_date"></th>
-                <th>파일명</th>
-                <th id="filename"></th>
-            </tr>
-        </thead>
-        <tbody>
-            <td colspan="4" id="viewer"></td>
-        </tbody>
-    </table>
+<div class="p-4">
+    <div class="mt-14">
+<!--    <div id="category-list" style="width: 15%;text-align: center;"></div>-->
+        <table id="data-table" style="width:100%;height:100%;">
+            <thead>
+                <tr>
+                    <th>제목</th>
+                    <th colspan="3" id="title"></th>
+                </tr>
+                <tr>
+                    <th>등록일자</th>
+                    <th id="registration_date"></th>
+                    <th>파일명</th>
+                    <th id="filename"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <td colspan="4" id="viewer"></td>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="modal fade" id="listDataCategoryModal" tabindex="-1" role="dialog" aria-labelledby="listDataCategoryModalLabel" aria-hidden="true">
