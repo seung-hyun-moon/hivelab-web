@@ -317,3 +317,8 @@ textarea {
 #id_sidebar.hidden {
     transform: translateX(-100%);
 }
+
+input[type="checkbox"]:checked + .person-label {
+  background-color: #777777;
+  border-color: #777777;
+}

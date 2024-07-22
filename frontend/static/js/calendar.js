@@ -1,5 +1,120 @@
 /* eslint-disable no-var,prefer-destructuring,prefer-template,no-undef,object-shorthand,no-console */
 // for testing IE11 compatibility, this file doesn't use ES6 syntax.
+
+function createDropdownSection() {
+  const section = document.createElement('div');
+  section.className = 'toastui-calendar-popup-section toastui-calendar-dropdown-section toastui-calendar-state-section';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'toastui-calendar-popup-section-item toastui-calendar-popup-button';
+  button.innerHTML = `
+    <span class="toastui-calendar-icon toastui-calendar-ic-user-b"></span>
+    <span class="toastui-calendar-content toastui-calendar-event-state">
+      <div>인원</div>
+    </span>
+    <span class="toastui-calendar-icon toastui-calendar-ic-dropdown-arrow"></span>
+  `;
+
+  const ul = document.createElement('ul');
+  ul.className = 'toastui-calendar-dropdown-menu';
+  ul.style.display = 'none';
+  const people = ['재민', '민제', '경주', '현정', '선복', '시나'];
+
+  people.forEach(person => {
+    const li = document.createElement('li');
+    li.className = 'toastui-calendar-popup-section-item toastui-calendar-dropdown-menu-item';
+    li.innerHTML = `
+      <input type="checkbox" id="${person}" name="person" value="${person}" style="display:none;">
+      <label for="${person}" style="width:70px;height:32px;cursor: pointer;" class="person-label toastui-calendar-content">${person}</label>
+    `;
+    ul.appendChild(li);
+  });
+
+  section.appendChild(button);
+  section.appendChild(ul);
+
+  // 드롭다운 토글 기능
+  button.addEventListener('click', () => {
+    ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // 체크박스 변경 이벤트 처리
+  ul.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') {
+      updateSelectedPeople();
+    }
+  });
+
+  function updateSelectedPeople() {
+    const selectedPeople = Array.from(ul.querySelectorAll('input:checked'))
+      .map(input => input.value);
+
+    const contentDiv = button.querySelector('.toastui-calendar-event-state div');
+    contentDiv.id = 'id_attendees';
+    contentDiv.textContent = selectedPeople.length > 0
+      ? `${selectedPeople.join(', ')}`
+      : '';
+  }
+
+  return section;
+}
+
+function transformEvent(event) {
+    const defaultValues = {
+        id: '',
+        calendarId: '',
+        title: '',
+        body: '',
+        isAllday: false,
+        goingDuration: 0,
+        comingDuration: 0,
+        location: '',
+        attendees: [],
+        category: 'time',
+        dueDateClass: '',
+        recurrenceRule: '',
+        state: 'Busy',
+        isVisible: true,
+        isPending: false,
+        isFocused: false,
+        isReadOnly: false,
+        isPrivate: false,
+        color: '#000',
+        backgroundColor: '#a1b56c',
+        dragBackgroundColor: '#a1b56c',
+        borderColor: '#000',
+        customStyle: {},
+        raw: null
+    };
+
+    // Merge default values with the provided event
+    event = Object.assign({}, defaultValues, event);
+
+    // Convert isAllday to string
+    event.isAllday = JSON.parse(event.isAllday);
+
+    // Convert start and end to ISO strings
+    event.start = moment(event.start.d.d).toISOString();
+    event.end = moment(event.end.d.d).toISOString();
+
+    return event;
+}
+
+function updateJSON(largeObj, smallObj) {
+  // Object.keys()를 사용하여 smallObj의 모든 키를 가져옵니다
+  Object.keys(smallObj).forEach(key => {
+    // largeObj에 해당 키가 있는지 확인합니다
+    if (largeObj.hasOwnProperty(key)) {
+      // 키가 있다면, largeObj의 값을 smallObj의 값으로 업데이트합니다
+      largeObj[key] = smallObj[key];
+    }
+  });
+
+  // 업데이트된 largeObj를 반환합니다
+  return largeObj;
+}
+
 (function (Calendar) {
   var cal;
   // Constants
@@ -33,11 +148,30 @@
     var randomEvents;
 
     cal.clear();
-//    randomEvents = generateRandomEvents(
-//      cal.getViewName(),
-//      cal.getDateRangeStart(),
-//      cal.getDateRangeEnd()
-//    );
+    fetch('/api/event/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Fetched events:', data);
+        data.forEach(event => {
+            event.start = moment(event.start).toDate();
+            event.end = moment(event.end).toDate();
+        });
+        cal.createEvents(data);
+    })
+    .catch(error => console.error('Error:', error));
+
+
+    randomEvents = generateRandomEvents(
+      cal.getViewName(),
+      cal.getDateRangeStart(),
+      cal.getDateRangeEnd()
+    );
+    console.log(randomEvents);
 //    cal.createEvents(randomEvents);
   }
 
@@ -63,7 +197,6 @@
 
   function setDropdownTriggerText() {
     var viewName = cal.getViewName();
-    console.log(viewName);
     var buttonText = document.querySelector('.dropdown .button-text');
     buttonText.textContent = getReadableViewName(viewName);
   }
@@ -189,10 +322,48 @@
       },
       selectDateTime: function (dateTimeInfo) {
         console.log('selectDateTime', dateTimeInfo);
+        // MutationObserver를 사용하여 DOM 변경을 감지합니다.
+        const targetNode = document.querySelector('.toastui-calendar-event-form-popup-slot');
+        if (targetNode) {
+            console.log("감지!!!!!!!!");
+          const observer = new MutationObserver((mutations, observer) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                const formContainer = targetNode.querySelector('.toastui-calendar-form-container');
+
+                  const dropdownSection = createDropdownSection();
+                  formContainer.insertBefore(dropdownSection, formContainer.firstChild);
+
+                // 한 번 감지하면 더 이상 관찰하지 않도록 종료합니다.
+                observer.disconnect();
+              }
+            });
+          });
+
+          // 해당 요소의 자식 노드 변화를 관찰합니다.
+          observer.observe(targetNode, { childList: true });
+        }
       },
       beforeCreateEvent: function (event) {
         console.log('beforeCreateEvent', event);
         event.id = chance.guid();
+        event.category = 'time';
+        event.color = '#a1b56c';
+        event.borderColor = MOCK_CALENDARS[event.calendarId - 1].borderColor;
+        event.backgroundColor = MOCK_CALENDARS[event.calendarId - 1].backgroundColor;
+        event.dragBackgroundColor = MOCK_CALENDARS[event.calendarId - 1].dragBackgroundColor;
+        event.attendees = document.querySelector('#id_attendees').textContent.split(',').map(name => name.trim());
+        const transformedEvent = transformEvent(event);
+        fetch('/api/event/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(transformedEvent)
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
 
         cal.createEvents([event]);
         cal.clearGridSelections();
@@ -205,10 +376,27 @@
         event = eventInfo.event;
         changes = eventInfo.changes;
 
+        fetch('/api/event/'+event.id, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(transformEvent(updateJSON(event, changes)))
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+
         cal.updateEvent(event.id, event.calendarId, changes);
       },
       beforeDeleteEvent: function (eventInfo) {
         console.log('beforeDeleteEvent', eventInfo);
+        fetch('/api/event/'+eventInfo.id, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
 
         cal.deleteEvent(eventInfo.id, eventInfo.calendarId);
       },

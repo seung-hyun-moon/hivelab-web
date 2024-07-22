@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Text, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -113,9 +113,29 @@ class DataCategoryModel(Base):
 class EventModel(Base):
     __tablename__ = "events"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True)
+    calendarId = Column(String, nullable=False)
     title = Column(String, nullable=False)
-    start = Column(DateTime, nullable=False)
-    end = Column(DateTime, nullable=False)
+    body = Column(Text, nullable=True)
+    isAllday = Column(Boolean, nullable=False)
+    start = Column(String, nullable=False)
+    end = Column(String, nullable=False)
+    goingDuration = Column(Integer, nullable=True)
+    comingDuration = Column(Integer, nullable=True)
     location = Column(String, nullable=True)
-    description = Column(String, nullable=True)
+    attendees = Column(JSON, nullable=True)
+    category = Column(String, nullable=True)
+    dueDateClass = Column(String, nullable=True)
+    recurrenceRule = Column(String, nullable=True)
+    state = Column(String, nullable=False)
+    isVisible = Column(Boolean, nullable=True)
+    isPending = Column(Boolean, nullable=True)
+    isFocused = Column(Boolean, nullable=True)
+    isReadOnly = Column(Boolean, nullable=True)
+    isPrivate = Column(Boolean, nullable=False)
+    color = Column(String, nullable=True)
+    backgroundColor = Column(String, nullable=True)
+    dragBackgroundColor = Column(String, nullable=True)
+    borderColor = Column(String, nullable=True)
+    customStyle = Column(JSON, nullable=True)
+    raw = Column(JSON, nullable=True)
