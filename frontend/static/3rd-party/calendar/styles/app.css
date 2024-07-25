@@ -19,7 +19,7 @@
 
 .sidebar {
     display: flex;
-    flex: 0 1 12rem;
+    flex: 0 1 8rem;
     flex-direction: column;
     border-right: 1px solid #d5d5d5;
 }
@@ -132,4 +132,12 @@ input:disabled + label {
 
 .checkbox.checkbox-6::before {
     background-color: var(--checkbox-6);
+}
+
+.checkbox.checkbox-7::before {
+    background-color: var(--checkbox-7);
+}
+
+.toastui-calendar-see-more-container {
+    height: 200px !important;
 }

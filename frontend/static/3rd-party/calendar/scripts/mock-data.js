@@ -17,6 +17,14 @@ var MOCK_CALENDARS = [
     dragBackgroundColor: '#00a9ff',
   },
   {
+    id: '7',
+    name: '미팅',
+    color: '#ffffff',
+    borderColor: '#f7cc0c',
+    backgroundColor: '#f7cc0c',
+    dragBackgroundColor: '#f7cc0c',
+  },
+  {
     id: '3',
     name: '계약',
     color: '#ffffff',
@@ -47,7 +55,15 @@ var MOCK_CALENDARS = [
     borderColor: '#292929',
     backgroundColor: '#292929',
     dragBackgroundColor: '#292929',
-  }
+  },
+  {
+    id: '99',
+    name: '공휴일',
+    color: 'red',
+    borderColor: 'red',
+    backgroundColor: 'red',
+    dragBackgroundColor: 'red',
+  },
 ];
 
 var EVENT_CATEGORIES = ['milestone', 'task'];

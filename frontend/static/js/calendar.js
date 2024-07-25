@@ -36,6 +36,7 @@ function createDropdownSection() {
 
   // 드롭다운 토글 기능
   button.addEventListener('click', () => {
+    event.stopPropagation();
     ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
   });
 
@@ -56,6 +57,13 @@ function createDropdownSection() {
       ? `${selectedPeople.join(', ')}`
       : '';
   }
+
+  // 드롭다운 외부 클릭 시 드롭다운을 닫기 위한 이벤트 리스너 추가
+  document.addEventListener('click', (event) => {
+    if (!section.contains(event.target)) {
+      ul.style.display = 'none';
+    }
+  });
 
   return section;
 }
@@ -144,10 +152,19 @@ function updateJSON(largeObj, smallObj) {
   };
 
   // functions to handle calendar behaviors
-  function reloadEvents() {
+  async function reloadEvents(holidays) {
     var randomEvents;
 
     cal.clear();
+
+//    cal.createEvents(holidays);
+    var aholidays = await holidays;
+    // 모든 Promise가 해결된 후 결과를 반복하여 TUI Calendar에 추가
+    aholidays.forEach(holiday => {
+        console.log(holiday);
+        cal.createEvents([holiday]);
+    });
+
     fetch('/api/event/', {
         method: 'GET',
         headers: {
@@ -166,12 +183,12 @@ function updateJSON(largeObj, smallObj) {
     .catch(error => console.error('Error:', error));
 
 
-    randomEvents = generateRandomEvents(
-      cal.getViewName(),
-      cal.getDateRangeStart(),
-      cal.getDateRangeEnd()
-    );
-    console.log(randomEvents);
+//    randomEvents = generateRandomEvents(
+//      cal.getViewName(),
+//      cal.getDateRangeStart(),
+//      cal.getDateRangeEnd()
+//    );
+//    console.log(randomEvents);
 //    cal.createEvents(randomEvents);
   }
 
@@ -191,8 +208,9 @@ function updateJSON(largeObj, smallObj) {
   function displayRenderRange() {
     var rangeStart = cal.getDateRangeStart();
     var rangeEnd = cal.getDateRangeEnd();
-
-    navbarRange.textContent = getNavbarRange(rangeStart, rangeEnd, cal.getViewName());
+    var holidays;
+    [navbarRange.textContent, holidays] = getNavbarRange(rangeStart, rangeEnd, cal.getViewName());
+    return holidays;
   }
 
   function setDropdownTriggerText() {
@@ -237,8 +255,8 @@ function updateJSON(largeObj, smallObj) {
 
   function update() {
     setDropdownTriggerText();
-    displayRenderRange();
-    reloadEvents();
+    const holidays = displayRenderRange();
+    reloadEvents(holidays);
   }
 
   function bindAppEvents() {
@@ -325,7 +343,6 @@ function updateJSON(largeObj, smallObj) {
         // MutationObserver를 사용하여 DOM 변경을 감지합니다.
         const targetNode = document.querySelector('.toastui-calendar-event-form-popup-slot');
         if (targetNode) {
-            console.log("감지!!!!!!!!");
           const observer = new MutationObserver((mutations, observer) => {
             mutations.forEach((mutation) => {
               if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
@@ -335,6 +352,9 @@ function updateJSON(largeObj, smallObj) {
                   formContainer.insertBefore(dropdownSection, formContainer.firstChild);
 
                 // 한 번 감지하면 더 이상 관찰하지 않도록 종료합니다.
+                const busy_dd = document.querySelector('.toastui-calendar-form-container > div:nth-child(6)');
+                busy_dd.style.display='none';
+
                 observer.disconnect();
               }
             });
@@ -349,10 +369,14 @@ function updateJSON(largeObj, smallObj) {
         event.id = chance.guid();
         event.category = 'time';
         event.color = '#a1b56c';
-        event.borderColor = MOCK_CALENDARS[event.calendarId - 1].borderColor;
-        event.backgroundColor = MOCK_CALENDARS[event.calendarId - 1].backgroundColor;
-        event.dragBackgroundColor = MOCK_CALENDARS[event.calendarId - 1].dragBackgroundColor;
-        event.attendees = document.querySelector('#id_attendees').textContent.split(',').map(name => name.trim());
+        const calendar = MOCK_CALENDARS.find(cal => cal.id === event.calendarId);
+        if (calendar) {
+          event.borderColor = calendar.borderColor;
+          event.backgroundColor = calendar.bgColor;
+          event.dragBackgroundColor = calendar.dragBackgroundColor;
+        }
+        const attendeesElement = document.querySelector('#id_attendees');
+        const eventAttendees = attendeesElement ? attendeesElement.textContent.split(',').map(name => name.trim()) : [];
         const transformedEvent = transformEvent(event);
         fetch('/api/event/', {
             method: 'POST',
@@ -414,7 +438,7 @@ function updateJSON(largeObj, smallObj) {
   function getEventTemplate(event, isAllday) {
     var html = [];
     var start = moment(event.start.toDate().toUTCString());
-    if (!isAllday) {
+    if (!event.isAllday) {
       html.push('<strong>' + start.format('HH:mm') + '</strong> ');
     }
 
@@ -477,8 +501,19 @@ function updateJSON(largeObj, smallObj) {
       popupIsAllday() {
         return '종일';
       },
+      titlePlaceholder() {
+        return '제목';
+      },
     },
   });
+
+  cal.setTheme({
+      common: {
+        saturday: {
+          color: 'rgba(64, 64, 255)',
+        },
+      },
+    });
 
   // Init
   bindInstanceEvents();
