@@ -32,7 +32,7 @@ class CustomerModel(Base):
     head = Column(String)                               # 정
     deputy = Column(String)                             # 부
 
-    status = Column(Integer)                            # 상태 (0: 진행, 1: 완료, 2: 보류, 3: 폐기)
+    status = Column(Integer)                            # 상태 (0: 진행, 1: 완료, 2: 보류, 3: 폐기, 4: 잠재)
 
     # customer_page = Column(String)                    # 고객페이지
     edit_date = Column(String)                          # 수정 날짜

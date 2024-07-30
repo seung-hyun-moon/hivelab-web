@@ -467,7 +467,7 @@ $(document).ready(function() {
 
 
         var fields = ['contact_person'];
-        var statuses = ['진행', '완료', '보류', '폐기', '전체'];
+        var statuses = ['진행', '완료', '보류', '폐기', '잠재', '전체'];
         var counts = {};
 
 
@@ -478,7 +478,7 @@ $(document).ready(function() {
                     fieldName = fieldName.replace(/\s/g, ''); // 모든 공백 제거
                     if (fieldName !== '') {
                         if (!counts[fieldName]) {
-                            counts[fieldName] = { '진행': 0, '완료': 0, '보류': 0, '폐기': 0, '전체': 0 };
+                            counts[fieldName] = { '진행': 0, '완료': 0, '보류': 0, '폐기': 0,'잠재': 0, '전체': 0 };
                         }
                         switch(item.status) {
                             case 0:
@@ -492,6 +492,9 @@ $(document).ready(function() {
                                 break;
                             case 3:
                                 counts[fieldName]['폐기']++;
+                                break;
+                            case 4:
+                                counts[fieldName]['잠재']++;
                                 break;
                         }
                         counts[fieldName]['전체']++;
@@ -548,6 +551,7 @@ $(document).ready(function() {
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="complete" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="complete">완료</label>');
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="hold" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="hold">보류</label>');
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="discard" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="discard">폐기</label>');
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="potential" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="potential">잠재</label>');
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="all" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="all">전체보기</label>');
 
     // 버튼을 필터의 앞에 추가
@@ -560,6 +564,7 @@ $(document).ready(function() {
             '<li><a class="dropdown-item" href="#" data-status="1">완료</a></li>' +
             '<li><a class="dropdown-item" href="#" data-status="2">보류</a></li>' +
             '<li><a class="dropdown-item" href="#" data-status="3">폐기</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="4">잠재</a></li>' +
         '</ul>' +
         '</div>';
     $('#customerTable_filter').prepend(dropdown);
@@ -583,6 +588,10 @@ $(document).ready(function() {
 
     $('#discard').on('click', function() {
         table.columns(14).search('3').draw();
+    });
+
+    $('#potential').on('click', function() {
+        table.columns(14).search('4').draw();
     });
 
     // 전체 선택 체크박스 클릭 이벤트
