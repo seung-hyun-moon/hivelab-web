@@ -324,6 +324,85 @@ function updateJSON(largeObj, smallObj) {
         }
       }
     });
+
+    // 검색 관련 변수
+    const searchInput = document.getElementById('id_search_input');
+    const searchButton = document.getElementById('id_search_btn');
+
+    let originEvents = [];
+    let matchedEvents = [];
+    let currentIndex = -1;
+    let lastHighlightedEvent = null;
+    const defaultStyle = {};  // 기본 스타일 정의
+    const highlightStyle = { backgroundColor: 'yellow' };  // 하이라이트 스타일 정의
+
+    searchButton.addEventListener('click', () => {
+      const keyword = searchInput.value.toLowerCase();
+
+      // 새로운 검색어인 경우 검색 수행
+      if (keyword !== searchInput.dataset.lastKeyword) {
+        // 모든 일정 가져오기
+        fetch('/api/event/', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          originEvents = data;
+          console.log(originEvents);
+
+          // 검색어와 일치하는 일정 필터링
+          matchedEvents = originEvents.filter(event =>
+            event.title.toLowerCase().includes(keyword)
+          );
+
+          console.log(matchedEvents);
+
+          // 검색 결과 초기화
+          currentIndex = -1;
+          searchInput.dataset.lastKeyword = keyword;
+
+          // 검색 결과 처리
+          highlightNextEvent();
+        })
+        .catch(error => console.error('Error:', error));
+      } else {
+        // 동일 검색어로 순회
+        highlightNextEvent();
+      }
+    });
+
+    function highlightNextEvent() {
+      if (lastHighlightedEvent) {
+        cal.updateEvent(lastHighlightedEvent.id, lastHighlightedEvent.calendarId, {
+          customStyle: defaultStyle
+        });
+      }
+
+      // 검색 결과 처리
+      if (matchedEvents.length > 0) {
+        // 다음 일정으로 이동
+        currentIndex = (currentIndex + 1) % matchedEvents.length;
+        const nextMatch = matchedEvents[currentIndex];
+
+        // 해당 일정으로 이동 및 팝업 열기
+        cal.setDate(nextMatch.start);
+        cal.updateEvent(nextMatch.id, nextMatch.calendarId, {
+          customStyle: highlightStyle
+        });
+
+        // 현재 하이라이트된 이벤트 저장
+        lastHighlightedEvent = nextMatch;
+
+        // 현재 검색 결과 표시
+        console.log(`검색 결과 ${currentIndex + 1}/${matchedEvents.length}`);
+      } else {
+        console.log('일치하는 일정이 없습니다.');
+      }
+    }
+
   }
 
   function bindInstanceEvents() {
@@ -377,6 +456,7 @@ function updateJSON(largeObj, smallObj) {
         const attendeesElement = document.querySelector('#id_attendees');
         const eventAttendees = attendeesElement ? attendeesElement.textContent.split(',').map(name => name.trim()) : [];
         const transformedEvent = transformEvent(event);
+        event.attendees = eventAttendees;
         fetch('/api/event/', {
             method: 'POST',
             headers: {
