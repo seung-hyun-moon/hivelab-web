@@ -161,7 +161,6 @@ function updateJSON(largeObj, smallObj) {
     var aholidays = await holidays;
     // 모든 Promise가 해결된 후 결과를 반복하여 TUI Calendar에 추가
     aholidays.forEach(holiday => {
-        console.log(holiday);
         cal.createEvents([holiday]);
     });
 

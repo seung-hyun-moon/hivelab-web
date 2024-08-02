@@ -38,9 +38,9 @@ function getHolidays(year, month) {
               recurrenceRule: '',
               state: 'Busy',
               isVisible: true,
-              isPending: false,
-              isFocused: false,
-              isReadOnly: false,
+              isPending: true,
+              isFocused: true,
+              isReadOnly: true,
               isPrivate: false,
               color: '#000',
               backgroundColor: '#a1b56c',
@@ -59,6 +59,7 @@ function getHolidays(year, month) {
             };
             const calendar = MOCK_CALENDARS.find(cal => cal.id === event.calendarId);
             if (calendar) {
+              event.color = calendar.color;
               event.borderColor = calendar.borderColor;
               event.backgroundColor = calendar.bgColor;
               event.dragBackgroundColor = calendar.dragBackgroundColor;
