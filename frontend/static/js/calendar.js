@@ -160,9 +160,12 @@ function updateJSON(largeObj, smallObj) {
 //    cal.createEvents(holidays);
     var aholidays = await holidays;
     // 모든 Promise가 해결된 후 결과를 반복하여 TUI Calendar에 추가
-    aholidays.forEach(holiday => {
-        cal.createEvents([holiday]);
-    });
+
+    if (aholidays) {
+        aholidays.forEach(holiday => {
+            cal.createEvents([holiday]);
+        });
+    }
 
     fetch('/api/event/', {
         method: 'GET',
@@ -405,14 +408,95 @@ function updateJSON(largeObj, smallObj) {
 
   }
 
+  // 이벤트 블록에서 시간을 추출하는 함수입니다.
+    function extractTimeFromEventBlock(block) {
+      const timeElement = block.querySelector('.toastui-calendar-template-time strong');
+      if (timeElement) {
+        const timeText = timeElement.textContent.trim();
+        const [hours, minutes] = timeText.split(':').map(Number);
+        return new Date().setHours(hours, minutes, 0, 0); // 현재 날짜의 시간으로 반환
+      }
+      return new Date().setHours(0, 0, 0, -1); // 시간이 없는 경우 00:00 반환
+    }
+
   function bindInstanceEvents() {
     cal.on({
       clickMoreEventsBtn: function (btnInfo) {
         console.log('clickMoreEventsBtn', btnInfo);
+          const moreContainer = document.querySelector('.toastui-calendar-month-more-list');
+
+          if (moreContainer) {
+            // `toastui-calendar-weekday-event-block` 요소들을 가져옵니다.
+            const eventBlocks = Array.from(moreContainer.querySelectorAll('.toastui-calendar-weekday-event-block'));
+
+            // 이벤트 시작 시간을 기준으로 정렬합니다.
+            eventBlocks.sort((a, b) => {
+              const timeA = extractTimeFromEventBlock(a);
+              const timeB = extractTimeFromEventBlock(b);
+              return timeA - timeB;
+            });
+
+            // 정렬된 순서대로 요소를 다시 추가합니다.
+            eventBlocks.forEach(block => moreContainer.appendChild(block));
+          }
       },
       clickEvent: function (eventInfo) {
-        console.log('clickEvent', eventInfo);
-      },
+            console.log('clickEvent', eventInfo);
+            // 1. Wait for the `.toastui-calendar-edit-button` to appear using a MutationObserver
+            const observeButtonAppearance = new MutationObserver((mutations, observer) => {
+                mutations.forEach((mutation) => {
+                    const editButton = document.querySelector('.toastui-calendar-edit-button');
+                    if (editButton) {
+                        console.log('Edit button appeared');
+                        // 2. Add click listener to the edit button
+                        editButton.addEventListener('click', function () {
+                            console.log('Edit button clicked');
+                            // 3. Start observing the form popup slot for changes
+                            const targetNode = document.querySelector('.toastui-calendar-event-form-popup-slot');
+                            if (targetNode) {
+                                const observer = new MutationObserver((mutations, observer) => {
+                                    mutations.forEach((mutation) => {
+                                        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                                            const formContainer = targetNode.querySelector('.toastui-calendar-form-container');
+                                            const dropdownSection = createDropdownSection();
+                                            formContainer.insertBefore(dropdownSection, formContainer.firstChild);
+
+                                            console.log(eventInfo.event.attendees);
+                                            const attendees = eventInfo.event.attendees;
+                                            console.log(attendees);
+                                            attendees.forEach(attendee => {
+                                                const checkbox = document.querySelector(`input[value="${attendee}"]`);
+                                                if (checkbox) {
+                                                    checkbox.checked = true;
+                                                }
+                                            });
+
+                                            // Hide the sixth div element
+                                            const busy_dd = document.querySelector('.toastui-calendar-form-container > div:nth-child(6)');
+                                            if (busy_dd) busy_dd.style.display = 'none';
+
+                                            // Disconnect the observer after handling the mutation
+                                            observer.disconnect();
+                                        }
+                                    });
+                                });
+
+                                observer.observe(targetNode, { childList: true });
+                            }
+                        });
+
+                        // Once the button is found and event listener is added, disconnect the observer
+                        observer.disconnect();
+                    }
+                });
+            });
+
+            // Start observing the DOM for the edit button
+            observeButtonAppearance.observe(document.body, { childList: true, subtree: true });
+
+            // Optionally, stop observing after a certain time to avoid unnecessary overhead
+            setTimeout(() => observeButtonAppearance.disconnect(), 5000); // Disconnect after 5 seconds if not found
+        },
       clickDayName: function (dayNameInfo) {
         console.log('clickDayName', dayNameInfo);
       },
@@ -455,8 +539,9 @@ function updateJSON(largeObj, smallObj) {
         }
         const attendeesElement = document.querySelector('#id_attendees');
         const eventAttendees = attendeesElement ? attendeesElement.textContent.split(',').map(name => name.trim()) : [];
-        const transformedEvent = transformEvent(event);
         event.attendees = eventAttendees;
+        const transformedEvent = transformEvent(event);
+
         fetch('/api/event/', {
             method: 'POST',
             headers: {
@@ -478,6 +563,10 @@ function updateJSON(largeObj, smallObj) {
 
         event = eventInfo.event;
         changes = eventInfo.changes;
+
+        const attendeesElement = document.querySelector('#id_attendees');
+        const eventAttendees = attendeesElement ? attendeesElement.textContent.split(',').map(name => name.trim()) : [];
+        changes.attendees = eventAttendees;
 
         fetch('/api/event/'+event.id, {
             method: 'PATCH',
@@ -583,6 +672,9 @@ function updateJSON(largeObj, smallObj) {
       titlePlaceholder() {
         return '제목';
       },
+      popupDetailState({ state }) {
+        return ''
+      }
     },
   });
 
