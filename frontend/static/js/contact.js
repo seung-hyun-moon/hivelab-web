@@ -14,7 +14,7 @@ $(document).ready(function() {
     var table = $('#contactTable').DataTable({
         dom : 'Blfrtip',
         lengthChange : true,
-        order : [[ 3, "asc" ]],
+        order : [[ 4, "desc" ]],
         orderCellsTop: true,
         fixedHeader: true,
         "pageLength": 25,

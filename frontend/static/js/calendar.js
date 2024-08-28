@@ -2,6 +2,7 @@
 // for testing IE11 compatibility, this file doesn't use ES6 syntax.
 
 function createDropdownSection() {
+  console.log("createDropdownSection 실행");
   const section = document.createElement('div');
   section.className = 'toastui-calendar-popup-section toastui-calendar-dropdown-section toastui-calendar-state-section';
 
@@ -11,13 +12,14 @@ function createDropdownSection() {
   button.innerHTML = `
     <span class="toastui-calendar-icon toastui-calendar-ic-user-b"></span>
     <span class="toastui-calendar-content toastui-calendar-event-state">
-      <div>인원</div>
+      <div id="id_attendees">인원</div>
     </span>
     <span class="toastui-calendar-icon toastui-calendar-ic-dropdown-arrow"></span>
   `;
 
   const ul = document.createElement('ul');
   ul.className = 'toastui-calendar-dropdown-menu';
+  ul.id = 'id_dropdown_ul'
   ul.style.display = 'none';
   const people = ['재민', '민제', '경주', '현정', '선복', '시나'];
 
@@ -42,17 +44,18 @@ function createDropdownSection() {
 
   // 체크박스 변경 이벤트 처리
   ul.addEventListener('change', (e) => {
+    console.log("!@!@!", e.target.type);
     if (e.target.type === 'checkbox') {
       updateSelectedPeople();
     }
   });
 
   function updateSelectedPeople() {
+    console.log("updateSelectedPeople 실행");
     const selectedPeople = Array.from(ul.querySelectorAll('input:checked'))
       .map(input => input.value);
 
-    const contentDiv = button.querySelector('.toastui-calendar-event-state div');
-    contentDiv.id = 'id_attendees';
+    const contentDiv = document.getElementById('id_attendees');
     contentDiv.textContent = selectedPeople.length > 0
       ? `${selectedPeople.join(', ')}`
       : '';
@@ -89,8 +92,8 @@ function transformEvent(event) {
         isReadOnly: false,
         isPrivate: false,
         color: '#000',
-        backgroundColor: '#a1b56c',
-        dragBackgroundColor: '#a1b56c',
+        backgroundColor: '#000',
+        dragBackgroundColor: '#000',
         borderColor: '#000',
         customStyle: {},
         raw: null
@@ -461,9 +464,8 @@ function updateJSON(largeObj, smallObj) {
                                             const dropdownSection = createDropdownSection();
                                             formContainer.insertBefore(dropdownSection, formContainer.firstChild);
 
-                                            console.log(eventInfo.event.attendees);
+                                            console.log("!!!!", eventInfo.event.attendees);
                                             const attendees = eventInfo.event.attendees;
-                                            console.log(attendees);
                                             attendees.forEach(attendee => {
                                                 const checkbox = document.querySelector(`input[value="${attendee}"]`);
                                                 if (checkbox) {
@@ -530,7 +532,7 @@ function updateJSON(largeObj, smallObj) {
         console.log('beforeCreateEvent', event);
         event.id = chance.guid();
         event.category = 'time';
-        event.color = '#a1b56c';
+        event.color = '#000';
         const calendar = MOCK_CALENDARS.find(cal => cal.id === event.calendarId);
         if (calendar) {
           event.borderColor = calendar.borderColor;
@@ -563,10 +565,25 @@ function updateJSON(largeObj, smallObj) {
 
         event = eventInfo.event;
         changes = eventInfo.changes;
+        const calendar = MOCK_CALENDARS.find(cal => cal.id === changes.calendarId);
+        if (calendar) {
+          changes.borderColor = calendar.borderColor;
+          changes.backgroundColor = calendar.bgColor;
+          changes.dragBackgroundColor = calendar.dragBackgroundColor;
+        }
 
-        const attendeesElement = document.querySelector('#id_attendees');
-        const eventAttendees = attendeesElement ? attendeesElement.textContent.split(',').map(name => name.trim()) : [];
-        changes.attendees = eventAttendees;
+        const ul = document.getElementById('id_dropdown_ul');
+        if (ul) {
+            const selectedPeople = Array.from(ul.querySelectorAll('input:checked'))
+              .map(input => input.value);
+
+            const contentDiv = document.getElementById('id_attendees');
+            contentDiv.textContent = selectedPeople.length > 0
+              ? `${selectedPeople.join(', ')}`
+              : '';
+            changes.attendees = selectedPeople;
+        }
+
 
         fetch('/api/event/'+event.id, {
             method: 'PATCH',

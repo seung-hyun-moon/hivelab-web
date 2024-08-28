@@ -43,8 +43,8 @@ function getHolidays(year, month) {
               isReadOnly: true,
               isPrivate: false,
               color: '#000',
-              backgroundColor: '#a1b56c',
-              dragBackgroundColor: '#a1b56c',
+              backgroundColor: '#000',
+              dragBackgroundColor: '#000',
               borderColor: '#000',
               customStyle: {},
               raw: null
