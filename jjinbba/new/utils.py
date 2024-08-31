@@ -150,3 +150,35 @@ def get_matching_td_content(table_element, target_th_text):
         print("Error", target_th_text, e)
         return None
     return None
+
+
+def convert_korean_number(input_string):
+    try:
+        # 숫자 단위 사전
+        units = {'억': 10000}
+
+        # 쉼표 제거
+        input_string = input_string.replace(',', '')
+
+        # 정규식을 사용하여 숫자와 단위 분리
+        numbers = re.findall(r'(\d+)(억)?', input_string)
+
+        result = 0
+
+        for num, unit in numbers:
+            num = int(num)  # 문자열을 정수로 변환
+            if unit:  # '억' 단위가 있으면
+                num *= units[unit]  # 단위 적용하여 값 변경
+            result += num
+
+        return f"{result:,}"
+
+    except Exception as e:
+        logging.exception(f"convert_korean_number Exception: {e}")
+        return "?"
+
+
+def replace_button_with_img(html_string):
+    pattern = r'<button class="main_photo_item"[^>]*style="background-image: url\(&quot;([^&]*)&quot;\);"[^>]*></button>'
+    replacement = r'<img class="main_photo_item" src="\1" alt="사진">'
+    return re.sub(pattern, replacement, html_string)
