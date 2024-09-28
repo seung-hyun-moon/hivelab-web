@@ -77,8 +77,8 @@ $(document).ready(function() {
             { data: 'name' },
             { data: 'phone' },
             { data: 'address' },
-            { data: 'registration_date' },
             { data: 'description' },
+            { data: 'registration_date' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
                     return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'

@@ -4,6 +4,7 @@ from typing import Any, Dict
 import pandas as pd
 from fastapi import APIRouter, Depends, UploadFile, HTTPException, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend.schemas.contact import Contact, ContactCreate, ContactUpdate
@@ -37,7 +38,14 @@ class ContactRouter(BaseCRUD):
 
         # 검색 처리
         if search_value:
-            query = query.filter(self.model.name.ilike(f"%{search_value}%"))
+            query = query.filter(
+                or_(
+                    self.model.name.ilike(f"%{search_value}%"),
+                    self.model.description.ilike(f"%{search_value}%"),
+                    self.model.address.ilike(f"%{search_value}%"),
+                    self.model.phone.ilike(f"%{search_value}%")
+                )
+            )
 
         # 정렬 처리
         if order_dir == 'asc':
