@@ -1,10 +1,19 @@
 function formatData(data, type, row) {
     if (type === 'display') {
         data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
-        return '<textarea readonly class="data-cell" onclick="this.style.height = this.scrollHeight + \'px\';">' + data + '</textarea>';
+        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + data + '</textarea>';
     }
     return data;
 }
+
+function toggleHeight(element) {
+    if (element.style.height !== element.scrollHeight + 'px') {
+        element.style.height = element.scrollHeight + 'px';
+    } else {
+        element.style.height = ''; // 원래 높이로 복원
+    }
+}
+
 
 function formatYYMMDD() {
     var date = new Date();

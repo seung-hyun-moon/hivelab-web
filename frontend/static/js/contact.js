@@ -81,34 +81,11 @@ $(document).ready(function() {
             { data: 'registration_date' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
-                    return '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"></button>' +
+               '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>';
                 }
             },
         ],
-    });
-
-    datatableEdit({
-        dataTable: table,
-        columnDefs: [
-            { targets: 0 },
-            { targets: 1 },
-            { targets: 2 },
-            { targets: 3 },
-            { targets: 4 }
-        ],
-        onEdited: function (prev, changed, index, cell) {
-            var rowData = cell.row(index.row).data();
-            $.ajax({
-                url: '/api/contact/' + rowData.id,
-                type: 'PUT',
-                accept: 'application/json',
-                contentType: 'application/json',
-                data: JSON.stringify(rowData),
-                success: function(response) {
-                    table.ajax.reload();
-                }
-            });
-        }
     });
 
     $('#contactTable tbody').on('click', 'button.delete-btn', function () {
@@ -128,6 +105,53 @@ $(document).ready(function() {
             });
         }
     });
+
+    $('#contactTable tbody').on('click', 'button.edit-btn', function () {
+        var contactId = $(this).data('id');
+
+        $.ajax({
+            url: '/api/contact/' + contactId,
+            type: 'GET',
+            success: function(contactData) {
+                $('#modifyContactModal').find('input[name="name"]').val(contactData.name);
+                $('#modifyContactModal').find('input[name="phone"]').val(contactData.phone);
+                $('#modifyContactModal').find('input[name="address"]').val(contactData.address);
+                $('#modifyContactModal').find('input[name="description"]').val(contactData.description);
+            }
+        });
+
+        // Open the modal
+        $('#modifyContactModal').modal('show');
+
+        $('#modifyContactModal form').on('submit', function() {
+            var form = $(this);
+            var data = {
+                name: form.find('input[name="name"]').val(),
+                phone: form.find('input[name="phone"]').val(),
+                address: form.find('input[name="address"]').val(),
+                description: form.find('input[name="description"]').val(),
+                registration_date: formatDate()
+            };
+
+            $.ajax({
+                type: 'PUT',
+                url: '/api/contact/' + contactId,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('Success:', response);
+                    $('#modifyContactModal').modal('hide');
+                    table.ajax.reload();
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+
+            return false;
+        });
+    });
+
 
     $("#closeContactModal").click(function(){
         $("#addContactModal").modal("hide");
@@ -161,6 +185,7 @@ $(document).ready(function() {
         return false;
     });
 
+
     // 업로드 데이터
     $('#uploadForm').on('submit', function(e) {
         e.preventDefault();
@@ -188,6 +213,10 @@ $(document).ready(function() {
 
     $("#closeUploadModal").click(function(){
         $("#uploadModal").modal("hide");
+    });
+
+    $("#closeModifyContactModal").click(function(){
+        $("#modifyContactModal").modal("hide");
     });
 
 
