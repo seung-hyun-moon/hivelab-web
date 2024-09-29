@@ -133,7 +133,7 @@ def get_xpath_element(xpath: str, driver: webdriver.Chrome, timeout=3):
             return None
     except Exception as e:
         logging.exception(f"get_xpath_element Exception Timeout: {xpath}")
-        print("get_xpath_string error", xpath)
+        print("get_xpath_string error", xpath, e)
         return None
 
 
