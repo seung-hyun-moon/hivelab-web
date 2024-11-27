@@ -7,7 +7,7 @@
             <colgroup>
                 <col width="3%" /><!-- 체크박스 0 -->
                 <col width="3%" /><!-- 구분 1 -->
-                <col width="3%" /><!-- 중요도 2-->
+<!--                <col width="3%" />&lt;!&ndash; 중요도 2&ndash;&gt;-->
                 <col width="8%" /><!-- 컨택일 3-->
                 <col width="8%" /><!-- 입주시기 4-->
                 <col width="10%" /><!-- 업종 5-->
@@ -22,7 +22,7 @@
                 <col width="4%" /><!-- 만든날짜 12-->
                 <col width="0" /><!-- 마케팅 13-->
                 <col width="0" /><!-- 상태 14-->
-
+                <col width="0" />
                 <col width="0" /><!-- 삭제 15-->
             </colgroup>
             <thead>
@@ -31,9 +31,9 @@
                     <th class="align-middle">구분</th>
                     <th class="align-middle">중요</th>
                     <th class="align-middle">컨택일</th>
-                    <th class="align-middle">입주시기</th>
                     <th class="align-middle">업종 | 회사명</th>
                     <th class="align-middle">연락처</th>
+                    <th class="align-middle">입주시기</th>
                     <th class="align-middle">컨디션 및 진행상황</th>
                     <th class="align-middle">컨택</th>
                     <th class="align-middle">PO</th>
@@ -71,13 +71,13 @@
                                     <label for="industry" class="form-label">업종</label>
                                 </div>
                                 <div class="col-md-4">
-                                    <input type="text" id="industry" name="industry" class="form-control" placeholder="부동산회사">
+                                    <input type="text" id="industry" name="industry" class="form-control" placeholder="중개업">
                                 </div>
                                 <div class="col-md-2">
                                     <label for="company_name" class="form-label">회사명</label>
                                 </div>
                                 <div class="col-md-4">
-                                    <input type="text" id="company_name" name="company_name" class="form-control" placeholder="회사명">
+                                    <input type="text" id="company_name" name="company_name" class="form-control" placeholder="하이브메이트">
                                 </div>
                             </div>
                             <div class="row mb-3 align-items-center">
@@ -195,8 +195,8 @@
                                         <option value="대표콜">대표콜</option>
                                         <option value="현수막">현수막</option>
                                         <option value="OB">OB</option>
-                                        <option value="RE (재방문)">RE (재방문)</option>
-                                        <option value="IC (소개)">IC (소개)</option>
+                                        <option value="RE">RE</option>
+                                        <option value="IC">IC</option>
                                         <option value="기타">기타</option>
                                         <option value="미확인">미확인</option>
                                     </select>
@@ -387,8 +387,8 @@
                                         <option value="대표콜">대표콜</option>
                                         <option value="현수막">현수막</option>
                                         <option value="OB">OB</option>
-                                        <option value="RE (재방문)">RE (재방문)</option>
-                                        <option value="IC (소개)">IC (소개)</option>
+                                        <option value="RE">RE</option>
+                                        <option value="IC">IC</option>
                                         <option value="기타">기타</option>
                                         <option value="미확인">미확인</option>
                                     </select>

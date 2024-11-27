@@ -70,7 +70,7 @@ $(document).ready(function() {
         fixedHeader: true,
         columnDefs: [
             {
-                targets: [12, 13, 14], // 상태 열의 인덱스
+                targets: [2, 12, 13, 14], // 상태 열의 인덱스
                 visible: false,
             }
         ],
@@ -207,11 +207,6 @@ $(document).ready(function() {
                     $(td).attr('data-column', 'contact_date');
                 } 
             },
-            { data: 'move_in_date', render: formatData,
-                createdCell: function (td, cellData, rowData, row, col) {
-                    $(td).attr('data-column', 'move_in_date');
-                } 
-            },
             { data: 'industry', render: formatData3,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'industry');
@@ -221,6 +216,11 @@ $(document).ready(function() {
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'contact_info');
                 } 
+            },
+            { data: 'move_in_date', render: formatData,
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'move_in_date');
+                }
             },
             { data: 'notes', render: formatData2,
                 createdCell: function (td, cellData, rowData, row, col) {
@@ -605,10 +605,10 @@ $(document).ready(function() {
     $('#customerTable_filter').prepend('<div id="custombtn" class="btn-group" role="group" aria-label="Basic radio toggle button group"></div>');
 
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="progress" autocomplete="off" checked><label class="btn btn-sm btn-outline-secondary" for="progress">진행</label>');
-    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="complete" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="complete">완료</label>');
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="potential" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="potential">대기</label>');
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="hold" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="hold">보류</label>');
+    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="complete" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="complete">완료</label>');
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="discard" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="discard">폐기</label>');
-    $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="potential" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="potential">잠재</label>');
     $('#custombtn').append('<input type="radio" class="btn-check" name="btnradio" id="all" autocomplete="off"><label class="btn btn-sm btn-outline-secondary" for="all">전체보기</label>');
 
     // 버튼을 필터의 앞에 추가
@@ -618,10 +618,11 @@ $(document).ready(function() {
         '</button>' +
         '<ul class="dropdown-menu">' +
             '<li><a class="dropdown-item" href="#" data-status="0">진행</a></li>' +
-            '<li><a class="dropdown-item" href="#" data-status="1">완료</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="4">대기</a></li>' +
             '<li><a class="dropdown-item" href="#" data-status="2">보류</a></li>' +
+            '<li><a class="dropdown-item" href="#" data-status="1">완료</a></li>' +
             '<li><a class="dropdown-item" href="#" data-status="3">폐기</a></li>' +
-            '<li><a class="dropdown-item" href="#" data-status="4">잠재</a></li>' +
+
         '</ul>' +
         '</div>';
     $('#customerTable_filter').prepend(dropdown);
