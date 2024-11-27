@@ -6,6 +6,28 @@ function formatData(data, type, row) {
     return data;
 }
 
+function formatData2(data, type, row) {
+    if (type === 'display') {
+        data = data || '';
+        var move_in_date = row.move_in_date ? row.move_in_date + ' | ' : '';
+        var price = row.price ? row.price + ' | ' : '';
+        var area = row.area ? row.area + ' | ' : '';
+        var location = row.location ? row.location + '\n' : '';
+        var special_notes = row.special_notes ? row.special_notes + ' \n\n' : '';
+        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + move_in_date + price + area + location + special_notes + data + '</textarea>';
+    }
+    return data;
+}
+
+function formatData3(data, type, row) {
+    if (type === 'display') {
+        data = data ? data + ' | ' : '';
+        var company_name = row.company_name ? row.company_name : '';
+        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + data + company_name + '</textarea>';
+    }
+    return data;
+}
+
 function toggleHeight(element) {
     if (element.style.height !== element.scrollHeight + 'px') {
         element.style.height = element.scrollHeight + 'px';
@@ -190,7 +212,7 @@ $(document).ready(function() {
                     $(td).attr('data-column', 'move_in_date');
                 } 
             },
-            { data: 'industry', render: formatData,
+            { data: 'industry', render: formatData3,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'industry');
                 } 
@@ -200,7 +222,7 @@ $(document).ready(function() {
                     $(td).attr('data-column', 'contact_info');
                 } 
             },
-            { data: 'notes', render: formatData,
+            { data: 'notes', render: formatData2,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'notes');
                     $(td).children().css('resize', 'vertical');
@@ -302,13 +324,23 @@ $(document).ready(function() {
             industry: form.find('input[name="industry"]').val(),
             contact_info: form.find('input[name="contact_info"]').val(),
             notes: form.find('textarea[name="notes"]').val(),
-            contact_person: form.find('textarea[name="contact_person"]').val(),
-            head: form.find('textarea[name="head"]').val(),
-            deputy: form.find('textarea[name="deputy"]').val(),
+            contact_person: form.find('select[name="contact_person"]').val(),
+            head: form.find('select[name="head"]').val().map(value => `${value}`).join('\n'),
+            deputy: form.find('select[name="deputy"]').val().map(value => `${value}`).join('\n'),
             edit_date: formatDate(),
             create_date: formatDate(),
-            marketing: ""
+            marketing: "",
+
+            company_name: form.find('input[name="company_name"]').val(),
+            gender: form.find('input[name="gender"]:checked').val(),
+            price: form.find('input[name="price"]').val(),
+            area: form.find('input[name="area"]').val(),
+            location: form.find('input[name="location"]').val(),
+            special_notes: form.find('textarea[name="special_notes"]').val(),
+
+            status: form.find('select[name="group"]').val(),
         };
+
         $.ajax({
             type: 'POST',
             url: '/api/customer/',
@@ -334,16 +366,24 @@ $(document).ready(function() {
         var create_date = $(this).data('create_date');
     
         $.ajax({ url: '/api/customer/' + customerId, success: function(customerData) {
-            $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry);
-            $('#modifyCustomerModal').find('input[name="importance"]').val(customerData.importance),
-            $('#modifyCustomerModal').find('input[name="contact_date"]').val(customerData.contact_date),
-            $('#modifyCustomerModal').find('input[name="move_in_date"]').val(customerData.move_in_date),
-            $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry),
-            $('#modifyCustomerModal').find('input[name="contact_info"]').val(customerData.contact_info),
-            $('#modifyCustomerModal').find('textarea[name="notes"]').val(customerData.notes),
-            $('#modifyCustomerModal').find('textarea[name="contact_person"]').val(customerData.contact_person),
-            $('#modifyCustomerModal').find('textarea[name="head"]').val(customerData.head),
-            $('#modifyCustomerModal').find('textarea[name="deputy"]').val(customerData.deputy)
+            $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry)
+            $('#modifyCustomerModal').find('input[name="importance"]').val(customerData.importance)
+            $('#modifyCustomerModal').find('input[name="contact_date"]').val(customerData.contact_date)
+            $('#modifyCustomerModal').find('input[name="move_in_date"]').val(customerData.move_in_date)
+            $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry)
+            $('#modifyCustomerModal').find('input[name="contact_info"]').val(customerData.contact_info)
+            $('#modifyCustomerModal').find('textarea[name="notes"]').val(customerData.notes)
+            $('#modifyCustomerModal').find('select[name="contact_person"]').val(customerData.contact_person)
+            $('#modifyCustomerModal').find('select[name="head"]').val(customerData.head.split('\n'))
+            $('#modifyCustomerModal').find('select[name="deputy"]').val(customerData.deputy.split('\n'))
+            $('#modifyCustomerModal').find('input[name="company_name"]').val(customerData.company_name)
+            $('#modifyCustomerModal').find('input[name="gender"][value="' + customerData.gender + '"]').prop('checked', true);
+            $('#modifyCustomerModal').find('input[name="price"]').val(customerData.price)
+            $('#modifyCustomerModal').find('input[name="area"]').val(customerData.area)
+            $('#modifyCustomerModal').find('input[name="location"]').val(customerData.location)
+            $('#modifyCustomerModal').find('textarea[name="special_notes"]').val(customerData.special_notes)
+
+            $('#modifyCustomerModal').find('select[name="group"]').val(customerData.status)
         }});
     
         // 모달 창 열기
@@ -366,13 +406,21 @@ $(document).ready(function() {
                 industry: form.find('input[name="industry"]').val(),
                 contact_info: form.find('input[name="contact_info"]').val(),
                 notes: form.find('textarea[name="notes"]').val(),
-                contact_person: form.find('textarea[name="contact_person"]').val(),
-                head: form.find('textarea[name="head"]').val(),
-                deputy: form.find('textarea[name="deputy"]').val(),
-                status: status,
+                contact_person: form.find('select[name="contact_person"]').val(),
+                head: form.find('select[name="head"]').val().map(value => `${value}`).join('\n'),
+                deputy: form.find('select[name="deputy"]').val().map(value => `${value}`).join('\n'),
                 edit_date: formatDate(),
                 create_date: create_date,
-                marketing: ""
+                marketing: "",
+
+                company_name: form.find('input[name="company_name"]').val(),
+                gender: form.find('input[name="gender"]:checked').val(),
+                price: form.find('input[name="price"]').val(),
+                area: form.find('input[name="area"]').val(),
+                location: form.find('input[name="location"]').val(),
+                special_notes: form.find('textarea[name="special_notes"]').val(),
+
+                status: form.find('select[name="group"]').val(),
             };
             
             $.ajax({

@@ -245,6 +245,18 @@ textarea {
     max-width: 800px;
 }
 
+.modal-content {
+    width: 900px;
+}
+
+.modal-content legend {
+    font-size: 0.8rem;
+}
+
+.modal-content label, .form-select {
+    font-size: 0.8rem;
+}
+
 #data-table {
     width: 100%;
     border-collapse: collapse;
@@ -287,6 +299,7 @@ textarea {
     z-index: 99999;
 }
 
+/*
 .modal label {
     display: inline-block;
     padding: 10px 20px;
@@ -297,6 +310,7 @@ textarea {
     height: 40px;
     margin-left: 10px;
 }
+*/
 
 #id_btn_toggle_sidebar {
     z-index: 51; /* 햄버거 버튼이 사이드바 위에 표시되도록 설정 */

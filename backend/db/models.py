@@ -39,13 +39,12 @@ class CustomerModel(Base):
     create_date = Column(String)                        # 만든 날짜
     marketing = Column(String)                          # 마케팅
 
-    # property_id = Column(Integer, ForeignKey("properties.id"))
-    # user_id = Column(Integer, ForeignKey("users.id"))
-    # property_id = Column(Integer)
-    # user_id = Column(Integer)
-
-    # Relationships
-    # user = relationship("User", back_populates="customers")
+    company_name = Column(String)
+    gender = Column(String)
+    price = Column(String)
+    area = Column(String)
+    location = Column(String)
+    special_notes = Column(String)
 
 
 class Property(Base):

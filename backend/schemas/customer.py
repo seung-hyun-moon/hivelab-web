@@ -21,6 +21,13 @@ class CustomerBase(BaseModel):
     create_date : Optional[str] = None  # 만든 날짜
     marketing : Optional[str] = None    # 마케팅
 
+    company_name : Optional[str] = None
+    gender : Optional[str] = "남자"
+    price : Optional[str] = None
+    area : Optional[str] = None
+    location : Optional[str] = None
+    special_notes : Optional[str] = None
+
 class CustomerCreate(CustomerBase):
     pass
 
