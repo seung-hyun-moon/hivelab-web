@@ -9,12 +9,12 @@ function formatData(data, type, row) {
 function formatData2(data, type, row) {
     if (type === 'display') {
         data = data || '';
-        var move_in_date = row.move_in_date ? row.move_in_date + ' | ' : '';
-        var price = row.price ? row.price + ' | ' : '';
-        var area = row.area ? row.area + ' | ' : '';
-        var location = row.location ? row.location + '\n' : '';
-        var special_notes = row.special_notes ? row.special_notes + ' \n\n' : '';
-        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + move_in_date + price + area + location + special_notes + data + '</textarea>';
+        var move_in_date = row.move_in_date ? row.move_in_date + ' | ' : '- | ';
+        var price = row.price ? row.price + ' | ' : '- | ';
+        var area = row.area ? row.area + ' | ' : '- |';
+        var location = row.location ? row.location + '\n' : '-\n';
+        var special_notes = row.special_notes ? row.special_notes : '특이사항 : -';
+        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + move_in_date + price + area + location + special_notes + '\n\n' + data + '</textarea>';
     }
     return data;
 }
@@ -70,7 +70,7 @@ $(document).ready(function() {
         fixedHeader: true,
         columnDefs: [
             {
-                targets: [2, 12, 13, 14], // 상태 열의 인덱스
+                targets: [2, 6, 12, 13, 14], // 상태 열의 인덱스
                 visible: false,
             }
         ],
@@ -535,7 +535,7 @@ $(document).ready(function() {
                     fieldName = fieldName.replace(/\s/g, ''); // 모든 공백 제거
                     if (fieldName !== '') {
                         if (!counts[fieldName]) {
-                            counts[fieldName] = { '진행': 0, '완료': 0, '보류': 0, '폐기': 0,'잠재': 0, '전체': 0 };
+                            counts[fieldName] = { '진행': 0, '대기': 0, '보류': 0, '완료': 0,'폐기': 0, '전체': 0 };
                         }
                         switch(item.status) {
                             case 0:
