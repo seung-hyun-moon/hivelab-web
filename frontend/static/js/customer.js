@@ -772,6 +772,13 @@ $(document).ready(function() {
                 checkbox.checked = !checkbox.checked;
                 updateButtonText(dropdown);
             });
+
+            // 체크박스 클릭 시 이벤트 반응
+            var checkbox = item.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('click', function(e) {
+                e.stopPropagation(); // 클릭이 dropdown-item으로 전파되지 않도록
+                updateButtonText(dropdown);
+            });
         });
     });
 
@@ -782,9 +789,40 @@ $(document).ready(function() {
             var selectedNames = Array.from(selectedItems).map(item => item.value);
             dropdownButton.textContent = selectedNames.join(', ');
         } else {
-            dropdownButton.textContent = '선택';
+            dropdownButton.textContent = '선택하세요';
         }
     }
+
+    // 각 textarea에 이벤트 리스너 추가
+    document.querySelectorAll('textarea').forEach(function(textarea) {
+        textarea.addEventListener('keydown', function(event) {
+        console.log(event);
+            // Shift + D 키가 눌렸는지 확인
+            if (event.shiftKey && event.code === 'ControlRight') {
+                event.preventDefault(); // 기본 동작을 방지
+
+                // 현재 날짜를 yy.mm.dd 형식으로 구하기
+                const currentDate = new Date();
+                const year = currentDate.getFullYear().toString().slice(-2); // 년도 마지막 두 자
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // 월
+                const day = String(currentDate.getDate()).padStart(2, '0'); // 일
+
+                const formattedDate = `${year}.${month}.${day}`;
+
+                // 현재 커서 위치에 날짜 삽입
+                const cursorPosition = textarea.selectionStart;
+                const textBefore = textarea.value.substring(0, cursorPosition);
+                const textAfter = textarea.value.substring(cursorPosition);
+                textarea.value = textBefore + formattedDate + textAfter;
+
+                // 커서가 날짜 뒤에 오도록 설정
+                textarea.selectionStart = textarea.selectionEnd = cursorPosition + formattedDate.length;
+            }
+        });
+    });
+
+
+
 
 
 });

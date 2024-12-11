@@ -247,6 +247,7 @@ textarea {
 
 .modal-content {
     width: 900px;
+    overflow: hidden;
 }
 
 .modal-content legend {
@@ -346,4 +347,12 @@ input[type="checkbox"]:checked + .person-label {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+#dropdownMenuButton, #dropdownMenuButton2 {
+    width: 190px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    border: 1px solid #ced4da;
 }
