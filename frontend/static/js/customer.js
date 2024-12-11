@@ -325,8 +325,8 @@ $(document).ready(function() {
             contact_info: form.find('input[name="contact_info"]').val(),
             notes: form.find('textarea[name="notes"]').val(),
             contact_person: form.find('select[name="contact_person"]').val(),
-            head: form.find('select[name="head"]').val().map(value => `${value}`).join('\n'),
-            deputy: form.find('select[name="deputy"]').val().map(value => `${value}`).join('\n'),
+            head: Array.from(form.find('input[type="checkbox"][name="head"]:checked')).map(item => item.value).join('\n'),
+            deputy: Array.from(form.find('input[type="checkbox"][name="deputy"]:checked')).map(item => item.value).join('\n'),
             edit_date: formatDate(),
             create_date: formatDate(),
             marketing: "",
@@ -356,7 +356,7 @@ $(document).ready(function() {
                 console.error('Error:', error);
             }
         });
-    
+
         return false;
     });
 
@@ -364,7 +364,7 @@ $(document).ready(function() {
         var customerId = $(this).data('id');
         var status = $(this).data('status');
         var create_date = $(this).data('create_date');
-    
+
         $.ajax({ url: '/api/customer/' + customerId, success: function(customerData) {
             $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry)
             $('#modifyCustomerModal').find('input[name="importance"]').val(customerData.importance)
@@ -374,8 +374,8 @@ $(document).ready(function() {
             $('#modifyCustomerModal').find('input[name="contact_info"]').val(customerData.contact_info)
             $('#modifyCustomerModal').find('textarea[name="notes"]').val(customerData.notes)
             $('#modifyCustomerModal').find('select[name="contact_person"]').val(customerData.contact_person)
-            $('#modifyCustomerModal').find('select[name="head"]').val(customerData.head.split('\n'))
-            $('#modifyCustomerModal').find('select[name="deputy"]').val(customerData.deputy.split('\n'))
+            $('#modifyCustomerModal').find('input[name="head"]').val(customerData.head.split('\n'))
+            $('#modifyCustomerModal').find('input[name="deputy"]').val(customerData.deputy.split('\n'))
             $('#modifyCustomerModal').find('input[name="company_name"]').val(customerData.company_name)
             $('#modifyCustomerModal').find('input[name="gender"][value="' + customerData.gender + '"]').prop('checked', true);
             $('#modifyCustomerModal').find('input[name="price"]').val(customerData.price)
@@ -385,7 +385,7 @@ $(document).ready(function() {
 
             $('#modifyCustomerModal').find('select[name="group"]').val(customerData.status)
         }});
-    
+
         // 모달 창 열기
         $('#modifyCustomerModal').modal('show');
 
@@ -407,8 +407,8 @@ $(document).ready(function() {
                 contact_info: form.find('input[name="contact_info"]').val(),
                 notes: form.find('textarea[name="notes"]').val(),
                 contact_person: form.find('select[name="contact_person"]').val(),
-                head: form.find('select[name="head"]').val().map(value => `${value}`).join('\n'),
-                deputy: form.find('select[name="deputy"]').val().map(value => `${value}`).join('\n'),
+                head: Array.from(form.find('input[type="checkbox"][name="head"]:checked')).map(item => item.value).join('\n'),
+                deputy: Array.from(form.find('input[type="checkbox"][name="deputy"]:checked')).map(item => item.value).join('\n'),
                 edit_date: formatDate(),
                 create_date: create_date,
                 marketing: "",
@@ -422,7 +422,7 @@ $(document).ready(function() {
 
                 status: form.find('select[name="group"]').val(),
             };
-            
+
             $.ajax({
                 type: 'PUT',
                 url: '/api/customer/'+customerId,
@@ -438,7 +438,7 @@ $(document).ready(function() {
                     console.error('Error:', error);
                 }
             });
-        
+
             return false;
         });
 
@@ -727,4 +727,64 @@ $(document).ready(function() {
     } else {
         $('#all').click();
     }
+
+    document.getElementById('toggleBasicInfo').addEventListener('click', function() {
+        var basicInfoContent = document.getElementById('basicInfoContent');
+        var notesTextarea = document.getElementById('notes');
+        if (basicInfoContent.style.display === 'none') {
+            basicInfoContent.style.display = 'block';
+            this.textContent = '접기';
+            notesTextarea.rows = 4;
+        } else {
+            basicInfoContent.style.display = 'none';
+            this.textContent = '펼치기';
+            // Adjust the height of the textarea
+            notesTextarea.rows = 13;
+        }
+    });
+
+    document.getElementById('toggleBasicInfo2').addEventListener('click', function() {
+        var basicInfoContent = document.getElementById('basicInfoContent2');
+        var notesTextarea = document.getElementById('notes2');
+        if (basicInfoContent.style.display === 'none') {
+            basicInfoContent.style.display = 'block';
+            this.textContent = '접기';
+            notesTextarea.rows = 4;
+        } else {
+            basicInfoContent.style.display = 'none';
+            this.textContent = '펼치기';
+            // Adjust the height of the textarea
+            notesTextarea.rows = 13;
+        }
+    });
+
+    var dropdowns = document.querySelectorAll('.dropdown');
+
+    dropdowns.forEach(function(dropdown) {
+        var dropdownButton = dropdown.querySelector('.dropdown-toggle');
+        var dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+
+        dropdownItems.forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+                updateButtonText(dropdown);
+            });
+        });
+    });
+
+    function updateButtonText(dropdown) {
+        var dropdownButton = dropdown.querySelector('.dropdown-toggle');
+        var selectedItems = dropdown.querySelectorAll('.dropdown-item input[type="checkbox"]:checked');
+        if (selectedItems.length > 0) {
+            var selectedNames = Array.from(selectedItems).map(item => item.value);
+            dropdownButton.textContent = selectedNames.join(', ');
+        } else {
+            dropdownButton.textContent = '선택';
+        }
+    }
+
+
 });

@@ -51,7 +51,7 @@
     </div>
 </div>
 
-<!-- Add Customer Modal -->
+
 <!-- Add Customer Modal -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -64,64 +64,66 @@
                 <form onsubmit="return false;" class="grid-form">
                     <!-- 기본정보 -->
                     <fieldset class="border p-2 mb-3">
-                        <legend class="w-auto pb-3">기본정보</legend>
-                        <fieldset class="border p-2 mb-3">
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-md-1">
-                                    <label for="industry" class="form-label">업종</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="industry" name="industry" class="form-control" placeholder="중개업">
-                                </div>
-                                <div class="col-md-1">
-                                    <label for="company_name" class="form-label">회사명</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="company_name" name="company_name" class="form-control" placeholder="하이브메이트">
-                                </div>
-                            </div>
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-md-1">
-                                    <label for="contact_info" class="form-label">연락처</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678">
-                                </div>
-                                <div class="col-md-1">
-                                    <label class="form-label">성별</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="male" value="남자" checked>
-                                        <label class="form-check-label" for="male">남자</label>
+                        <legend class="w-auto pb-3">기본정보<button type="button" class="btn btn-sm btn-link" id="toggleBasicInfo">접기</button></legend>
+                        <div id="basicInfoContent">
+                            <fieldset class="border p-2 mb-3">
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="industry" class="form-label">업종</label>
                                     </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="female" value="여자">
-                                        <label class="form-check-label" for="female">여자</label>
+                                    <div class="col-md-5">
+                                        <input type="text" id="industry" name="industry" class="form-control" placeholder="중개업">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="company_name" class="form-label">회사명</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="company_name" name="company_name" class="form-control" placeholder="하이브메이트">
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-md-1">
-                                    <label for="contact_date" class="form-label">컨택일</label>
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_info" class="form-label">연락처</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">성별</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="male" value="남자" checked>
+                                            <label class="form-check-label" for="male">남자</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="female" value="여자">
+                                            <label class="form-check-label" for="female">여자</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25">
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_date" class="form-label">컨택일</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="group" class="form-label">그룹</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <select id="group" name="group" class="form-select">
+                                            <option value=0>진행</option>
+                                            <option value=4>대기</option>
+                                            <option value=2>보류</option>
+                                            <option value=1>완료</option>
+                                            <option value=3>폐기</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="col-md-1">
-                                    <label for="group" class="form-label">그룹</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <select id="group" name="group" class="form-select">
-                                        <option value=0>진행</option>
-                                        <option value=4>대기</option>
-                                        <option value=2>보류</option>
-                                        <option value=1>완료</option>
-                                        <option value=3>폐기</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </fieldset>
+                            </fieldset>
+                        </div>
                     </fieldset>
 
                     <!-- 컨디션 -->
@@ -159,7 +161,7 @@
                                     <label for="special_notes" class="form-label">특이<br>사항</label>
                                 </div>
                                 <div class="col-md-11">
-                                    <textarea id="special_notes" name="special_notes" class="form-control" rows="2" placeholder="특이사항 입력"></textarea>
+                                    <textarea id="special_notes" name="special_notes" class="form-control" rows="2" placeholder="특이사항 입력" style="overflow-y: auto;"></textarea>
                                 </div>
                             </div>
                         </fieldset>
@@ -172,7 +174,7 @@
                                 <legend class="w-auto pb-3">진행<br>사항</legend>
                             </div>
                             <div class="col-md-11">
-                                <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="진행사항 입력"></textarea>
+                                <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="진행사항 입력" style="overflow-y: auto;"></textarea>
                             </div>
                         </div>
                     </fieldset>
@@ -204,29 +206,39 @@
                                     <label for="head" class="form-label">PO</label>
                                 </div>
                                 <div class="col-md-3">
-                                    <select id="head" name="head" class="form-select" multiple size="2">
-                                        <option value="송재민">송재민</option>
-                                        <option value="길민제">길민제</option>
-                                        <option value="이경주">이경주</option>
-                                        <option value="노현정">노현정</option>
-                                        <option value="이선복">이선복</option>
-                                        <option value="김시나">김시나</option>
-                                        <option value="이소은">이소은</option>
-                                    </select>
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                            선택하세요
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="송재민"> 송재민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="길민제"> 길민제</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이경주"> 이경주</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="노현정"> 노현정</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이선복"> 이선복</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="김시나"> 김시나</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이소은"> 이소은</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                                 <div class="col-md-1">
                                     <label for="deputy" class="form-label">PA</label>
                                 </div>
                                 <div class="col-md-3">
-                                    <select id="deputy" name="deputy" class="form-select" multiple size="2">
-                                        <option value="송재민">송재민</option>
-                                        <option value="길민제">길민제</option>
-                                        <option value="이경주">이경주</option>
-                                        <option value="노현정">노현정</option>
-                                        <option value="이선복">이선복</option>
-                                        <option value="김시나">김시나</option>
-                                        <option value="이소은">이소은</option>
-                                    </select>
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                                            선택하세요
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="송재민"> 송재민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="길민제"> 길민제</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이경주"> 이경주</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="노현정"> 노현정</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이선복"> 이선복</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="김시나"> 김시나</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이소은"> 이소은</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </fieldset>
@@ -255,64 +267,66 @@
                 <form onsubmit="return false;" class="grid-form">
                     <!-- 기본정보 -->
                     <fieldset class="border p-2 mb-3">
-                        <legend class="w-auto pb-3">기본정보</legend>
-                        <fieldset class="border p-2 mb-3">
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-md-1">
-                                    <label for="industry" class="form-label">업종</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="industry" name="industry" class="form-control" placeholder="부동산회사">
-                                </div>
-                                <div class="col-md-1">
-                                    <label for="company_name" class="form-label">회사명</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="company_name" name="company_name" class="form-control" placeholder="회사명">
-                                </div>
-                            </div>
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-md-1">
-                                    <label for="contact_info" class="form-label">연락처</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678">
-                                </div>
-                                <div class="col-md-1">
-                                    <label class="form-label">성별</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="male" value="남자" checked>
-                                        <label class="form-check-label" for="male">남자</label>
+                        <legend class="w-auto pb-3">기본정보<button type="button" class="btn btn-sm btn-link" id="toggleBasicInfo2">펼치기</button></legend>
+                        <div id="basicInfoContent2" style="display:none">
+                            <fieldset class="border p-2 mb-3">
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="industry" class="form-label">업종</label>
                                     </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="female" value="여자">
-                                        <label class="form-check-label" for="female">여자</label>
+                                    <div class="col-md-5">
+                                        <input type="text" id="industry" name="industry" class="form-control" placeholder="중개업">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="company_name" class="form-label">회사명</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="company_name" name="company_name" class="form-control" placeholder="하이브메이트">
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-md-1">
-                                    <label for="contact_date" class="form-label">컨택일</label>
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_info" class="form-label">연락처</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">성별</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="male" value="남자" checked>
+                                            <label class="form-check-label" for="male">남자</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="female" value="여자">
+                                            <label class="form-check-label" for="female">여자</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-5">
-                                    <input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25">
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_date" class="form-label">컨택일</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="group" class="form-label">그룹</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <select id="group" name="group" class="form-select">
+                                            <option value=0>진행</option>
+                                            <option value=4>대기</option>
+                                            <option value=2>보류</option>
+                                            <option value=1>완료</option>
+                                            <option value=3>폐기</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="col-md-1">
-                                    <label for="group" class="form-label">그룹</label>
-                                </div>
-                                <div class="col-md-5">
-                                    <select id="group" name="group" class="form-select">
-                                        <option value=0>진행</option>
-                                        <option value=4>대기</option>
-                                        <option value=2>보류</option>
-                                        <option value=1>완료</option>
-                                        <option value=3>폐기</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </fieldset>
+                            </fieldset>
+                        </div>
                     </fieldset>
 
                     <!-- 컨디션 -->
@@ -350,7 +364,7 @@
                                     <label for="special_notes" class="form-label">특이<br>사항</label>
                                 </div>
                                 <div class="col-md-11">
-                                    <textarea id="special_notes" name="special_notes" class="form-control" rows="2" placeholder="특이사항 입력"></textarea>
+                                    <textarea id="special_notes" name="special_notes" class="form-control" rows="2" placeholder="특이사항 입력" style="overflow-y: auto;"></textarea>
                                 </div>
                             </div>
                         </fieldset>
@@ -363,7 +377,7 @@
                                 <legend class="w-auto pb-3">진행<br>사항</legend>
                             </div>
                             <div class="col-md-11">
-                                <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="진행사항 입력"></textarea>
+                                <textarea id="notes2" name="notes" class="form-control" rows="13" placeholder="진행사항 입력" style="overflow-y: auto;"></textarea>
                             </div>
                         </div>
                     </fieldset>
@@ -395,29 +409,39 @@
                                     <label for="head" class="form-label">PO</label>
                                 </div>
                                 <div class="col-md-3">
-                                    <select id="head" name="head" class="form-select" multiple size="2">
-                                        <option value="송재민">송재민</option>
-                                        <option value="길민제">길민제</option>
-                                        <option value="이경주">이경주</option>
-                                        <option value="노현정">노현정</option>
-                                        <option value="이선복">이선복</option>
-                                        <option value="김시나">김시나</option>
-                                        <option value="이소은">이소은</option>
-                                    </select>
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                            선택하세요
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="송재민"> 송재민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="길민제"> 길민제</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이경주"> 이경주</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="노현정"> 노현정</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이선복"> 이선복</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="김시나"> 김시나</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이소은"> 이소은</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                                 <div class="col-md-1">
                                     <label for="deputy" class="form-label">PA</label>
                                 </div>
                                 <div class="col-md-3">
-                                    <select id="deputy" name="deputy" class="form-select" multiple size="2">
-                                        <option value="송재민">송재민</option>
-                                        <option value="길민제">길민제</option>
-                                        <option value="이경주">이경주</option>
-                                        <option value="노현정">노현정</option>
-                                        <option value="이선복">이선복</option>
-                                        <option value="김시나">김시나</option>
-                                        <option value="이소은">이소은</option>
-                                    </select>
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                                            선택하세요
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="송재민"> 송재민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="길민제"> 길민제</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이경주"> 이경주</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="노현정"> 노현정</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이선복"> 이선복</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="김시나"> 김시나</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이소은"> 이소은</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </fieldset>
