@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+import logging
+from functools import wraps
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import Type, TypeVar, Generic, List
 from pydantic import BaseModel
@@ -10,6 +12,34 @@ TGet = TypeVar("TGet")
 TCreate = TypeVar("TCreate")
 TUpdate = TypeVar("TUpdate")
 
+logging.basicConfig(
+    filename=r'D:\\db_customer_log.txt',
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+
+# 로깅 데코레이터
+def log_db_activity(action: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, request: Request = None, **kwargs):
+            result = func(self, *args, **kwargs)
+            client_ip = request.client.host if request else "Unknown"
+            # 로그를 남길 내용 준비
+            item = kwargs.get("item", None)
+            item_id = kwargs.get("item_id", None)
+            if item:
+                logging.info(f"{client_ip} {action.upper()} ITEM: {item.dict() if hasattr(item, 'dict') else item}")
+            if item_id:
+                logging.info(f"{client_ip} {action.upper()} ITEM ID: {item_id}")
+
+            return result
+
+        return wrapper
+
+    return decorator
 
 # TODO : create_item, update_item 상속 시 Schema Type 문제 해결
 class BaseCRUD(Generic[TGet, TCreate, TUpdate]):
@@ -38,14 +68,16 @@ class BaseCRUD(Generic[TGet, TCreate, TUpdate]):
             raise HTTPException(status_code=404, detail="Item not found")
         return item
 
-    def create_item(self, item: TCreate, db: Session = Depends(get_db)):
+    @log_db_activity("create")
+    def create_item(self, item: TCreate, db: Session = Depends(get_db), request: Request = None):
         db_item = self.model(**item.model_dump())
         db.add(db_item)
         db.commit()
         db.refresh(db_item)
         return db_item
 
-    def update_item(self, item_id: int, item: TUpdate, db: Session = Depends(get_db)):
+    @log_db_activity("update")
+    def update_item(self, item_id: int, item: TUpdate, db: Session = Depends(get_db), request: Request = None):
         db_item = db.query(self.model).get(item_id)
         if db_item is None:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -55,14 +87,16 @@ class BaseCRUD(Generic[TGet, TCreate, TUpdate]):
         db.refresh(db_item)
         return db_item
 
-    def delete_item(self, item_id: int, db: Session = Depends(get_db)):
+    @log_db_activity("delete")
+    def delete_item(self, item_id: int, db: Session = Depends(get_db), request: Request = None):
         db_item = db.query(self.model).filter(self.model.id == item_id).first()
         if db_item:
             db.delete(db_item)
             db.commit()
         return {"message": "Item deleted"}
-    
-    def patch_item(self, item_id: int, item: TUpdate, db: Session = Depends(get_db)):
+
+    @log_db_activity("patch")
+    def patch_item(self, item_id: int, item: TUpdate, db: Session = Depends(get_db), request: Request = None):
         db_item = db.query(self.model).get(item_id)
         if db_item is None:
             raise HTTPException(status_code=404, detail="Item not found")

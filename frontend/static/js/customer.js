@@ -875,8 +875,8 @@ $(document).ready(function() {
         });
     });
 
-
-
-
-
+//    setInterval(function() {
+//        // 페이지나 필터 상태 유지하며 테이블 데이터만 새로고침
+//        table.ajax.reload(null, false);
+//    }, 30000); // 30000ms = 30초
 });
