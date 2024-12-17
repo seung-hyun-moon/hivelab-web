@@ -356,3 +356,25 @@ input[type="checkbox"]:checked + .person-label {
     text-overflow: ellipsis;
     border: 1px solid #ced4da;
 }
+
+.arrow-icon {
+    transition: transform 0.3s ease;
+}
+
+.arrow-icon.rotated {
+    transform: rotate(180deg);
+}
+
+#basicInfoContent, #basicInfoContent2 {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    max-height: 500px; /* 콘텐츠 높이에 맞춰 충분히 크게 설정 */
+}
+
+#basicInfoContent.collapsed, #basicInfoContent2.collapsed {
+    max-height: 0;
+}
+
+#notes, #notes2 {
+    transition: max-height 0.3s ease;
+}

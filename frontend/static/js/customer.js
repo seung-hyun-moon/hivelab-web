@@ -70,8 +70,12 @@ $(document).ready(function() {
         fixedHeader: true,
         columnDefs: [
             {
-                targets: [2, 6, 12, 13, 14], // 상태 열의 인덱스
+                targets: [2, 6, 12, 13, 14, 16, 17, 18, 19, 20, 21],
                 visible: false,
+            },
+            {
+                targets: '_all',
+                searchable: true,
             }
         ],
         initComplete: function () {
@@ -276,24 +280,35 @@ $(document).ready(function() {
                     return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + ' data-create_date="' + row.create_date + '"></button>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
+            { data: 'company_name' },
+            { data: 'gender' },
+            { data: 'price' },
+            { data: 'area' },
+            { data: 'location' },
+            { data: 'special_notes' },
         ]
     });
 
     $('#customerTable tbody').on('click', 'button.delete-btn', function () {
         var id = $(this).data('id');
-        var confirmDelete = confirm('정말로 이 고객 정보를 삭제하시겠습니까?');
-        if (confirmDelete) {
-            $.ajax({
-                url: '/api/customer/' + id,
-                type: 'DELETE',
-                success: function(result) {
-                    table.ajax.reload();
-                    console.log('Customer deleted successfully');
-                },
-                error: function(request, msg, error) {
-                    console.log('Failed to delete customer');
-                }
-            });
+        var password = prompt('비밀번호를 입력하세요.');
+        if (password === '5125') {
+            var confirmDelete = confirm('정말로 이 고객 정보를 삭제하시겠습니까?');
+            if (confirmDelete) {
+                $.ajax({
+                    url: '/api/customer/' + id,
+                    type: 'DELETE',
+                    success: function(result) {
+                        table.ajax.reload();
+                        console.log('Customer deleted successfully');
+                    },
+                    error: function(request, msg, error) {
+                        console.log('Failed to delete customer');
+                    }
+                });
+            }
+        } else {
+            alert('비밀번호가 틀렸습니다.');
         }
     });
 
@@ -382,8 +397,11 @@ $(document).ready(function() {
             $('#modifyCustomerModal').find('input[name="area"]').val(customerData.area)
             $('#modifyCustomerModal').find('input[name="location"]').val(customerData.location)
             $('#modifyCustomerModal').find('textarea[name="special_notes"]').val(customerData.special_notes)
+            $('#modifyCustomerModal #dropdownMenuButton').text(customerData.head.split('\n').join(', '))
+            $('#modifyCustomerModal #dropdownMenuButton2').text(customerData.deputy.split('\n').join(', '))
 
             $('#modifyCustomerModal').find('select[name="group"]').val(customerData.status)
+            console.log('>????');
         }});
 
         // 모달 창 열기
@@ -728,33 +746,69 @@ $(document).ready(function() {
         $('#all').click();
     }
 
+//    document.getElementById('toggleBasicInfo').addEventListener('click', function() {
+//        var basicInfoContent = document.getElementById('basicInfoContent');
+//        var notesTextarea = document.getElementById('notes');
+//        if (basicInfoContent.style.display === 'none') {
+//            basicInfoContent.style.display = 'block';
+//            this.textContent = '접기';
+//            notesTextarea.rows = 4;
+//        } else {
+//            basicInfoContent.style.display = 'none';
+//            this.textContent = '펼치기';
+//            // Adjust the height of the textarea
+//            notesTextarea.rows = 13;
+//        }
+//    });
+//
+//    document.getElementById('toggleBasicInfo2').addEventListener('click', function() {
+//        var basicInfoContent = document.getElementById('basicInfoContent2');
+//        var notesTextarea = document.getElementById('notes2');
+//        if (basicInfoContent.style.display === 'none') {
+//            basicInfoContent.style.display = 'block';
+//            this.textContent = '접기';
+//            notesTextarea.rows = 4;
+//        } else {
+//            basicInfoContent.style.display = 'none';
+//            this.textContent = '펼치기';
+//            // Adjust the height of the textarea
+//            notesTextarea.rows = 13;
+//        }
+//    });
+
     document.getElementById('toggleBasicInfo').addEventListener('click', function() {
         var basicInfoContent = document.getElementById('basicInfoContent');
-        var notesTextarea = document.getElementById('notes');
-        if (basicInfoContent.style.display === 'none') {
-            basicInfoContent.style.display = 'block';
-            this.textContent = '접기';
-            notesTextarea.rows = 4;
+        var arrowIcon = this.querySelector('.arrow-icon');
+        var notesTextarea = document.getElementById('notes'); // 필요하다면 가져옴
+
+        if (basicInfoContent.classList.contains('collapsed')) {
+            // 펼치기
+            basicInfoContent.classList.remove('collapsed');
+            arrowIcon.classList.remove('rotated');
+            notesTextarea.rows = 4; // 필요하다면 활성화
         } else {
-            basicInfoContent.style.display = 'none';
-            this.textContent = '펼치기';
-            // Adjust the height of the textarea
-            notesTextarea.rows = 13;
+            // 접기
+            basicInfoContent.classList.add('collapsed');
+            arrowIcon.classList.add('rotated');
+            notesTextarea.rows = 13; // 필요하다면 활성화
         }
     });
 
     document.getElementById('toggleBasicInfo2').addEventListener('click', function() {
         var basicInfoContent = document.getElementById('basicInfoContent2');
-        var notesTextarea = document.getElementById('notes2');
-        if (basicInfoContent.style.display === 'none') {
-            basicInfoContent.style.display = 'block';
-            this.textContent = '접기';
-            notesTextarea.rows = 4;
+        var arrowIcon = this.querySelector('.arrow-icon');
+        var notesTextarea = document.getElementById('notes2'); // 필요하다면 가져옴
+
+        if (basicInfoContent.classList.contains('collapsed')) {
+            // 펼치기
+            basicInfoContent.classList.remove('collapsed');
+            arrowIcon.classList.remove('rotated');
+            notesTextarea.rows = 4; // 필요하다면 활성화
         } else {
-            basicInfoContent.style.display = 'none';
-            this.textContent = '펼치기';
-            // Adjust the height of the textarea
-            notesTextarea.rows = 13;
+            // 접기
+            basicInfoContent.classList.add('collapsed');
+            arrowIcon.classList.add('rotated');
+            notesTextarea.rows = 13; // 필요하다면 활성화
         }
     });
 
