@@ -365,7 +365,7 @@ $(document).ready(function() {
                 console.log('Success:', response);
                 $('#addCustomerModal').modal('hide');
                 table.ajax.reload();
-                $('#addCustomerModal form').find('input, textarea').val('');
+                $('#addCustomerModal form').find('input, textarea').not('[name="head"], [name="deputy"]').val('');
             },
             error: function(error) {
                 console.error('Error:', error);
@@ -401,7 +401,6 @@ $(document).ready(function() {
             $('#modifyCustomerModal #dropdownMenuButton2').text(customerData.deputy.split('\n').join(', '))
 
             $('#modifyCustomerModal').find('select[name="group"]').val(customerData.status)
-            console.log('>????');
         }});
 
         // 모달 창 열기
@@ -450,7 +449,7 @@ $(document).ready(function() {
                     console.log('Success:', response);
                     $('#modifyCustomerModal').modal('hide');
                     table.ajax.reload();
-                    $('#modifyCustomerModal form').find('input, textarea').val('');
+                    $('#modifyCustomerModal form').find('input, textarea').not('[name="head"], [name="deputy"]').val('');
                 },
                 error: function(error) {
                     console.error('Error:', error);
@@ -746,36 +745,6 @@ $(document).ready(function() {
         $('#all').click();
     }
 
-//    document.getElementById('toggleBasicInfo').addEventListener('click', function() {
-//        var basicInfoContent = document.getElementById('basicInfoContent');
-//        var notesTextarea = document.getElementById('notes');
-//        if (basicInfoContent.style.display === 'none') {
-//            basicInfoContent.style.display = 'block';
-//            this.textContent = '접기';
-//            notesTextarea.rows = 4;
-//        } else {
-//            basicInfoContent.style.display = 'none';
-//            this.textContent = '펼치기';
-//            // Adjust the height of the textarea
-//            notesTextarea.rows = 13;
-//        }
-//    });
-//
-//    document.getElementById('toggleBasicInfo2').addEventListener('click', function() {
-//        var basicInfoContent = document.getElementById('basicInfoContent2');
-//        var notesTextarea = document.getElementById('notes2');
-//        if (basicInfoContent.style.display === 'none') {
-//            basicInfoContent.style.display = 'block';
-//            this.textContent = '접기';
-//            notesTextarea.rows = 4;
-//        } else {
-//            basicInfoContent.style.display = 'none';
-//            this.textContent = '펼치기';
-//            // Adjust the height of the textarea
-//            notesTextarea.rows = 13;
-//        }
-//    });
-
     document.getElementById('toggleBasicInfo').addEventListener('click', function() {
         var basicInfoContent = document.getElementById('basicInfoContent');
         var arrowIcon = this.querySelector('.arrow-icon');
@@ -812,7 +781,7 @@ $(document).ready(function() {
         }
     });
 
-    var dropdowns = document.querySelectorAll('.dropdown');
+    var dropdowns = document.querySelectorAll('.dropdown_person');
 
     dropdowns.forEach(function(dropdown) {
         var dropdownButton = dropdown.querySelector('.dropdown-toggle');
@@ -850,7 +819,6 @@ $(document).ready(function() {
     // 각 textarea에 이벤트 리스너 추가
     document.querySelectorAll('textarea').forEach(function(textarea) {
         textarea.addEventListener('keydown', function(event) {
-        console.log(event);
             // Shift + D 키가 눌렸는지 확인
             if (event.shiftKey && event.code === 'ControlRight') {
                 event.preventDefault(); // 기본 동작을 방지
