@@ -843,6 +843,18 @@ $(document).ready(function() {
         });
     });
 
+    function adjustTextareaHeight(id) {
+      const textarea = document.getElementById(id);
+      textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        const newHeight = Math.min(this.scrollHeight, 10 * parseFloat(getComputedStyle(this).lineHeight));
+        this.style.height = newHeight + 'px';
+      });
+    }
+
+    ['special_notes', 'special_notes2', 'notes', 'notes2'].forEach(adjustTextareaHeight);
+
+
 //    setInterval(function() {
 //        // 페이지나 필터 상태 유지하며 테이블 데이터만 새로고침
 //        table.ajax.reload(null, false);
