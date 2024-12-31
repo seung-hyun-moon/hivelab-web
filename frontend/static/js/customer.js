@@ -11,7 +11,7 @@ function formatData2(data, type, row) {
         data = data || '';
         var move_in_date = row.move_in_date ? row.move_in_date + ' | ' : '- | ';
         var price = row.price ? row.price + ' | ' : '- | ';
-        var area = row.area ? row.area + ' | ' : '- |';
+        var area = row.area ? row.area + ' | ' : '- | ';
         var location = row.location ? row.location + '\n' : '-\n';
         var special_notes = row.special_notes ? row.special_notes : '특이사항 : -';
         return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + move_in_date + price + area + location + special_notes + '\n\n' + data + '</textarea>';
@@ -541,7 +541,7 @@ $(document).ready(function() {
 
 
         var fields = ['contact_person'];
-        var statuses = ['진행', '완료', '보류', '폐기', '잠재', '전체'];
+        var statuses = ['진행', '완료', '보류', '폐기', '대기', '전체'];
         var counts = {};
 
 
@@ -568,7 +568,7 @@ $(document).ready(function() {
                                 counts[fieldName]['폐기']++;
                                 break;
                             case 4:
-                                counts[fieldName]['잠재']++;
+                                counts[fieldName]['대기']++;
                                 break;
                         }
                         counts[fieldName]['전체']++;
