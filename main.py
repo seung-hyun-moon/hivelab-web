@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from backend.routers import auth, customer, property, contact, image, download, event
+from backend.routers import auth, customer, property, contact, image, download, event, jjinbba
 from backend.db.database import conn
 
 
@@ -42,6 +42,8 @@ app.include_router(contact.ContactRouter().router, tags=["contact"], prefix="/ap
 app.include_router(download.FileRouter().router, tags=["download"], prefix="/api/download")
 app.include_router(download.DataCategoryRouter().router, tags=["data_category"], prefix="/api/data_category")
 
+app.include_router(jjinbba.JjinbbaRouter().router, tags=["jjinbba"], prefix="/api/jjinbba")
+
 app.include_router(event.EventRouter().router, tags=["event"], prefix="/api/event")
 
 app.include_router(image.router, tags=["image"], prefix="/api/image")
@@ -68,6 +70,10 @@ async def move_contact(request: Request):
 @app.get("/property")
 async def move_property(request: Request):
     return templates.TemplateResponse("property.html", {"request": request})
+
+@app.get("/jjinbba")
+async def move_jjinbba_list(request: Request):
+    return templates.TemplateResponse("jjinbba_list.html", {"request": request})
 
 # 파일 다운로드 형태 게시판
 @app.get("/download/{category}/{data_category_id}")
