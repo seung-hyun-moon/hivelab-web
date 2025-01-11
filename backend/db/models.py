@@ -109,16 +109,16 @@ class DataCategoryModel(Base):
     type = Column(Integer)
 
 
-class JjinbbaModel(Base):
-    __tablename__ = "jjinbba"
-    id = Column(Integer, primary_key=True, index=True)
-    numbers = Column(String, nullable=True)
-    filename = Column(String, nullable=True)
-    description = Column(String, nullable=True)
-    registration_date = Column(String, nullable=True)
-    file_path = Column(String, nullable=True)
-    person = Column(String, nullable=True)
-    status = Column(Integer)
+# class JjinbbaModel(Base):
+#     __tablename__ = "jjinbba"
+#     id = Column(Integer, primary_key=True, index=True)
+#     numbers = Column(String, nullable=True)
+#     filename = Column(String, nullable=True)
+#     description = Column(String, nullable=True)
+#     registration_date = Column(String, nullable=True)
+#     file_path = Column(String, nullable=True)
+#     person = Column(String, nullable=True)
+#     status = Column(Integer)
 
 class EventModel(Base):
     __tablename__ = "events"

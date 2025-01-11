@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="mt-10">
+    <!-- Top Buttons -->
+    <div class="d-flex justify-content-between m-3">
+        <div class="d-flex">
+            <input id="id_input_number" type="text" class="form-control-sm me-2" style="border: 1px solid #ced4da;">
+            <a id="id_move_number" class="btn btn-sm btn-secondary" href="#">조회</a>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-success me-2">Right Button 1</button>
+            <button class="btn btn-sm btn-danger">Right Button 2</button>
+        </div>
+    </div>
+
+    <!-- Row 1: Full Width -->
+    <div class="row m-3 flex-grow-1">
+        <div class="col-12" style="height: 15vh; background-color: #f8f9fa; border: 1px solid #dee2e6;">
+            매물번호 : <input name="name_ro_매물번호" readonly>
+        </div>
+    </div>
+
+    <!-- Row 2: Three Columns -->
+    <div class="row m-3 flex-grow-1">
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6; overflow-y: auto;">
+            <form>
+                {% set items = [
+                    ('주소', true), ('층', true), ('보증금', true), ('임대료', true), ('관리비', true), ('임대면적', false), ('전용면적', true),
+                    ('EV', true), ('냉난방', true), ('화장실', true), ('특징', true), ('주차', true), ('합', false),
+                    ('NOC', false), ('건물명', false), ('규모', false), ('연면적', false), ('준공년도', false), ('방향', false),
+                    ('매물번호', false), ('법정총EV', false)
+                ] %}
+                {% for item in items %}
+                <div class="mb-1 d-flex align-items-center" style="font-size: 0.8rem;">
+                    <div class="d-flex w-100">
+                        <!-- Checkbox Column -->
+                        <div class="d-flex justify-content-center align-items-center" style="width: 5%; padding: 0.3rem;">
+                            <input class="me-2" type="checkbox" id="id_checkbox_{{ item[0] }}" {% if item[1] %}checked{% endif %} style="width: 1rem; height: 1rem;">
+                        </div>
+                        <!-- Label Column -->
+                        <div class="d-flex justify-content-start align-items-center" style="width: 25%; padding: 0.3rem;">
+                            <label class="me-2" for="id_checkbox_{{ item[0] }}">{{ item[0] }}</label>
+                        </div>
+                        <!-- Read-Only Input Column -->
+                        <div class="d-flex justify-content-start align-items-center" style="width: 35%; padding: 0.3rem;">
+                            <input class="form-control" type="text" name="name_ro_{{ item[0] }}" readonly value="{{ item[0] }}">
+                        </div>
+                        <!-- Editable Input Column -->
+                        <div class="d-flex justify-content-start align-items-center" style="width: 35%; padding: 0.3rem;">
+                            <input class="form-control" type="text" name="name_edit_{{ item[0] }}" placeholder="{{ item[0] }}">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </form>
+        </div>
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;">
+            <input class="form-control" type="text" id="id_jjinbba_template" style="height:100%">
+        </div>
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;"></div>
+    </div>
+</div>
+
+<script>
+    var number = "{{ number }}";
+</script>
+
+<script src="{{ url_for('static', path='js/jjinbba.js') }}"></script>
+
+{% endblock %}
