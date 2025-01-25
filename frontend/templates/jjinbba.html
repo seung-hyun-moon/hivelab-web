@@ -10,8 +10,8 @@
             <a id="id_move_number" class="btn btn-sm btn-secondary" href="#">조회</a>
         </div>
         <div>
-            <button class="btn btn-sm btn-success me-2">Right Button 1</button>
-            <button class="btn btn-sm btn-danger">Right Button 2</button>
+            <button id="id_each_img_download" class="btn btn-sm btn-success me-2">해당 매물 이미지 다운</button>
+            <button class="btn btn-sm btn-danger">구현중</button>
         </div>
     </div>
 
@@ -27,10 +27,15 @@
         <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6; overflow-y: auto;">
             <form>
                 {% set items = [
-                    ('주소', true), ('층', true), ('보증금', true), ('임대료', true), ('관리비', true), ('임대면적', false), ('전용면적', true),
-                    ('EV', true), ('냉난방', true), ('화장실', true), ('특징', true), ('주차', true), ('합', false),
-                    ('NOC', false), ('건물명', false), ('규모', false), ('연면적', false), ('준공년도', false), ('방향', false),
-                    ('매물번호', false), ('법정총EV', false)
+                    ('주소', true), ('건물명', true), ('층', true),
+                    ('보증금', true), ('임대료', true), ('관리비', true), ('임+관', false),
+                    ('이율(%)', false), ('RF(개월)', false), ('NOC', false),
+
+                    ('임대면적', false), ('전용면적', true),
+
+                    ('엘베', true), ('주차', true), ('냉난방', true), ('화장실', true), ('방향', false), ('특징', true),
+
+                    ('사용승인일', false), ('대지면적', false), ('연면적', false), ('규모', false), ('주구조', false), ('건폐율', false), ('용적률', false),
                 ] %}
                 {% for item in items %}
                 <div class="mb-1 d-flex align-items-center" style="font-size: 0.8rem;">
@@ -56,10 +61,12 @@
                 {% endfor %}
             </form>
         </div>
-        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;">
-            <input class="form-control" type="text" id="id_jjinbba_template" style="height:100%">
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;" spellcheck="false">
+            <div id="id_jjinbba_template" style="height:100%; overflow-y: auto; padding: 10px;" contenteditable="true"></div>
         </div>
-        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;"></div>
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;">
+            <iframe id="id_naver_iframe" style="height: 100%;width: 100%;"></iframe>
+        </div>
     </div>
 </div>
 
