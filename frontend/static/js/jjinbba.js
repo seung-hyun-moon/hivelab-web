@@ -119,7 +119,6 @@ function calculateExcelFormula() {
  let mgmtCost = Math.floor(formatNumber(document.querySelectorAll('input[name="name_edit_관리비"]')[0]?.value))*10000;
  let areaPyeong = parseFloat(document.querySelectorAll('input[name="name_edit_전용면적"]')[0]?.value);
 
- console.log(deposit, interestRate, rent, rentFree, mgmtCost, areaPyeong);
   try {
     // 숫자로 변환 및 유효성 검사
     const d = Number(deposit);
@@ -410,6 +409,15 @@ function generateTemplate() {
     document.getElementById('id_jjinbba_template').innerHTML = template;
 }
 
+document.getElementById('id_move_number').addEventListener('click', function() {
+    const inputValue = document.getElementById('id_input_number').value.trim();
+    console.log(inputValue);
+    if (inputValue) {
+        const newUrl = window.location.origin + "/jjinbba/" + inputValue;
+        window.location.href = newUrl;
+    }
+});
+
 /**
  * 메인 진입점
  */
@@ -456,15 +464,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('Error loading iframe content:', error);
     }
-
-    // 9) 다른 번호로 이동
-    document.getElementById('id_move_number').addEventListener('click', function() {
-        const inputValue = document.getElementById('id_input_number').value.trim();
-        if (inputValue) {
-            const newUrl = window.location.origin + "/jjinbba/" + encodeURIComponent(inputValue);
-            window.location.href = newUrl;
-        }
-    });
 
     // 10) 이미지 ZIP 다운로드
     document.getElementById('id_each_img_download').addEventListener('click', async function() {
