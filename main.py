@@ -76,6 +76,15 @@ async def move_property(request: Request):
 async def move_jjinbba(request: Request, number: int = None):
     return templates.TemplateResponse("jjinbba.html", {"number":number, "request": request})
 
+@app.get("/jjinbba_list")
+async def move_jjinbba_list(request: Request):
+    return templates.TemplateResponse("jjinbba_list.html", {"request": request})
+
+@app.get("/jjinbba_list/{jjinbba_id}")
+@app.get("/jjinbba_list/{jjinbba_id}/{number}")
+async def move_jjinbba_list(request: Request, jjinbba_id: int, number: int = None):
+    return templates.TemplateResponse("jjinbba_detail.html", {"jjinbba_id": jjinbba_id, "number": number, "request": request})
+
 # 파일 다운로드 형태 게시판
 @app.get("/download/{category}/{data_category_id}")
 async def move_download(request: Request, category: str, data_category_id: int):

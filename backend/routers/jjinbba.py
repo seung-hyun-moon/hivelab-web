@@ -18,8 +18,8 @@ from fastapi.responses import StreamingResponse
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-# from backend.schemas._jjinbba import Jjinbba, JjinbbaCreate, JjinbbaUpdate
-# from backend.db.models import JjinbbaModel
+from backend.schemas.jjinbba import Jjinbba, JjinbbaCreate, JjinbbaUpdate, ImageRequest
+from backend.db.models import JjinbbaModel
 from backend.db.database import get_db
 from backend.routers.basecurd import BaseCRUD
 
@@ -44,19 +44,22 @@ headers = {
     "Sec-Fetch-Site": "same-origin",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 }
-from pydantic import BaseModel
-class ImageRequest(BaseModel):
-    zip_name: str
-    image_urls: list  # 이미지 URL 리스트
 
-class JjinbbaRouter():
+
+class JjinbbaRouter(BaseCRUD):
     def __init__(self):
         self.router = APIRouter()
-        self.router.add_api_route('/{number}', self.get_naver_info, response_model=None, methods=['GET'])
+        super().__init__(get_schema=Jjinbba, post_schema=JjinbbaCreate, put_schema=JjinbbaUpdate, model=JjinbbaModel)
+        self.router.add_api_route('/info/{number}', self.get_naver_info, response_model=None, methods=['GET'])
         self.router.add_api_route('/adr/{lng}_{lat}', self.get_naver_map, response_model=None, methods=['GET'])
         self.router.add_api_route('/nif/{number}', self.get_naver_iframe, response_model=None, methods=['GET'])
-        self.router.add_api_route('/nif/{number}', self.get_naver_iframe, response_model=None, methods=['GET'])
         self.router.add_api_route('/each_down', self.download_each_images_as_zip, response_model=None, methods=['POST'])
+
+    def create_item(self, item: JjinbbaCreate, db: Session = Depends(get_db)):
+        return super().create_item(item=item, db=db)
+
+    def update_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
+        return super().update_item(item_id=item_id, item=item, db=db)
 
     async def get_naver_iframe(self, number: str):
         naver_url = f"https://new.land.naver.com/offices?articleNo={number}"
@@ -88,7 +91,6 @@ class JjinbbaRouter():
     async def get_naver_info(self, number: str):
         # URL of the Naver API endpoint
         naver_url = f"https://new.land.naver.com/api/articles/{number}"
-
         try:
             # Use aiohttp for asynchronous HTTP requests
             async with aiohttp.ClientSession() as session:
@@ -96,7 +98,6 @@ class JjinbbaRouter():
                     # Check if the response is successful
                     if response.status == 200:
                         data = await response.json()  # Read the JSON data asynchronously
-                        print(data)  # Print the response data
                     else:
                         print(f"Failed to fetch data from Naver. Status code: {response.status}")
             return data
@@ -112,7 +113,6 @@ class JjinbbaRouter():
             "X-NCP-APIGW-API-KEY-ID": client_id,
             "X-NCP-APIGW-API-KEY": client_secret,
         }
-        print(url)
 
         try:
             # Use aiohttp for asynchronous HTTP requests
@@ -132,10 +132,7 @@ class JjinbbaRouter():
     @staticmethod
     def extract_address_and_number_correctly(xml_data):
         try:
-            # XML 파싱
-            print("xml_data", xml_data)
             root = ET.fromstring(xml_data)
-            print("root", root)
             for order in root.findall('.//order'):
                 area3 = order.find(".//area3")
                 if area3 is not None:

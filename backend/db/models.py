@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Text, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
-
+from datetime import datetime
 
 
 class User(Base):
@@ -109,16 +109,20 @@ class DataCategoryModel(Base):
     type = Column(Integer)
 
 
-# class JjinbbaModel(Base):
-#     __tablename__ = "jjinbba"
-#     id = Column(Integer, primary_key=True, index=True)
-#     numbers = Column(String, nullable=True)
-#     filename = Column(String, nullable=True)
-#     description = Column(String, nullable=True)
-#     registration_date = Column(String, nullable=True)
-#     file_path = Column(String, nullable=True)
-#     person = Column(String, nullable=True)
-#     status = Column(Integer)
+class JjinbbaModel(Base):
+    __tablename__ = "jjinbba"
+
+    id = Column(Integer, primary_key=True, index=True)
+    person = Column(String, nullable=True)
+    # numbers 컬럼은 정수 리스트를 저장 (예: [12345, 67890, 11223])
+    numbers = Column(JSON, nullable=False, default=list)
+
+    description = Column(String, nullable=True)
+
+    created_at = Column(String)
+    updated_at = Column(String)
+
+    is_completed = Column(Boolean, default=True)
 
 class EventModel(Base):
     __tablename__ = "events"

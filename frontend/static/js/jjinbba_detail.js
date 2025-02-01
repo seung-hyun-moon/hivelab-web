@@ -24,6 +24,7 @@ async function fetchJSON(url) {
  */
 async function getBuildingData(number) {
     const naver_url = `/api/jjinbba/info/${number}`;
+    console.log("naver_url", naver_url);
     return await fetchJSON(naver_url);
 }
 
@@ -444,14 +445,68 @@ document.getElementById('id_move_number')?.addEventListener('click', function() 
  * 메인 진입점
  */
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1) URL에서 number 추출
-    const currentUrl = window.location.href;
-    const match = currentUrl.match(/\/jjinbba\/(\d+)/);
-    if (!match) return;
-    const number = match[1];
+    // 1) number 추출 X
+    console.log(number, jjinbba_id);
+
+    // Navigation Logic
+    let currentIndex = 0;
+    let propertyList = [];
+
+    function updateNavigation() {
+//        document.getElementById('currentPosition').textContent =
+//            `매물 ${currentIndex+1}/${propertyList.length}`;
+
+        document.getElementById('prevBtn').disabled = currentIndex === 0;
+        document.getElementById('nextBtn').disabled = currentIndex === propertyList.length-1;
+    }
+
+    // Initial load
+    try {
+        const response = await fetch(`/api/jjinbba/${jjinbba_id}`);
+        const data = await response.json();
+        propertyList = data.numbers;
+        if (number == 'None') {
+            number = propertyList[0];
+        }
+
+        const btnContainer = document.getElementById('btn_numbers');
+        // propertyList의 각 요소마다 버튼 생성
+        propertyList.forEach(property => {
+          const btn = document.createElement('button');
+          btn.textContent = property;
+          btn.className = 'btn btn-outline-primary btn-sm m-1';
+
+          // 클릭 시 해당 URL로 이동하는 이벤트 추가
+          btn.addEventListener('click', () => {
+            window.location.href = `/jjinbba_list/${jjinbba_id}/${property}`;
+          });
+
+          // 컨테이너에 버튼 추가
+          btnContainer.appendChild(btn);
+        });
+
+        currentIndex = propertyList.indexOf(Number(number));
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if(currentIndex > 0) {
+                currentIndex = currentIndex - 1;
+                window.location.href = `/jjinbba_list/${jjinbba_id}/${propertyList[currentIndex]}`;
+            }
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if(currentIndex < propertyList.length - 1) {
+                currentIndex = currentIndex + 1;
+                window.location.href = `/jjinbba_list/${jjinbba_id}/${propertyList[currentIndex]}`;
+            }
+        });
+        updateNavigation();
+    } catch (error) {
+        console.error('Error loading property list:', error);
+    }
 
     // 2) 두 가지 API 데이터 가져오기 (실패 시 null 반환)
     const buildingData = await getBuildingData(number);
+    console.log(buildingData);
     const pnu = buildingData?.articleDetail?.pnu || "";
     const buildingReg = await getBuildingReg(pnu);
 
@@ -477,15 +532,28 @@ document.addEventListener('DOMContentLoaded', async function() {
         checkbox.addEventListener('change', generateTemplate);
     });
 
-    // 8) iframe 로드 (NIF)
-    try {
-        const iframeResponse = await fetch(`/api/jjinbba/nif/${number}`, { method: 'GET' });
-        if (!iframeResponse.ok) throw new Error('Network response was not ok');
-        const iframeContent = await iframeResponse.json();
-        document.getElementById('id_naver_iframe').srcdoc = iframeContent;
-    } catch (error) {
-        console.error('Error loading iframe content:', error);
-    }
+
+    document.getElementById('id_naver_info')?.addEventListener('click', async () => {
+        // 8) iframe 로드 (NIF)
+        try {
+            const iframeResponse = await fetch(`/api/jjinbba/nif/${number}`, { method: 'GET' });
+            if (!iframeResponse.ok) throw new Error('Network response was not ok');
+            const iframeContent = await iframeResponse.json();
+            document.getElementById('id_naver_iframe').srcdoc = iframeContent;
+        } catch (error) {
+            console.error('Error loading iframe content:', error);
+        }
+    });
+
+
+      // 클릭 이벤트 리스너 등록
+      document.getElementById('id_naver_info_new')?.addEventListener('click', () => {
+        // 원하는 링크를 지정 (예: 'https://www.example.com')
+        const url = `https://new.land.naver.com/offices?articleNo=${number}`;
+        // 새 창(또는 새 탭)으로 링크 열기
+        window.open(url, '_blank');
+    });
+
 
     // 10) 이미지 ZIP 다운로드
     document.getElementById('id_each_img_download').addEventListener('click', async function() {
