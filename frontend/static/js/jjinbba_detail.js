@@ -300,7 +300,7 @@ function applyFormFields(formFields) {
 /**
  * 체크된 항목들을 바탕으로 템플릿 HTML 생성 후 id_jjinbba_template에 삽입
  */
-function generateTemplate() {
+function generateTemplate(currentIndex) {
     const items = [
         { name: '주소',       checked: document.getElementById('id_checkbox_주소').checked,       value: document.getElementsByName("name_edit_주소")[0].value },
         { name: '건물명',     checked: document.getElementById('id_checkbox_건물명').checked,     value: document.getElementsByName("name_edit_건물명")[0].value },
@@ -363,7 +363,7 @@ function generateTemplate() {
     }
 
 
-    let template = `매물 1. ${combineStr}<br><br>`;
+    let template = `매물 ${currentIndex}. ${combineStr}<br><br>`;
 
     // 보증금, 임대료, 관리비, 환산면적
     if (items.find(item => item.name === '보증금' && item.checked)) {
@@ -474,7 +474,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         propertyList.forEach(property => {
           const btn = document.createElement('button');
           btn.textContent = property;
-          btn.className = 'btn btn-outline-primary btn-sm m-1';
+
+          // 현재 number와 같은 값이면 btn-primary 클래스로 채워진 파란색 버튼으로 표시
+          if (Number(property) === Number(number)) {
+            btn.className = 'btn btn-primary btn-sm m-1';
+          } else {
+            btn.className = 'btn btn-outline-primary btn-sm m-1';
+          }
 
           // 클릭 시 해당 URL로 이동하는 이벤트 추가
           btn.addEventListener('click', () => {
@@ -520,16 +526,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     applyFormFields(formFields);
 
     // 6) 템플릿 생성(초기 1회)
-    generateTemplate();
+    generateTemplate(currentIndex+1);
 
     // 7) 이벤트 리스너 등록(입력값 변경 시 템플릿 재생성)
     document.querySelectorAll('input[name^="name_edit_"]').forEach(editInput => {
-        editInput.addEventListener('input', generateTemplate);
+        editInput.addEventListener('input', event => {
+            generateTemplate(currentIndex+1);
+        });
         editInput.addEventListener('input', calculateExcelFormula);
     });
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', generateTemplate);
+        checkbox.addEventListener('change', event => {
+            generateTemplate(currentIndex+1);
+        });
     });
 
 
@@ -557,23 +567,30 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 10) 이미지 ZIP 다운로드
     document.getElementById('id_each_img_download').addEventListener('click', async function() {
-        if (!buildingData) {
-            console.error('No buildingData available');
-            return;
-        }
-        // zipName 구성
-        const zipName = formFields['층']
-            ? (formFields['주소'] + ", " + formFields['층'].split("/")[0] + "층")
-            : formFields['주소'];
-
-        // 이미지 URL
-        const imageUrls = buildingData.articlePhotos?.map(photo => photo.imageSrc) || [];
-        if (!imageUrls.length) {
-            console.error('No imageUrls available');
-            return;
-        }
+        // 클릭 시작 시 로딩 아이콘 표시
+        $('#loading-icon').show();
 
         try {
+            if (!buildingData) {
+                console.error('No buildingData available');
+                return;
+            }
+            // zipName 구성
+            const zipName = formFields['층']
+                ? number + " " + (formFields['주소'] + ", " + formFields['층'].split("/")[0] + "층")
+                : number + " " + formFields['주소'];
+
+            const imageUrls = buildingData.articlePhotos?.map(photo => `https://landthumb-phinf.pstatic.net${photo.imageSrc}`) || [];
+            if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
+                const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=1006&h=493`;
+                imageUrls.push(mapUrl);
+            }
+
+            if (!imageUrls.length) {
+                console.error('No imageUrls available');
+                return;
+            }
+
             // ZIP 생성 요청
             const response = await fetch('/api/jjinbba/each_down', {
                 method: 'POST',
@@ -600,6 +617,85 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.body.removeChild(link);
         } catch (error) {
             console.error('Error downloading ZIP file:', error);
+        } finally {
+            // 다운로드 완료 또는 에러 시 로딩 아이콘 감추기
+            $('#loading-icon').hide();
         }
     });
+
+    document.getElementById('id_all_img_download').addEventListener('click', async function() {
+        $('#loading-icon').show();
+        try {
+            // 오늘 날짜를 YYYY.MM.DD 형식으로 생성
+            const today = new Date();
+            const zipName = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+
+            // 모든 매물번호에 대해 폴더명과 이미지 URL 수집
+            const propertiesPayload = [];
+            for (const property of propertyList) {
+                // 매물번호에 해당하는 buildingData 가져오기
+                const response = await fetch(`/api/jjinbba/info/${property}`);
+
+                // (필요하다면 건축물대장, 주소 조회 등 추가 호출)
+                // 예시: buildingData.articleDetail, articleAddition 등에서 주소/층 정보를 추출
+                const buildingData = await getBuildingData(property);
+                const pnu = buildingData?.articleDetail?.pnu || "";
+                const buildingReg = await getBuildingReg(pnu);
+
+                // 3) 주소 결정
+                const address = await getAddress(buildingReg, buildingData);
+                const finalAddress = address.replace(/^서울특별시.*?구\s/, "").replace(/번지/, "") || "주소없음";
+
+                const floor = buildingData.articleAddition?.floorInfo?.split("/")[0] || "";
+                const folderName = floor ? `${property} ${finalAddress}, ${floor}층` : `${property} ${finalAddress}`;
+
+                // 기존 로직과 같이 이미지 URL 구성
+                let imageUrls = buildingData.articlePhotos?.map(photo => `https://landthumb-phinf.pstatic.net${photo.imageSrc}`) || [];
+                if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
+                    const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=1006&h=493`;
+                    imageUrls.push(mapUrl);
+                }
+
+                propertiesPayload.push({
+                    zip_name: folderName,
+                    image_urls: imageUrls
+                });
+            }
+
+            console.log("!!!", propertiesPayload);
+
+            // 백엔드의 새로운 엔드포인트 (/api/jjinbba/all_down)로 payload 전송
+            const zipResponse = await fetch('/api/jjinbba/all_down', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    zip_name: zipName,
+                    properties: propertiesPayload
+                })
+            });
+
+            console.log("1", "끝인가?");
+
+            if (!zipResponse.ok) {
+                console.error('Failed to download zip file:', zipResponse.statusText);
+                return;
+            }
+
+            // 응답 Blob → 다운로드 처리
+            const blob = await zipResponse.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${zipName}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url); // 메모리 해제
+        } catch (error) {
+            console.error('Error downloading ZIP file:', error);
+        } finally {
+            $('#loading-icon').hide();
+        }
+    });
+
 });

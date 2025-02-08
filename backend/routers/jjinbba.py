@@ -4,6 +4,8 @@ import xml.etree.ElementTree as ET
 import html
 import zipfile
 from io import BytesIO
+import tempfile
+import os
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,12 +15,12 @@ from selenium.webdriver.chrome.options import Options
 
 from typing import List, Dict
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import StreamingResponse, FileResponse
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from backend.schemas.jjinbba import Jjinbba, JjinbbaCreate, JjinbbaUpdate, ImageRequest
+from backend.schemas.jjinbba import Jjinbba, JjinbbaCreate, JjinbbaUpdate, ImageRequest, AllImagesRequest
 from backend.db.models import JjinbbaModel
 from backend.db.database import get_db
 from backend.routers.basecurd import BaseCRUD
@@ -54,6 +56,7 @@ class JjinbbaRouter(BaseCRUD):
         self.router.add_api_route('/adr/{lng}_{lat}', self.get_naver_map, response_model=None, methods=['GET'])
         self.router.add_api_route('/nif/{number}', self.get_naver_iframe, response_model=None, methods=['GET'])
         self.router.add_api_route('/each_down', self.download_each_images_as_zip, response_model=None, methods=['POST'])
+        self.router.add_api_route('/all_down', self.download_all_images_as_zip, response_model=None, methods=['POST'])
 
     def create_item(self, item: JjinbbaCreate, db: Session = Depends(get_db)):
         return super().create_item(item=item, db=db)
@@ -167,10 +170,11 @@ class JjinbbaRouter(BaseCRUD):
                 for idx, url in enumerate(image_urls):
                     try:
                         # 이미지 파일 다운로드
-                        async with session.get(r"https://landthumb-phinf.pstatic.net"+url) as response:
+                        async with session.get(url) as response:
                             if response.status == 200:
                                 image_data = await response.read()
-                                zip_file.writestr(f"image_{idx}.jpg", image_data)  # 이미지 데이터를 직접 zip 파일에 저장
+                                file_name = "위치정보.jpg" if idx == len(image_urls) - 1 else f"image_{idx}.jpg"
+                                zip_file.writestr(file_name, image_data)  # 이미지 데이터를 직접 zip 파일에 저장
                             else:
                                 print(f"Failed to fetch image from {url}. Status code: {response.status}")
                     except Exception as e:
@@ -182,3 +186,58 @@ class JjinbbaRouter(BaseCRUD):
         zip_filename = f"{zip_name}.zip"
         encoded_zip_filename = urllib.parse.quote(zip_filename)
         return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_zip_filename}"})
+
+    async def download_all_images_as_zip(self, request: AllImagesRequest, background_tasks: BackgroundTasks):
+        zip_name = request.zip_name
+        properties = request.properties
+
+        # 임시 파일 생성 (삭제되지 않도록 delete=False)
+        temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+        zip_path = temp_zip.name
+        temp_zip.close()  # zipfile 모듈이 해당 파일을 열 수 있도록 닫아줌
+
+        # 폴더명 중복 처리를 위한 딕셔너리
+        folder_name_counts = {}
+
+        # 임시 파일에 ZIP 파일 생성
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            async with aiohttp.ClientSession() as session:
+                for prop in properties:
+                    original_folder = prop.zip_name  # 원래 폴더명
+                    # 중복된 폴더명 처리: 이미 존재하면 (1), (2) 등 붙임
+                    if original_folder in folder_name_counts:
+                        folder_name_counts[original_folder] += 1
+                        folder = f"{original_folder} ({folder_name_counts[original_folder]})"
+                    else:
+                        folder_name_counts[original_folder] = 0
+                        folder = original_folder
+
+                    image_urls = prop.image_urls
+                    for idx, url in enumerate(image_urls):
+                        try:
+                            async with session.get(url) as response:
+                                if response.status == 200:
+                                    image_data = await response.read()
+                                    # 마지막 이미지면 "위치정보.jpg", 아니면 "image_{idx}.jpg"
+                                    file_name = "위치정보.jpg" if idx == len(image_urls) - 1 else f"image_{idx}.jpg"
+                                    # 폴더 내부에 파일 저장 (경로 형식)
+                                    file_path = f"{folder}/{file_name}"
+                                    zip_file.writestr(file_path, image_data)
+                                else:
+                                    print(f"Failed to fetch image from {url}. Status code: {response.status}")
+                        except Exception as e:
+                            print(f"Error downloading {url}: {e}")
+
+        # 응답 전송 후 임시 파일을 삭제하도록 백그라운드 작업에 등록
+        background_tasks.add_task(os.remove, zip_path)
+
+        zip_filename = f"{zip_name}.zip"
+        encoded_zip_filename = urllib.parse.quote(zip_filename)
+        return FileResponse(
+            path=zip_path,
+            filename=zip_filename,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_zip_filename}"
+            }
+        )

@@ -20,9 +20,10 @@
 
         </div>
         <div>
-            <button id="id_each_img_download" class="btn btn-sm btn-success me-2">해당 매물 이미지 다운</button>
+            <button id="id_all_img_download" class="btn btn-sm btn-success me-2">전체 매물 이미지 다운</button>
+            <button id="id_each_img_download" class="btn btn-sm btn-warning me-2">해당 매물 이미지 다운</button>
             <button id="id_naver_info" class="btn btn-sm btn-danger hidden">네이버 가져오기</button>
-            <button id="id_naver_info_new" class="btn btn-sm btn-danger">네이버 새창 열기</button>
+            <button id="id_naver_info_new" class="btn btn-sm btn-danger">네이버 새탭 열기</button>
         </div>
     </div>
 
@@ -72,10 +73,10 @@
                 {% endfor %}
             </form>
         </div>
-        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;" spellcheck="false">
+        <div class="col-8" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;" spellcheck="false">
             <div id="id_jjinbba_template" style="height:100%; overflow-y: auto; padding: 10px;" contenteditable="true"></div>
         </div>
-        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;">
+        <div class="col-4 hidden" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;">
             <iframe id="id_naver_iframe" style="height: 100%;width: 100%;"></iframe>
         </div>
     </div>

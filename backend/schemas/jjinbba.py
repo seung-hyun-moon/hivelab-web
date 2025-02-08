@@ -29,6 +29,12 @@ class Jjinbba(JjinbbaBase):
     class Config:
         from_attributes = True
 
+
 class ImageRequest(BaseModel):
     zip_name: str
     image_urls: list  # 이미지 URL 리스트
+
+
+class AllImagesRequest(BaseModel):
+    zip_name: str                # 오늘 날짜 "YYYY.MM.DD" 등이 전달됨
+    properties: List[ImageRequest]
