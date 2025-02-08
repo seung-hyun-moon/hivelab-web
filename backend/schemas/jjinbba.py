@@ -3,12 +3,12 @@ from typing import List, Optional
 
 
 class JjinbbaBase(BaseModel):
-    person: Optional[str] = "미정"
-    description: Optional[str]
-    numbers: List[int]
+    person: Optional[str] = None
+    description: Optional[str] = None
+    numbers: Optional[List[int]] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-    is_completed: bool = False
+    is_completed: Optional[bool] = False
 
     class Config:
         from_attributes = True

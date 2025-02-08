@@ -475,21 +475,97 @@ document.addEventListener('DOMContentLoaded', async function() {
           const btn = document.createElement('button');
           btn.textContent = property;
 
-          // 현재 number와 같은 값이면 btn-primary 클래스로 채워진 파란색 버튼으로 표시
+          // 현재 number와 같은 값이면 파란색, 아니면 외곽선 스타일 적용
           if (Number(property) === Number(number)) {
             btn.className = 'btn btn-primary btn-sm m-1';
           } else {
             btn.className = 'btn btn-outline-primary btn-sm m-1';
           }
 
-          // 클릭 시 해당 URL로 이동하는 이벤트 추가
+          // 좌클릭 시 해당 URL로 이동
           btn.addEventListener('click', () => {
             window.location.href = `/jjinbba_list/${jjinbba_id}/${property}`;
+          });
+
+          // 우클릭(컨텍스트 메뉴) 시 사용자 정의 메뉴 표시
+          btn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+
+            // 기존에 표시된 커스텀 컨텍스트 메뉴가 있다면 제거
+            const existingMenu = document.querySelector('.custom-context-menu');
+            if (existingMenu) {
+              existingMenu.remove();
+            }
+
+            // 컨텍스트 메뉴 생성
+            const menu = document.createElement('div');
+            menu.className = 'custom-context-menu';
+            menu.style.position = 'absolute';
+            menu.style.top = `${e.pageY}px`;
+            menu.style.left = `${e.pageX}px`;
+            menu.style.background = '#fff';
+            menu.style.border = '1px solid #ccc';
+            menu.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+            menu.style.zIndex = 1000;
+            menu.style.minWidth = '100px';
+
+            // 메뉴 항목 생성: 삭제
+            const deleteItem = document.createElement('div');
+            deleteItem.textContent = '삭제';
+            deleteItem.style.padding = '8px 12px';
+            deleteItem.style.cursor = 'pointer';
+            deleteItem.addEventListener('mouseover', () => {
+              deleteItem.style.backgroundColor = '#f0f0f0';
+            });
+            deleteItem.addEventListener('mouseout', () => {
+              deleteItem.style.backgroundColor = '#fff';
+            });
+            deleteItem.addEventListener('click', async () => {
+              // 현재 리스트에서 해당 property를 제외한 새 리스트 생성
+              const updatedNumbers = propertyList.filter(p => Number(p) !== Number(property));
+              try {
+                const response = await fetch(`/api/jjinbba/${jjinbba_id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  // 백엔드에서 numbers 필드를 업데이트하도록 처리
+                  body: JSON.stringify({
+                        numbers: updatedNumbers,
+                        updated_at: formatDate(),
+                        id: jjinbba_id
+                    })
+                });
+                if (!response.ok) {
+                  throw new Error('삭제 요청 실패');
+                }
+                // 삭제 성공 시 버튼 제거 및 전역 리스트 업데이트
+                btn.remove();
+                propertyList = updatedNumbers;
+                alert(`${property} 번호가 삭제되었습니다.`);
+              } catch (error) {
+                console.error('삭제 에러:', error);
+                alert('삭제에 실패했습니다.');
+              }
+              menu.remove();
+            });
+            menu.appendChild(deleteItem);
+
+            // 컨텍스트 메뉴를 body에 추가
+            document.body.appendChild(menu);
+
+            // 메뉴 외부 클릭 시 메뉴 제거
+            const removeContextMenu = (event) => {
+              if (!menu.contains(event.target)) {
+                menu.remove();
+                document.removeEventListener('click', removeContextMenu);
+              }
+            };
+            document.addEventListener('click', removeContextMenu);
           });
 
           // 컨테이너에 버튼 추가
           btnContainer.appendChild(btn);
         });
+
 
         currentIndex = propertyList.indexOf(Number(number));
         document.getElementById('prevBtn').addEventListener('click', () => {

@@ -64,6 +64,9 @@ class JjinbbaRouter(BaseCRUD):
     def update_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
         return super().update_item(item_id=item_id, item=item, db=db)
 
+    def patch_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
+        return super().patch_item(item_id=item_id, item=item, db=db)
+
     async def get_naver_iframe(self, number: str):
         naver_url = f"https://new.land.naver.com/offices?articleNo={number}"
 
