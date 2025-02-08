@@ -126,12 +126,23 @@ function formatNumber(str) {
 /**
  * YYYYMMDD → YYYY년 M월 D일
  */
-function formatDate(dateStr) {
+function formatKoreaDate(dateStr) {
     if (dateStr?.length !== 8) return "잘못된 날짜 형식";
     const year = dateStr.slice(0, 4);
     const month = parseInt(dateStr.slice(4, 6), 10);
     const day = parseInt(dateStr.slice(6, 8), 10);
     return `${year}년 ${month}월 ${day}일`;
+}
+
+function formatDate() {
+    var date = new Date();
+    var year = date.getFullYear().toString();
+    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+    var day = ('0' + date.getDate()).slice(-2);
+    var hour = ('0' + date.getHours()).slice(-2);
+    var minute = ('0' + date.getMinutes()).slice(-2);
+    var second = ('0' + date.getSeconds()).slice(-2);
+    return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
 function calculateExcelFormula() {
@@ -242,7 +253,7 @@ function populateFormFields(buildingData, buildingReg, address) {
         '방향':       buildingData?.articleAddition?.direction || "",
         '특징':       buildingData?.articleAddition?.articleFeatureDesc || "",
 
-        '사용승인일':   formatDate(useAprDay),
+        '사용승인일':   formatKoreaDate(useAprDay),
         '대지면적':    (platArea*0.3025).toFixed(1) + "평",
         '연면적':     (totArea*0.3025).toFixed(1) + "평",
 
