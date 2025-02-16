@@ -1,3 +1,5 @@
+let currentCheckboxes = {};
+let first_number = 1;
 /**
  * 공통 Fetch → JSON 호출 함수
  * @param {string} url
@@ -17,6 +19,40 @@ async function fetchJSON(url) {
     }
 }
 
+async function setupCheckboxUpdater(jjinbbaId) {
+    // id가 "id_checkbox_"로 시작하는 모든 체크박스를 선택
+    document.querySelectorAll("input[type=checkbox][id^='id_checkbox_']").forEach(checkbox => {
+        checkbox.addEventListener("change", async function() {
+            // id에서 체크박스 항목 이름 추출 (예: "id_checkbox_주소" → "주소")
+            const key = this.id.replace("id_checkbox_", "");
+            const value = this.checked;
+            // 변경된 항목만 local 딕셔너리에 반영
+            currentCheckboxes[key] = value;
+            try {
+                const response = await fetch(`/api/jjinbba/${jjinbbaId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        // checkboxes 필드의 해당 항목만 업데이트
+                        checkboxes: currentCheckboxes,
+                        updated_at: formatDate(),
+                        id: jjinbba_id
+                    })
+                });
+                if (response.ok) {
+                    console.log(`체크박스 [${key}] 업데이트 성공: ${value}`);
+                } else {
+                    console.error(`체크박스 [${key}] 업데이트 실패, 상태코드: ${response.status}`);
+                }
+            } catch (error) {
+                console.error(`체크박스 [${key}] 업데이트 중 예외 발생:`, error);
+            }
+        });
+    });
+}
+
 /**
  * /api/jjinbba/{number} 에서 매물 정보 가져오기
  * @param {number|string} number
@@ -26,6 +62,12 @@ async function getBuildingData(number) {
     const naver_url = `/api/jjinbba/info/${number}`;
     console.log("naver_url", naver_url);
     return await fetchJSON(naver_url);
+}
+
+async function getCheckBoxesData(jjinbba_id) {
+    const url = `/api/jjinbba/${jjinbba_id}`;
+    console.log("Fetching CheckBoxes data from", url);
+    return await fetchJSON(url);
 }
 
 /**
@@ -80,7 +122,7 @@ async function getAddress(buildingReg, buildingData) {
  */
 function convertToKoreanUnit(num) {
     if (typeof num !== 'number' || isNaN(num) || num < 0) {
-        return "유효하지 않은 입력";
+        return "0";
     }
     const manValue = num / 10000;
     return manValue % 1 === 0
@@ -127,7 +169,7 @@ function formatNumber(str) {
  * YYYYMMDD → YYYY년 M월 D일
  */
 function formatKoreaDate(dateStr) {
-    if (dateStr?.length !== 8) return "잘못된 날짜 형식";
+    if (dateStr?.length !== 8) return "";
     const year = dateStr.slice(0, 4);
     const month = parseInt(dateStr.slice(4, 6), 10);
     const day = parseInt(dateStr.slice(6, 8), 10);
@@ -374,7 +416,7 @@ function generateTemplate(currentIndex) {
     }
 
 
-    let template = `매물 ${currentIndex}. ${combineStr}<br><br>`;
+    let template = `매물 ${Number(first_number)+currentIndex-1}. ${combineStr}<br><br>`;
 
     // 보증금, 임대료, 관리비, 환산면적
     if (items.find(item => item.name === '보증금' && item.checked)) {
@@ -475,10 +517,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         const response = await fetch(`/api/jjinbba/${jjinbba_id}`);
         const data = await response.json();
+        first_number = data.first_number;
         propertyList = data.numbers;
         if (number == 'None') {
             number = propertyList[0];
         }
+
+        document.getElementById('id_number').value = number;
 
         const btnContainer = document.getElementById('btn_numbers');
         // propertyList의 각 요소마다 버튼 생성
@@ -597,6 +642,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error('Error loading property list:', error);
     }
 
+    // 1) 체크 박스 정보 가져오기!!!
+    const infos = await getCheckBoxesData(jjinbba_id);
+    if (infos && infos.checkboxes) {
+        currentCheckboxes = infos.checkboxes;
+        Object.keys(currentCheckboxes).forEach(key => {
+            const checkbox = document.getElementById(`id_checkbox_${key}`);
+            if (checkbox) {
+                checkbox.checked = currentCheckboxes[key];
+            }
+        });
+    };
+    setupCheckboxUpdater(jjinbba_id);
+
     // 2) 두 가지 API 데이터 가져오기 (실패 시 null 반환)
     const buildingData = await getBuildingData(number);
     console.log(buildingData);
@@ -628,6 +686,40 @@ document.addEventListener('DOMContentLoaded', async function() {
             generateTemplate(currentIndex+1);
         });
     });
+
+    // 7-1) 매물번호 처음꺼 바꾸기
+    $('#id_number_input').on('input', function() {
+        const numberValue = $(this).val();
+
+        // 입력값이 빈 문자열이 아니고, 숫자로 변환했을 때 NaN이면 숫자가 아닌 것으로 간주
+        if (numberValue !== '' && isNaN(parseFloat(numberValue))) {
+          console.log("입력값이 숫자가 아닙니다:", numberValue);
+          return; // 숫자가 아니면 AJAX 요청을 실행하지 않음
+        }
+
+        fetch(`/api/jjinbba/${jjinbba_id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ first_number: numberValue })
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('네트워크 응답이 올바르지 않습니다: ' + response.statusText);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log("AJAX 요청 성공:", data);
+            // 글로벌 변수 first_number 업데이트
+            first_number = numberValue;
+            generateTemplate(currentIndex+1);
+          })
+          .catch(error => {
+            console.error("AJAX 요청 실패:", error);
+          });
+      });
 
 
     document.getElementById('id_naver_info')?.addEventListener('click', async () => {
@@ -664,8 +756,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             // zipName 구성
             const zipName = formFields['층']
-                ? number + " " + (formFields['주소'] + ", " + formFields['층'].split("/")[0] + "층")
-                : number + " " + formFields['주소'];
+                ? (formFields['주소'] + ", " + formFields['층'].split("/")[0] + "층")
+                : formFields['주소'];
 
             const imageUrls = buildingData.articlePhotos?.map(photo => `https://landthumb-phinf.pstatic.net${photo.imageSrc}`) || [];
             if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
@@ -719,8 +811,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             // 모든 매물번호에 대해 폴더명과 이미지 URL 수집
             const propertiesPayload = [];
+            let count_num = Number(first_number);
             for (const property of propertyList) {
                 // 매물번호에 해당하는 buildingData 가져오기
+
                 const response = await fetch(`/api/jjinbba/info/${property}`);
 
                 // (필요하다면 건축물대장, 주소 조회 등 추가 호출)
@@ -734,7 +828,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const finalAddress = address.replace(/^서울특별시.*?구\s/, "").replace(/번지/, "") || "주소없음";
 
                 const floor = buildingData.articleAddition?.floorInfo?.split("/")[0] || "";
-                const folderName = floor ? `${property} ${finalAddress}, ${floor}층` : `${property} ${finalAddress}`;
+                const folderName = floor ? `${count_num}. ${finalAddress}, ${floor}층` : `${count_num}. ${finalAddress}`;
+
+                count_num += 1;
 
                 // 기존 로직과 같이 이미지 URL 구성
                 let imageUrls = buildingData.articlePhotos?.map(photo => `https://landthumb-phinf.pstatic.net${photo.imageSrc}`) || [];
@@ -749,8 +845,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 });
             }
 
-            console.log("!!!", propertiesPayload);
-
             // 백엔드의 새로운 엔드포인트 (/api/jjinbba/all_down)로 payload 전송
             const zipResponse = await fetch('/api/jjinbba/all_down', {
                 method: 'POST',
@@ -760,8 +854,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                     properties: propertiesPayload
                 })
             });
-
-            console.log("1", "끝인가?");
 
             if (!zipResponse.ok) {
                 console.error('Failed to download zip file:', zipResponse.statusText);

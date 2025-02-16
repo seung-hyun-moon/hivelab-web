@@ -6,19 +6,23 @@
         <table id="jjinbbaTable" class="hover compact stripe cell-border" style="width:100%">
             <colgroup>
                 <col width="10%" /><!-- 담당자 -->
-                <col width="30%" /><!-- 제목 -->
-                <col width="10%" /><!-- 총개수 -->
-                <col width="25%" /><!-- 행정동(개수) -->
-                <col width="15%" /><!-- 수정날짜 -->
+                <col width="10%" /><!-- 고객정보 -->
+                <col width="20%" /><!-- 제목 -->
+                <col width="3%" /><!-- 총개수 -->
+                <col width="17%" /><!-- 행정동(개수) -->
+                <col width="20%" /><!-- 매물번호 -->
+                <col width="10%" /><!-- 수정날짜 -->
                 <col width="5%" /><!-- 완료여부 -->
                 <col width="5%" /><!-- 액션 -->
             </colgroup>
             <thead class="table-light">
                 <tr>
                     <th>담당자</th>
+                    <th>고객정보</th>
                     <th>제목</th>
                     <th>총개수</th>
                     <th>행정동(개수)</th>
+                    <th>매물번호</th>
                     <th>수정날짜</th>
                     <th>완료여부</th>
                     <th>액션</th>
@@ -29,71 +33,135 @@
         </table>
     </div>
 </div>
-
 <!-- 신규 등록 모달 -->
-<div class="modal fade" id="addJjinbbaModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addModalLabel">새 매물그룹 등록</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="addJjinbbaModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addModalLabel">새 매물그룹 등록</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="return false;" class="grid-form">
+          <fieldset class="border p-2 mb-3">
+            <legend class="w-auto pb-3">매물그룹 정보</legend>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">담당자</label>
+              </div>
+              <div class="col-md-10">
+                <select class="form-select" name="person" required>
+                  <option value="">선택하세요</option>
+                  <option value="송재민">송재민</option>
+                  <option value="길민제">길민제</option>
+                  <option value="이경주">이경주</option>
+                  <option value="노현정">노현정</option>
+                  <option value="이선복">이선복</option>
+                  <option value="김시나">김시나</option>
+                  <option value="이소은">이소은</option>
+                </select>
+              </div>
             </div>
-            <form onsubmit="return false;">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">담당자</label>
-                        <input type="text" class="form-control" name="person" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">제목</label>
-                        <input type="text" class="form-control" name="description" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">매물번호 (띄어쓰기로 구분)</label>
-                        <textarea class="form-control" name="numbers" rows="3" placeholder="예: 2504165111 2504184501" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="submit" class="btn btn-primary">저장</button>
-                </div>
-            </form>
-        </div>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">고객정보</label>
+              </div>
+              <div class="col-md-10">
+                <input type="text" class="form-control" name="customer" required>
+              </div>
+            </div>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">제목</label>
+              </div>
+              <div class="col-md-10">
+                <input type="text" class="form-control" name="description" required>
+              </div>
+            </div>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">매물번호 (띄어쓰기로 구분)</label>
+              </div>
+              <div class="col-md-10">
+                <textarea class="form-control" name="numbers" rows="3" placeholder="예: 2504165111 2504184501" required></textarea>
+              </div>
+            </div>
+          </fieldset>
+          <div class="text-end pt-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+            <button type="submit" class="btn btn-primary">저장</button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- 수정 모달 -->
-<div class="modal fade" id="editJjinbbaModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">매물그룹 수정</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="modifyJjinbbaModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">매물그룹 수정</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" onsubmit="return false;" class="grid-form">
+          <input type="hidden" name="id">
+          <fieldset class="border p-2 mb-3">
+            <legend class="w-auto pb-3">매물그룹 정보</legend>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">담당자</label>
+              </div>
+              <div class="col-md-10">
+                <select class="form-select" name="person" required>
+                  <option value="">선택하세요</option>
+                  <option value="송재민">송재민</option>
+                  <option value="길민제">길민제</option>
+                  <option value="이경주">이경주</option>
+                  <option value="노현정">노현정</option>
+                  <option value="이선복">이선복</option>
+                  <option value="김시나">김시나</option>
+                  <option value="이소은">이소은</option>
+                </select>
+              </div>
             </div>
-            <form id="editForm">
-                <input type="hidden" name="id">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">담당자</label>
-                        <input type="text" class="form-control" name="person" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">제목</label>
-                        <input type="text" class="form-control" name="description" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">매물번호 (띄어쓰기로 구분)</label>
-                        <textarea class="form-control" name="numbers" rows="5" placeholder="예: 2504165111 2504184501" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="submit" class="btn btn-primary">수정</button>
-                </div>
-            </form>
-        </div>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">고객정보</label>
+              </div>
+              <div class="col-md-10">
+                <input type="text" class="form-control" name="customer" required>
+              </div>
+            </div>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">제목</label>
+              </div>
+              <div class="col-md-10">
+                <input type="text" class="form-control" name="description" required>
+              </div>
+            </div>
+            <div class="row mb-3 align-items-center">
+              <div class="col-md-2">
+                <label class="form-label">매물번호 (띄어쓰기로 구분)</label>
+              </div>
+              <div class="col-md-10">
+                <textarea class="form-control" name="numbers" rows="5" placeholder="예: 2504165111 2504184501" required></textarea>
+              </div>
+            </div>
+          </fieldset>
+          <div class="text-end pt-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+            <button type="submit" class="btn btn-primary">수정</button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
+
 
 <script src="{{ url_for('static', path='js/jjinbba_list.js') }}"></script>
 {% endblock %}

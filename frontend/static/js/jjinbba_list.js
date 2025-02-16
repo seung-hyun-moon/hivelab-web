@@ -16,8 +16,8 @@ $(document).ready(function() {
     var table = $('#jjinbbaTable').DataTable({
         dom: 'Blfrtip',
         lengthChange: true,
-        // 기본적으로 수정일시(updated_at) 기준 내림차순 정렬 (컬럼 인덱스 4)
-        order: [[ 4, "desc" ]],
+        // 기본적으로 수정일시(updated_at) 기준 내림차순 정렬 (컬럼 인덱스 6)
+        order: [[ 6, "desc" ]],
         orderCellsTop: true,
         fixedHeader: true,
         pageLength: 25,
@@ -33,6 +33,14 @@ $(document).ready(function() {
             $('#loading-icon').hide();
             console.log('로딩 완료');
         },
+        columnDefs: [
+            {
+                targets: [0, 1, 2, 3, 4],
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).css('background-color', 'rgba(224, 247, 250, 0.2)'); // Adjust the color as needed
+                }
+            }
+        ],
         language: {
             emptyTable: "데이터가 없습니다.",
             lengthMenu: "_MENU_ 개씩 보기",
@@ -57,6 +65,7 @@ $(document).ready(function() {
         },
         columns: [
             { data: 'person' },
+            { data: 'customer' },
             { data: 'description' },
             {
                 data: 'numbers',
@@ -68,6 +77,7 @@ $(document).ready(function() {
                     return data;
                 }
             },
+            { data: 'region_info' },
             {
                 data: 'numbers',
                 render: function(data, type, row) {
@@ -94,7 +104,7 @@ $(document).ready(function() {
             },
         ],
         "createdRow": function ( row, data, index ) {
-            $('td', row).slice(0, 6).on('click', function () {
+            $('td', row).slice(0, 5).on('click', function () {
                 var id = data.id;
                 window.location.href = window.location.pathname + '/' + id;
             });
@@ -122,15 +132,22 @@ $(document).ready(function() {
     // ★ 수정 버튼 클릭 이벤트
     $('#jjinbbaTable tbody').on('click', 'button.edit-btn', function () {
         var id = $(this).data('id');
+        var checkboxes;
+        var created_at;
         $.ajax({
             url: '/api/jjinbba/' + id,
             type: 'GET',
             success: function(itemData) {
-                // numbers 배열을 띄어쓰기로 구분된 문자열로 변환
-                $('#modifyJjinbbaModal').find('input[name="numbers"]').val(itemData.numbers.join(" "));
+                // numbers 배열을 띄어쓰기로 구분된 문자열로 변환하여 textarea에 채움
+                $('#modifyJjinbbaModal').find('textarea[name="numbers"]').val(itemData.numbers.join(" "));
                 $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
-                $('#modifyJjinbbaModal').find('input[name="person"]').val(itemData.person);
+                // 담당자는 input에서 select로 변경
+                $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
+                $('#modifyJjinbbaModal').find('input[name="customer"]').val(itemData.customer);
+                // is_completed 필드가 checkbox인 경우
                 $('#modifyJjinbbaModal').find('input[name="is_completed"]').prop('checked', itemData.is_completed);
+                checkboxes = itemData.checkboxes;
+                created_at = itemData.created_at;
             },
             error: function(err) {
                 console.error('항목 데이터 불러오기 실패:', err);
@@ -141,17 +158,25 @@ $(document).ready(function() {
         // 기존 submit 이벤트 제거 후 재등록
         $('#modifyJjinbbaModal form').off('submit').on('submit', function() {
             var form = $(this);
-            // 입력한 numbers 값을 띄어쓰기로 분리한 후 정수 배열로 변환
-            var numbersStr = form.find('input[name="numbers"]').val();
-            var numbersArr = numbersStr.split(/\s+/).map(function(num) { return parseInt(num, 10); })
-                                        .filter(function(n) { return !isNaN(n); });
+            // numbers textarea 값을 띄어쓰기로 분리한 후 정수 배열로 변환
+            var numbersStr = form.find('textarea[name="numbers"]').val();
+            var numbersArr = numbersStr.split(/\s+/).map(function(num) {
+                return parseInt(num, 10);
+            }).filter(function(n) {
+                return !isNaN(n);
+            });
             var data = {
                 numbers: numbersArr,
                 description: form.find('input[name="description"]').val(),
-                person: form.find('input[name="person"]').val(),
-                is_completed: form.find('input[name="is_completed"]').is(':checked'),
-                // 수정 시 updated_at은 현재 시간으로 처리
-                updated_at: formatDate()
+                // 담당자는 select 요소에서 값 추출
+                person: form.find('select[name="person"]').val(),
+                customer: form.find('input[name="customer"]').val(),
+                // checkbox의 체크 상태로 is_completed 결정
+                is_completed: true,
+                // 수정 시 updated_at은 현재 시간으로 처리 (formatDate() 함수 활용)
+                updated_at: formatDate(),
+                created_at: created_at,
+                checkboxes: checkboxes
             };
 
             $.ajax({
@@ -172,6 +197,7 @@ $(document).ready(function() {
         });
     });
 
+
     // ★ 신규 등록 폼 제출 이벤트
     $("#closeAddJjinbbaModal").click(function(){
         $("#addJjinbbaModal").modal("hide");
@@ -181,13 +207,42 @@ $(document).ready(function() {
         var numbersStr = form.find('textarea[name="numbers"]').val();
         var numbersArr = numbersStr.split(" ").map(function(num) { return parseInt(num, 10); })
                                     .filter(function(n) { return !isNaN(n); });
+        var checkboxes = {
+          "주소": true,
+          "건물명": true,
+          "층": true,
+          "보증금": true,
+          "임대료": true,
+          "관리비": true,
+          "임+관": false,
+          "이율(%)": false,
+          "RF(개월)": false,
+          "NOC": false,
+          "임대면적": false,
+          "전용면적": true,
+          "엘베": true,
+          "주차": true,
+          "냉난방": true,
+          "화장실": true,
+          "방향": false,
+          "특징": true,
+          "사용승인일": false,
+          "대지면적": false,
+          "연면적": false,
+          "규모": false,
+          "주구조": false,
+          "건폐율": false,
+          "용적률": false
+        };
         var data = {
             numbers: numbersArr,
             description: form.find('input[name="description"]').val(),
-            person: form.find('input[name="person"]').val(),
-            is_completed: form.find('input[name="is_completed"]').is(':checked'),
+            person: form.find('select[name="person"]').val(),
+            customer: form.find('input[name="customer"]').val(),
+            is_completed: true,
             created_at: formatDate(),
-            updated_at: formatDate()
+            updated_at: formatDate(),
+            checkboxes: checkboxes
         };
 
         $.ajax({

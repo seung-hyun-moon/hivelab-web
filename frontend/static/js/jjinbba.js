@@ -79,7 +79,7 @@ async function getAddress(buildingReg, buildingData) {
  */
 function convertToKoreanUnit(num) {
     if (typeof num !== 'number' || isNaN(num) || num < 0) {
-        return "유효하지 않은 입력";
+        return "0";
     }
     const manValue = num / 10000;
     return manValue % 1 === 0
@@ -125,12 +125,23 @@ function formatNumber(str) {
 /**
  * YYYYMMDD → YYYY년 M월 D일
  */
-function formatDate(dateStr) {
-    if (dateStr?.length !== 8) return "잘못된 날짜 형식";
+function formatKoreaDate(dateStr) {
+    if (dateStr?.length !== 8) return "";
     const year = dateStr.slice(0, 4);
     const month = parseInt(dateStr.slice(4, 6), 10);
     const day = parseInt(dateStr.slice(6, 8), 10);
     return `${year}년 ${month}월 ${day}일`;
+}
+
+function formatDate() {
+    var date = new Date();
+    var year = date.getFullYear().toString();
+    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+    var day = ('0' + date.getDate()).slice(-2);
+    var hour = ('0' + date.getHours()).slice(-2);
+    var minute = ('0' + date.getMinutes()).slice(-2);
+    var second = ('0' + date.getSeconds()).slice(-2);
+    return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
 function calculateExcelFormula() {
@@ -241,7 +252,7 @@ function populateFormFields(buildingData, buildingReg, address) {
         '방향':       buildingData?.articleAddition?.direction || "",
         '특징':       buildingData?.articleAddition?.articleFeatureDesc || "",
 
-        '사용승인일':   formatDate(useAprDay),
+        '사용승인일':   formatKoreaDate(useAprDay),
         '대지면적':    (platArea*0.3025).toFixed(1) + "평",
         '연면적':     (totArea*0.3025).toFixed(1) + "평",
 
@@ -477,35 +488,54 @@ document.addEventListener('DOMContentLoaded', async function() {
         checkbox.addEventListener('change', generateTemplate);
     });
 
-    // 8) iframe 로드 (NIF)
-    try {
-        const iframeResponse = await fetch(`/api/jjinbba/nif/${number}`, { method: 'GET' });
-        if (!iframeResponse.ok) throw new Error('Network response was not ok');
-        const iframeContent = await iframeResponse.json();
-        document.getElementById('id_naver_iframe').srcdoc = iframeContent;
-    } catch (error) {
-        console.error('Error loading iframe content:', error);
-    }
+
+    document.getElementById('id_naver_info')?.addEventListener('click', async () => {
+        // 8) iframe 로드 (NIF)
+        try {
+            const iframeResponse = await fetch(`/api/jjinbba/nif/${number}`, { method: 'GET' });
+            if (!iframeResponse.ok) throw new Error('Network response was not ok');
+            const iframeContent = await iframeResponse.json();
+            document.getElementById('id_naver_iframe').srcdoc = iframeContent;
+        } catch (error) {
+            console.error('Error loading iframe content:', error);
+        }
+    });
+
+
+      // 클릭 이벤트 리스너 등록
+      document.getElementById('id_naver_info_new')?.addEventListener('click', () => {
+        // 원하는 링크를 지정 (예: 'https://www.example.com')
+        const url = `https://new.land.naver.com/offices?articleNo=${number}`;
+        // 새 창(또는 새 탭)으로 링크 열기
+        window.open(url, '_blank');
+    });
 
     // 10) 이미지 ZIP 다운로드
     document.getElementById('id_each_img_download').addEventListener('click', async function() {
-        if (!buildingData) {
-            console.error('No buildingData available');
-            return;
-        }
-        // zipName 구성
-        const zipName = formFields['층']
-            ? (formFields['주소'] + ", " + formFields['층'].split("/")[0] + "층")
-            : formFields['주소'];
-
-        // 이미지 URL
-        const imageUrls = buildingData.articlePhotos?.map(photo => photo.imageSrc) || [];
-        if (!imageUrls.length) {
-            console.error('No imageUrls available');
-            return;
-        }
+        // 클릭 시작 시 로딩 아이콘 표시
+        $('#loading-icon').show();
 
         try {
+            if (!buildingData) {
+                console.error('No buildingData available');
+                return;
+            }
+            // zipName 구성
+            const zipName = formFields['층']
+                ? (formFields['주소'] + ", " + formFields['층'].split("/")[0] + "층")
+                : formFields['주소'];
+
+            const imageUrls = buildingData.articlePhotos?.map(photo => `https://landthumb-phinf.pstatic.net${photo.imageSrc}`) || [];
+            if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
+                const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=1006&h=493`;
+                imageUrls.push(mapUrl);
+            }
+
+            if (!imageUrls.length) {
+                console.error('No imageUrls available');
+                return;
+            }
+
             // ZIP 생성 요청
             const response = await fetch('/api/jjinbba/each_down', {
                 method: 'POST',
@@ -532,6 +562,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.body.removeChild(link);
         } catch (error) {
             console.error('Error downloading ZIP file:', error);
+        } finally {
+            // 다운로드 완료 또는 에러 시 로딩 아이콘 감추기
+            $('#loading-icon').hide();
         }
     });
 });

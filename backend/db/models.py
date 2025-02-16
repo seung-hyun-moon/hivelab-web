@@ -114,6 +114,7 @@ class JjinbbaModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     person = Column(String, nullable=True)
+    customer = Column(String, nullable=True)
     # numbers 컬럼은 정수 리스트를 저장 (예: [12345, 67890, 11223])
     numbers = Column(JSON, nullable=False, default=list)
 
@@ -123,6 +124,10 @@ class JjinbbaModel(Base):
     updated_at = Column(String)
 
     is_completed = Column(Boolean, default=True)
+
+    checkboxes = Column(JSON, nullable=True, default=dict)
+    first_number = Column(Integer, nullable=True)
+    region_info = Column(String, nullable=True)
 
 class EventModel(Base):
     __tablename__ = "events"

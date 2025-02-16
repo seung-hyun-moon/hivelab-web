@@ -1,14 +1,19 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Dict, Optional
 
 
 class JjinbbaBase(BaseModel):
     person: Optional[str] = None
+    customer: Optional[str] = None
     description: Optional[str] = None
     numbers: Optional[List[int]] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     is_completed: Optional[bool] = False
+
+    checkboxes: Optional[Dict[str, bool]] = None
+    first_number: Optional[int] = 1
+    region_info: Optional[str] = None
 
     class Config:
         from_attributes = True
