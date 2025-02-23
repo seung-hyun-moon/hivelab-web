@@ -1,5 +1,84 @@
 let currentCheckboxes = {};
+let propertyList = [];
 let first_number = 1;
+// 전역에 debounce 타이머 변수 선언
+let updateTemplateTimeout = null;
+
+// scheduleTemplateUpdate: 3초 동안 추가 변경 없으면 PUT 요청 실행
+// scheduleTemplateUpdate: 3초 동안 추가 변경 없으면 PUT 요청 실행
+async function scheduleTemplateUpdate() {
+    // 이전 타이머 취소
+    if (updateTemplateTimeout) {
+        clearTimeout(updateTemplateTimeout);
+    }
+    updateTemplateTimeout = setTimeout(async () => {
+        const templateContent = document.getElementById('id_jjinbba_template').innerHTML;
+        try {
+            // 현재 레코드의 전체 데이터를 먼저 GET으로 가져옴
+            const getResponse = await fetch(`/api/jjinbba/${jjinbba_id}`);
+            const currentData = await getResponse.json();
+            // 기존 templates 객체를 유지 (없으면 빈 객체)
+            const currentTemplates = currentData.templates || {};
+            // 현재 매물번호에 해당하는 템플릿만 업데이트
+            currentTemplates[number] = templateContent;
+
+            // 병합된 templates를 포함하여 PATCH 요청 보내기
+            const patchResponse = await fetch(`/api/jjinbba/${jjinbba_id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templates: currentTemplates,
+                    updated_at: formatDate(),
+                    id: jjinbba_id
+                })
+            });
+            if (patchResponse.ok) {
+                console.log('Template updated successfully.');
+                // 업데이트 후 id_templates 컨테이너 재갱신 (필요 시)
+                updateTemplateContainer();
+            } else {
+                console.error('Template update failed, status:', patchResponse.status);
+            }
+        } catch (error) {
+            console.error('Error updating template:', error);
+        }
+    }, 500);
+}
+
+// MutationObserver를 사용하여 id_jjinbba_template 요소의 변경 감지
+function setupTemplateObserver() {
+    const templateElement = document.getElementById('id_jjinbba_template');
+    if (!templateElement) return;
+    const observer = new MutationObserver((mutations) => {
+        // 변경이 감지되면 debounce 함수 호출
+        scheduleTemplateUpdate();
+    });
+    observer.observe(templateElement, {
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
+}
+
+// id_templates 컨테이너 업데이트 함수 (이미 있던 코드 참고)
+async function updateTemplateContainer() {
+    try {
+        const response = await fetch(`/api/jjinbba/${jjinbba_id}`);
+        const data = await response.json();
+        if (data.templates) {
+            const templateContainer = document.getElementById('id_templates');
+            templateContainer.style.overflowY = 'auto';
+            templateContainer.innerHTML = "";  // 기존 내용 초기화
+            propertyList.forEach(key => {
+                templateContainer.innerHTML = templateContainer.innerHTML + data.templates[key];
+            });
+        }
+    } catch (error) {
+        console.error('Error updating template container:', error);
+    }
+}
+
+
 /**
  * 공통 Fetch → JSON 호출 함수
  * @param {string} url
@@ -188,14 +267,14 @@ function formatDate() {
 }
 
 function calculateExcelFormula() {
- console.log(document.querySelectorAll('input[name="name_edit_보증금"]')[0]?.value);
  let deposit = Math.floor(formatNumber(document.querySelectorAll('input[name="name_edit_보증금"]')[0]?.value).replace(",", ""))*10000;
  let interestRate = Math.floor(formatNumber(document.querySelectorAll('input[name="name_edit_이율(%)"]')[0]?.value))*0.01;
- let rent = Math.floor(formatNumber(document.querySelectorAll('input[name="name_edit_임대료"]')[0]?.value))*10000;
+ let rent = Math.floor(formatNumber(document.querySelectorAll('input[name="name_edit_임대료"]')[0]?.value).replace(",", ""))*10000;
  let rentFree = Math.floor(formatNumber(document.querySelectorAll('input[name="name_edit_RF(개월)"]')[0]?.value));
  let mgmtCost = Math.floor(formatNumber(document.querySelectorAll('input[name="name_edit_관리비"]')[0]?.value))*10000;
  let areaPyeong = parseFloat(document.querySelectorAll('input[name="name_edit_전용면적"]')[0]?.value);
-
+    console.log(deposit, interestRate, rent, rentFree, mgmtCost, areaPyeong);
+    console.log(document.querySelectorAll('input[name="name_edit_임대료"]')[0]?.value, formatNumber(document.querySelectorAll('input[name="name_edit_임대료"]')[0]?.value));
   try {
     // 숫자로 변환 및 유효성 검사
     const d = Number(deposit);
@@ -245,8 +324,6 @@ function calculateExcelFormula() {
  * @returns {object} formFields
  */
 function populateFormFields(buildingData, buildingReg, address) {
-    console.log(buildingData);
-    console.log(buildingReg?.response?.body?.items?.item[0]);
     // 필요한 정보가 하나도 없을 수 있으니, optional chaining + 기본값 사용
     const warrantPrc   = buildingData?.articleAddition?.dealOrWarrantPrc  || "";
     const rentPrc      = buildingData?.articleAddition?.rentPrc          || "";
@@ -275,7 +352,7 @@ function populateFormFields(buildingData, buildingReg, address) {
     return {
         '주소':       finalAddress,
         '건물명':     bldNm,
-        '층':         (buildingData?.articleAddition?.floorInfo || "") + "층",
+        '층':         (buildingData?.articleAddition?.floorInfo || "").split('/')[0] + "층",
 
         '보증금':     formatNumber(warrantPrc) + "만",
         '임대료':     formatNumber(rentPrc) + "만",
@@ -289,8 +366,8 @@ function populateFormFields(buildingData, buildingReg, address) {
         '전용면적':   (supplySpace*0.3025*0.8).toFixed(1) + "평",
 
         '엘베':       (rideUseElvtCnt+emgenUseElvtCnt) + "대",
-        '주차':       buildingData?.articleDetail?.parkingPossibleYN || "",
-        '냉난방':     buildingData?.articleFacility?.heatMethodTypeName || "",
+        '주차':       ((buildingData?.articleDetail?.parkingPossibleYN || "") === "Y") ? "1" : "0",
+        '냉난방':     ((buildingData?.articleFacility?.heatMethodTypeName || "").includes("중앙")) ? "중앙" : "개별",
         '화장실':     "외부 분리", // 고정
         '방향':       buildingData?.articleAddition?.direction || "",
         '특징':       buildingData?.articleAddition?.articleFeatureDesc || "",
@@ -330,18 +407,6 @@ function applyFormFields(formFields) {
             if (!editInput) return;
 
             switch (itemKey) {
-                case "층": {
-                    editInput.value = fieldValue.split('/')[0] + '층';
-                    break;
-                }
-                case "주차": {
-                    editInput.value = (fieldValue === "Y") ? "1" : "0";
-                    break;
-                }
-                case "냉난방": {
-                    editInput.value = (fieldValue.includes("중앙")) ? "중앙" : "개별";
-                    break;
-                }
                 default:
                     editInput.value = fieldValue;
                     break;
@@ -353,38 +418,38 @@ function applyFormFields(formFields) {
 /**
  * 체크된 항목들을 바탕으로 템플릿 HTML 생성 후 id_jjinbba_template에 삽입
  */
-function generateTemplate(currentIndex) {
+function generateTemplate(currentIndex, field) {
     const items = [
-        { name: '주소',       checked: document.getElementById('id_checkbox_주소').checked,       value: document.getElementsByName("name_edit_주소")[0].value },
-        { name: '건물명',     checked: document.getElementById('id_checkbox_건물명').checked,     value: document.getElementsByName("name_edit_건물명")[0].value },
-        { name: '층',         checked: document.getElementById('id_checkbox_층').checked,         value: document.getElementsByName("name_edit_층")[0].value },
+      { name: '주소',       checked: document.getElementById('id_checkbox_주소').checked,       value: field["주소"] },
+      { name: '건물명',     checked: document.getElementById('id_checkbox_건물명').checked,     value: field["건물명"] },
+      { name: '층',         checked: document.getElementById('id_checkbox_층').checked,         value: field["층"] },
 
-        { name: '보증금',     checked: document.getElementById('id_checkbox_보증금').checked,     value: document.getElementsByName("name_edit_보증금")[0].value },
-        { name: '임대료',     checked: document.getElementById('id_checkbox_임대료').checked,     value: document.getElementsByName("name_edit_임대료")[0].value },
-        { name: '관리비',     checked: document.getElementById('id_checkbox_관리비').checked,     value: document.getElementsByName("name_edit_관리비")[0].value },
-        { name: '임+관',         checked: document.getElementById('id_checkbox_임+관').checked,         value: document.getElementsByName("name_edit_임+관")[0].value },
+      { name: '보증금',     checked: document.getElementById('id_checkbox_보증금').checked,     value: field["보증금"] },
+      { name: '임대료',     checked: document.getElementById('id_checkbox_임대료').checked,     value: field["임대료"] },
+      { name: '관리비',     checked: document.getElementById('id_checkbox_관리비').checked,     value: field["관리비"] },
+      { name: '임+관',      checked: document.getElementById('id_checkbox_임+관').checked,      value: field["임+관"] },
 
-        { name: '이율(%)',     checked: document.getElementById('id_checkbox_이율(%)').checked,         value: document.getElementsByName("name_edit_이율(%)")[0].value },
-        { name: 'RF(개월)',    checked: document.getElementById('id_checkbox_RF(개월)').checked,         value: document.getElementsByName("name_edit_RF(개월)")[0].value },
-        { name: 'NOC',        checked: document.getElementById('id_checkbox_NOC').checked,        value: document.getElementsByName("name_edit_NOC")[0].value },
+      { name: '이율(%)',    checked: document.getElementById('id_checkbox_이율(%)').checked,    value: field["이율(%)"] },
+      { name: 'RF(개월)',   checked: document.getElementById('id_checkbox_RF(개월)').checked,   value: field["RF(개월)"] },
+      { name: 'NOC',       checked: document.getElementById('id_checkbox_NOC').checked,       value: field["NOC"] },
 
-        { name: '임대면적',        checked: document.getElementById('id_checkbox_임대면적').checked,        value: document.getElementsByName("name_edit_임대면적")[0].value },
-        { name: '전용면적',        checked: document.getElementById('id_checkbox_전용면적').checked,        value: document.getElementsByName("name_edit_전용면적")[0].value },
+      { name: '임대면적',   checked: document.getElementById('id_checkbox_임대면적').checked,   value: field["임대면적"] },
+      { name: '전용면적',   checked: document.getElementById('id_checkbox_전용면적').checked,   value: field["전용면적"] },
 
-        { name: '엘베',         checked: document.getElementById('id_checkbox_엘베').checked,         value: document.getElementsByName("name_edit_엘베")[0].value },
-        { name: '주차',       checked: document.getElementById('id_checkbox_주차').checked,       value: document.getElementsByName("name_edit_주차")[0].value },
-        { name: '냉난방',     checked: document.getElementById('id_checkbox_냉난방').checked,     value: document.getElementsByName("name_edit_냉난방")[0].value },
-        { name: '화장실',     checked: document.getElementById('id_checkbox_화장실').checked,     value: document.getElementsByName("name_edit_화장실")[0].value },
-        { name: '방향',       checked: document.getElementById('id_checkbox_방향').checked,       value: document.getElementsByName("name_edit_방향")[0].value },
-        { name: '특징',       checked: document.getElementById('id_checkbox_특징').checked,       value: document.getElementsByName("name_edit_특징")[0].value },
+      { name: '엘베',       checked: document.getElementById('id_checkbox_엘베').checked,       value: field["엘베"] },
+      { name: '주차',       checked: document.getElementById('id_checkbox_주차').checked,       value: field["주차"] },
+      { name: '냉난방',     checked: document.getElementById('id_checkbox_냉난방').checked,     value: field["냉난방"] },
+      { name: '화장실',     checked: document.getElementById('id_checkbox_화장실').checked,     value: field["화장실"] },
+      { name: '방향',       checked: document.getElementById('id_checkbox_방향').checked,       value: field["방향"] },
+      { name: '특징',       checked: document.getElementById('id_checkbox_특징').checked,       value: field["특징"] },
 
-        { name: '사용승인일',   checked: document.getElementById('id_checkbox_사용승인일').checked,   value: document.getElementsByName("name_edit_사용승인일")[0].value },
-        { name: '대지면적',   checked: document.getElementById('id_checkbox_대지면적').checked,   value: document.getElementsByName("name_edit_대지면적")[0].value },
-        { name: '연면적',     checked: document.getElementById('id_checkbox_연면적').checked,     value: document.getElementsByName("name_edit_연면적")[0].value },
-        { name: '규모',       checked: document.getElementById('id_checkbox_규모').checked,       value: document.getElementsByName("name_edit_규모")[0].value },
-        { name: '주구조',   checked: document.getElementById('id_checkbox_주구조').checked,   value: document.getElementsByName("name_edit_주구조")[0].value },
-        { name: '건폐율',   checked: document.getElementById('id_checkbox_건폐율').checked,   value: document.getElementsByName("name_edit_건폐율")[0].value },
-        { name: '용적률',   checked: document.getElementById('id_checkbox_용적률').checked,   value: document.getElementsByName("name_edit_용적률")[0].value },
+      { name: '사용승인일', checked: document.getElementById('id_checkbox_사용승인일').checked, value: field["사용승인일"] },
+      { name: '대지면적',   checked: document.getElementById('id_checkbox_대지면적').checked,   value: field["대지면적"] },
+      { name: '연면적',     checked: document.getElementById('id_checkbox_연면적').checked,     value: field["연면적"] },
+      { name: '규모',       checked: document.getElementById('id_checkbox_규모').checked,       value: field["규모"] },
+      { name: '주구조',     checked: document.getElementById('id_checkbox_주구조').checked,     value: field["주구조"] },
+      { name: '건폐율',     checked: document.getElementById('id_checkbox_건폐율').checked,     value: field["건폐율"] },
+      { name: '용적률',     checked: document.getElementById('id_checkbox_용적률').checked,     value: field["용적률"] },
     ];
 
     const addressItem  = items.find(item => item.name === '주소'   && item.checked)?.value;
@@ -483,7 +548,7 @@ function generateTemplate(currentIndex) {
         }
     });
 
-    document.getElementById('id_jjinbba_template').innerHTML = template;
+    return template;
 }
 
 document.getElementById('id_move_number')?.addEventListener('click', function() {
@@ -494,6 +559,15 @@ document.getElementById('id_move_number')?.addEventListener('click', function() 
     }
 });
 
+async function fetchPropertyInfo(number) {
+    const buildingData = await getBuildingData(number);
+    const pnu = buildingData?.articleDetail?.pnu || "";
+    const buildingReg = await getBuildingReg(pnu);
+    const address = await getAddress(buildingReg, buildingData);
+    const formFields = populateFormFields(buildingData, buildingReg, address);
+    return { number, address, formFields };
+}
+
 /**
  * 메인 진입점
  */
@@ -503,7 +577,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Navigation Logic
     let currentIndex = 0;
-    let propertyList = [];
+    let templates;
 
     function updateNavigation() {
 //        document.getElementById('currentPosition').textContent =
@@ -519,11 +593,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         const data = await response.json();
         first_number = data.first_number;
         propertyList = data.numbers;
+        const region_info = data.region_info;
+        templates = data.templates;
         if (number == 'None') {
             number = propertyList[0];
         }
 
+        if (data.templates) {
+            const templateContainer = document.getElementById('id_templates');
+            templateContainer.style.overflowY = 'auto';
+            templateContainer.innerHTML = "";  // 기존 내용 초기화
+            propertyList.forEach(key => {
+                templateContainer.innerHTML += data.templates[key];
+            });
+        }
+
         document.getElementById('id_number').value = number;
+        document.getElementById('id_region_info').value = "현재 매물번호들을 종합해봤을 때, ("+ region_info + ") 입니다."+"\n현재 규칙 : 동일한 주소인 경우에만 층을 기준으로 정렬하고, 나머지는 원래 순서를 유지 / 수정 시 기존 매물정보는 유지, 추가 매물은 규칙 적용\n체크박스 일괄 적용 후 수정해주세요. 왼쪽 입력칸을 이용한 수정은 버그가 발생하여 확인 중에 있습니다.";
 
         const btnContainer = document.getElementById('btn_numbers');
         // propertyList의 각 요소마다 버튼 생성
@@ -657,7 +743,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 2) 두 가지 API 데이터 가져오기 (실패 시 null 반환)
     const buildingData = await getBuildingData(number);
-    console.log(buildingData);
     const pnu = buildingData?.articleDetail?.pnu || "";
     const buildingReg = await getBuildingReg(pnu);
 
@@ -671,20 +756,51 @@ document.addEventListener('DOMContentLoaded', async function() {
     applyFormFields(formFields);
 
     // 6) 템플릿 생성(초기 1회)
-    generateTemplate(currentIndex+1);
+    document.getElementById('id_jjinbba_template').innerHTML = templates[number];
+
+    setupTemplateObserver();
 
     // 7) 이벤트 리스너 등록(입력값 변경 시 템플릿 재생성)
     document.querySelectorAll('input[name^="name_edit_"]').forEach(editInput => {
         editInput.addEventListener('input', event => {
-            generateTemplate(currentIndex+1);
+//            generateTemplate(currentIndex+1);
         });
         editInput.addEventListener('input', calculateExcelFormula);
     });
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', event => {
-            generateTemplate(currentIndex+1);
-        });
+      checkbox.addEventListener('change', async event => {
+            try {
+              // 각 property에 대한 fetch가 완료될 때까지 기다립니다.
+              const results = await Promise.all(propertyList.map(number => fetchPropertyInfo(number)));
+
+              // 각 매물에 대해 generateTemplate을 호출하여 템플릿 딕셔너리 생성 (매물번호 : 템플릿)
+              let new_templates = {};
+              results.forEach((item, index) => {
+                // 필요하다면 아래처럼 템플릿을 생성할 수 있습니다.
+                 new_templates[item.number] = generateTemplate(index + 1, item.formFields);
+              });
+              const patchResponse = await fetch(`/api/jjinbba/${jjinbba_id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        templates: new_templates,
+                        updated_at: formatDate(),
+                        id: jjinbba_id
+                    })
+                });
+                if (patchResponse.ok) {
+                    console.log('Template updated successfully.');
+                    // 업데이트 후 id_templates 컨테이너 재갱신 (필요 시)
+                    updateTemplateContainer();
+                    document.getElementById('id_jjinbba_template').innerHTML = new_templates[number];
+                } else {
+                    console.error('Template update failed, status:', patchResponse.status);
+                }
+            } catch (error) {
+              console.error("Error fetching property info:", error);
+            }
+      });
     });
 
     // 7-1) 매물번호 처음꺼 바꾸기
@@ -710,11 +826,40 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             return response.json();
           })
-          .then(data => {
+          .then(async data => {
             console.log("AJAX 요청 성공:", data);
             // 글로벌 변수 first_number 업데이트
             first_number = numberValue;
-            generateTemplate(currentIndex+1);
+                try {
+                  // 각 property에 대한 fetch가 완료될 때까지 기다립니다.
+                  const results = await Promise.all(propertyList.map(number => fetchPropertyInfo(number)));
+
+                  // 각 매물에 대해 generateTemplate을 호출하여 템플릿 딕셔너리 생성 (매물번호 : 템플릿)
+                  let new_templates = {};
+                  results.forEach((item, index) => {
+                    // 필요하다면 아래처럼 템플릿을 생성할 수 있습니다.
+                     new_templates[item.number] = generateTemplate(index + 1, item.formFields);
+                  });
+                  const patchResponse = await fetch(`/api/jjinbba/${jjinbba_id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            templates: new_templates,
+                            updated_at: formatDate(),
+                            id: jjinbba_id
+                        })
+                    });
+                    if (patchResponse.ok) {
+                        console.log('Template updated successfully.');
+                        // 업데이트 후 id_templates 컨테이너 재갱신 (필요 시)
+                        updateTemplateContainer();
+                        document.getElementById('id_jjinbba_template').innerHTML = new_templates[number];
+                    } else {
+                        console.error('Template update failed, status:', patchResponse.status);
+                    }
+                } catch (error) {
+                  console.error("Error fetching property info:", error);
+                }
           })
           .catch(error => {
             console.error("AJAX 요청 실패:", error);

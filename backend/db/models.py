@@ -109,6 +109,52 @@ class DataCategoryModel(Base):
     type = Column(Integer)
 
 
+class JjinbbaChildModel(Base):
+    __tablename__ = "jjinbba_child"
+
+    id = Column(Integer, primary_key=True, index=True)  # 자식의 고유 아이디
+    parent_id = Column(Integer, ForeignKey("jjinbba.id"), nullable=False)  # 부모(JjinbbaModel)의 아이디와 연결
+
+    number = Column(Integer)
+
+    # 건물 기본 정보
+    address = Column(String, comment="주소")  # finalAddress
+    building_name = Column(String, comment="건물명")  # bldNm
+    floor = Column(String, comment="층")  # floorInfo (첫번째 값 + "층")
+
+    # 금액 관련 (이미 formatNumber/convertToKoreanUnit 처리된 문자열)
+    deposit = Column(String, comment="보증금")  # warrantPrc -> "만"
+    rent = Column(String, comment="임대료")  # rentPrc -> "만"
+    management_fee = Column(String, comment="관리비")  # mgmtCost -> "만"
+    rent_and_mgmt = Column(String, comment="임+관")  # rent와 management_fee의 합산 결과
+
+    # 면적 관련
+    lease_area = Column(String, comment="임대면적")  # supplySpace * 0.3025 + "평"
+    exclusive_area = Column(String, comment="전용면적")  # (supplySpace * 0.3025 * 0.8) + "평"
+
+    # 기타 건물 정보
+    elevator = Column(String, comment="엘베")  # (rideUseElvtCnt + emgenUseElvtCnt) + "대"
+    parking = Column(String, comment="주차")  # "Y"이면 "1", 아니면 "0"
+    heating = Column(String, comment="냉난방")  # "중앙" 또는 "개별"
+    restroom = Column(String, comment="화장실")  # 고정값 "외부 분리"
+    direction = Column(String, comment="방향")  # buildingData.articleAddition.direction
+    feature = Column(String, comment="특징")  # buildingData.articleAddition.articleFeatureDesc
+
+    usage_approval_date = Column(String, comment="사용승인일")  # useAprDay를 formatKoreaDate로 변환한 값
+    land_area = Column(String, comment="대지면적")  # platArea * 0.3025 + "평"
+    total_area = Column(String, comment="연면적")  # totArea * 0.3025 + "평"
+
+    scale = Column(String, comment="규모")  # `지{ugrndFlrCnt}층 / {grndFlrCnt}층`
+    main_structure = Column(String, comment="주구조")  # etcStrct
+    building_coverage = Column(String, comment="건폐율")  # bcRat + "%"
+    floor_area_ratio = Column(String, comment="용적률")  # vlRat + "%"
+
+    template = Column(String, comment="템플릿")
+    img_urls = Column(JSON, default=list)
+
+    # 부모와의 관계 설정 (부모 모델에서 children 속성도 함께 정의하면 양방향 관계 사용 가능)
+    parent = relationship("JjinbbaModel", back_populates="children")
+
 class JjinbbaModel(Base):
     __tablename__ = "jjinbba"
 
@@ -128,6 +174,9 @@ class JjinbbaModel(Base):
     checkboxes = Column(JSON, nullable=True, default=dict)
     first_number = Column(Integer, nullable=True)
     region_info = Column(String, nullable=True)
+    templates = Column(JSON, nullable=True, default=dict)
+
+    children = relationship("JjinbbaChildModel", back_populates="parent", cascade="all, delete")
 
 class EventModel(Base):
     __tablename__ = "events"

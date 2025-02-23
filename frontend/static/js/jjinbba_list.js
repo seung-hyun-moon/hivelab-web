@@ -1,4 +1,117 @@
-// 날짜 형식: "YYYY-MM-DD HH:MM:SS"
+async function fetchJSON(url) {
+    try {
+        const response = await fetch(url, { method: 'GET' });
+        if (!response.ok) {
+            console.error(`Fetch error from: ${url}, status: ${response.status}`);
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Fetch exception from: ${url}`, error);
+        return null;
+    }
+}
+
+async function getBuildingData(number) {
+    const naver_url = `/api/jjinbba/info/${number}`;
+    return await fetchJSON(naver_url);
+}
+
+async function getBuildingReg(pnu) {
+    if (!pnu) return null;
+
+    const sigunguCd = pnu.slice(0, 5);
+    const bjdongCd  = pnu.slice(5, 10);
+    // platGbCd = pnu.slice(10, 11); // 사용하지 않아도 되면 생략 가능
+    const bun       = pnu.slice(11, 15);
+    const ji        = pnu.slice(15, 19);
+    const serviceKey = "BMGIafb6F%2BbjVUOgBpP0KhMFt2Xo%2B35JLYUc2Eu2AX%2BE69WIN4TwkM3a2YYb3XgUSmdv1CXPYOCFaYyyhwXEgw%3D%3D";
+
+    const apiUrl = `https://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo?serviceKey=${serviceKey}&sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bun}&ji=${ji}&_type=json&numOfRows=1&pageNo=1`;
+    return await fetchJSON(apiUrl);
+}
+
+async function getAddress(buildingReg, buildingData) {
+    // 1. 건축물대장 정보에서 주소
+    const addressFromReg = buildingReg?.response?.body?.items?.item[0]?.platPlc;
+    if (addressFromReg) {
+        return addressFromReg;
+    }
+    // 2. 좌표로 주소 조회
+    try {
+        const lng = buildingData?.articleDetail?.longitude;
+        const lat = buildingData?.articleDetail?.latitude;
+        if (!lat || !lng) {
+            return "";
+        }
+        const adrUrl = `/api/jjinbba/adr/${lat}_${lng}`;
+        const adrData = await fetchJSON(adrUrl);
+        return adrData || "";
+    } catch (error) {
+        console.error("좌표 기반 주소조회 실패:", error);
+        return "";
+    }
+}
+
+/**
+ * 숫자를 만(10000) 단위로 나누어 한국식 표기(만 단위)로 변환
+ */
+function convertToKoreanUnit(num) {
+    if (typeof num !== 'number' || isNaN(num) || num < 0) {
+        return "0";
+    }
+    const manValue = num / 10000;
+    return manValue % 1 === 0
+        ? `${manValue}`
+        : manValue.toString().replace(/\.0$/, '');
+}
+
+/**
+ * 문자열에서 숫자만 추출하고, 1억 이상이면 10000 단위로 나누어 표기
+ */
+function formatNumber(str) {
+  let result = 0;
+  let remaining = str;
+
+  // "억" 단위를 먼저 처리: 앞의 숫자에 10,000을 곱합니다.
+  const eokMatch = remaining.match(/([\d,\.]+)\s*억/);
+  if (eokMatch) {
+    // 콤마 제거 후 숫자로 변환
+    const eokValue = parseFloat(eokMatch[1].replace(/,/g, ''));
+    result += eokValue * 10000;
+    // 처리한 부분은 문자열에서 제거합니다.
+    remaining = remaining.replace(eokMatch[0], '');
+  }
+
+  // "만" 단위 처리: 앞의 숫자는 그대로 더합니다.
+  const manMatch = remaining.match(/([\d,\.]+)\s*만/);
+  if (manMatch) {
+    const manValue = parseFloat(manMatch[1].replace(/,/g, ''));
+    result += manValue;
+    remaining = remaining.replace(manMatch[0], '');
+  }
+
+  // 남은 문자열에서 숫자(콤마 포함)만 추출합니다.
+  const plainNumStr = remaining.replace(/[^\d,\.]/g, '');
+  if (plainNumStr) {
+    result += parseFloat(plainNumStr.replace(/,/g, ''));
+  }
+
+  // 항상 toLocaleString()을 사용하여 천단위 구분 쉼표를 적용합니다.
+  return result.toLocaleString();
+}
+
+/**
+ * YYYYMMDD → YYYY년 M월 D일
+ */
+function formatKoreaDate(dateStr) {
+    if (dateStr?.length !== 8) return "";
+    const year = dateStr.slice(0, 4);
+    const month = parseInt(dateStr.slice(4, 6), 10);
+    const day = parseInt(dateStr.slice(6, 8), 10);
+    return `${year}년 ${month}월 ${day}일`;
+}
+
 function formatDate() {
     var date = new Date();
     var year = date.getFullYear().toString();
@@ -10,9 +123,259 @@ function formatDate() {
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
+function populateFormFields(buildingData, buildingReg, address) {
+    // 필요한 정보가 하나도 없을 수 있으니, optional chaining + 기본값 사용
+    const warrantPrc   = buildingData?.articleAddition?.dealOrWarrantPrc  || "";
+    const rentPrc      = buildingData?.articleAddition?.rentPrc          || "";
+    const mgmtCost     = buildingData?.articleDetail?.monthlyManagementCost;
+    const supplySpace  = buildingData?.articleSpace?.supplySpace         || "";
+    const exclusiveSpace = buildingData?.articleSpace?.exclusiveSpace    || "";
+    const rideUseElvtCnt  = buildingReg?.response?.body?.items?.item[0]?.rideUseElvtCnt  ?? 0;
+    const emgenUseElvtCnt = buildingReg?.response?.body?.items?.item[0]?.emgenUseElvtCnt ?? 0;
+    const bldNm        = buildingReg?.response?.body?.items?.item[0]?.bldNm?.trim()      || "";
+    const ugrndFlrCnt  = buildingReg?.response?.body?.items?.item[0]?.ugrndFlrCnt        || "";
+    const grndFlrCnt   = buildingReg?.response?.body?.items?.item[0]?.grndFlrCnt         || "";
+    const totArea      = buildingReg?.response?.body?.items?.item[0]?.totArea            || "";
+    const useAprDay    = buildingReg?.response?.body?.items?.item[0]?.useAprDay          || "";
+
+    const vlRat           = buildingReg?.response?.body?.items?.item[0]?.vlRat          || "";
+    const bcRat         = buildingReg?.response?.body?.items?.item[0]?.bcRat          || "";
+    const etcStrct      = buildingReg?.response?.body?.items?.item[0]?.etcStrct || "";
+    const platArea      = buildingReg?.response?.body?.items?.item[0]?.platArea || "";
+
+    // 주소에서 "서울특별시 00구 " 이런 부분 제거
+    // 또한 "번지"라는 단어 제거
+    const finalAddress = address
+        .replace(/^서울특별시.*?구\s/, "")
+        .replace(/번지/, "");
+
+    return {
+        '주소':       finalAddress,
+        '건물명':     bldNm,
+        '층':         (buildingData?.articleAddition?.floorInfo || "").split('/')[0] + "층",
+
+        '보증금':     formatNumber(warrantPrc) + "만",
+        '임대료':     formatNumber(rentPrc) + "만",
+        '관리비':     convertToKoreanUnit(mgmtCost) + "만",
+        '임+관':         (
+            parseInt(formatNumber(rentPrc).replace(/,/g, '')) +
+            parseInt(convertToKoreanUnit(mgmtCost).replace(/,/g, ''))
+        ).toLocaleString() + "만",
+
+        '임대면적':   (supplySpace*0.3025).toFixed(1) + "평",
+        '전용면적':   (supplySpace*0.3025*0.8).toFixed(1) + "평",
+
+        '엘베':       (rideUseElvtCnt+emgenUseElvtCnt) + "대",
+        '주차':       ((buildingData?.articleDetail?.parkingPossibleYN || "") === "Y") ? "1" : "0",
+        '냉난방':     ((buildingData?.articleFacility?.heatMethodTypeName || "").includes("중앙")) ? "중앙" : "개별",
+        '화장실':     "외부 분리", // 고정
+        '방향':       buildingData?.articleAddition?.direction || "",
+        '특징':       buildingData?.articleAddition?.articleFeatureDesc || "",
+
+        '사용승인일':   formatKoreaDate(useAprDay),
+        '대지면적':    (platArea*0.3025).toFixed(1) + "평",
+        '연면적':     (totArea*0.3025).toFixed(1) + "평",
+
+        '규모':       `지${ugrndFlrCnt}층 / ${grndFlrCnt}층`,
+        '주구조':     etcStrct,
+        '건폐율':     bcRat + "%",
+        '용적률':     vlRat + "%",
+    };
+}
+
+// 예: numbersArr의 각 매물에 대해 buildingData, 주소, formFields를 가져오는 함수
+async function fetchPropertyInfo(number) {
+    const buildingData = await getBuildingData(number);
+    const pnu = buildingData?.articleDetail?.pnu || "";
+    const buildingReg = await getBuildingReg(pnu);
+    const address = await getAddress(buildingReg, buildingData);
+    const formFields = populateFormFields(buildingData, buildingReg, address);
+    return { number, address, formFields };
+}
+
+// numbersArr를 받아서 정렬 및 동별 개수를 만드는 함수
+async function processProperties(numbersArr) {
+    // 각 매물정보를 병렬로 가져오기
+    const results = await Promise.all(numbersArr.map(number => fetchPropertyInfo(number)));
+
+    console.log(results);
+
+    // 동일한 주소인 경우에만 "층"을 기준으로 정렬하고, 나머지는 원래 순서를 유지
+    results.sort((a, b) => {
+        if (a.formFields["주소"] === b.formFields["주소"]) {
+            // "층" 문자열에서 숫자만 추출하여 비교 (예: "3층" → 3)
+            const floorA = parseInt(a.formFields["층"]);
+            const floorB = parseInt(b.formFields["층"]);
+            return floorA - floorB;
+        }
+        // 주소가 다르면 기존 순서를 그대로 유지 (즉, 정렬하지 않음)
+        return 0;
+    });
+
+    // 정렬된 매물번호 배열 (매물번호만 추출)
+    const sortedNumbersArr = results.map(item => item.number);
+
+    numbersArr = sortedNumbersArr;
+
+    // 각 매물에 대해 generateTemplate을 호출하여 템플릿 딕셔너리 생성 (매물번호 : 템플릿)
+    const templates = {};
+    results.forEach((item, index) => {
+        // index는 0부터 시작하므로 index+1을 넘겨줍니다.
+        templates[item.number] = generateTemplate(index + 1, item.formFields);
+    });
+
+    // 주소에서 'OO동' 패턴을 추출하여 동별 개수를 카운트
+    const dongCounts = {};
+    results.forEach(item => {
+        const match = item.address.match(/([가-힣]+동)/);
+        if (match) {
+            const dong = match[1];
+            dongCounts[dong] = (dongCounts[dong] || 0) + 1;
+        }
+    });
+
+    // 동별 개수를 문자열로 생성 (예: "논현동 1개, 강남동 2개, ...")
+    const region_info = Object.keys(dongCounts)
+        .sort((a, b) => a.localeCompare(b, 'ko'))
+        .map(dong => `${dong} ${dongCounts[dong]}개`)
+        .join(', ');
+
+    // 두 값을 반환
+    return { sortedNumbersArr, region_info, templates };
+}
+
+function generateTemplate(currentIndex, field) {
+    const items = [
+        { name: '주소',       checked: true,       value: field["주소"] },
+        { name: '건물명',     checked: true,     value: field["건물명"] },
+        { name: '층',         checked: true,         value: field["층"] },
+
+        { name: '보증금',     checked: true,     value: field["보증금"] },
+        { name: '임대료',     checked: true,     value: field["임대료"] },
+        { name: '관리비',     checked: true,     value: field["관리비"] },
+        { name: '임+관',         checked: false,         value: field["임+관"] },
+
+        { name: '임대면적',        checked: false,        value: field["임대면적"] },
+        { name: '전용면적',        checked: true,        value: field["전용면적"] },
+
+        { name: '엘베',         checked: true,         value: field["엘베"] },
+        { name: '주차',       checked: true,       value: field["주차"] },
+        { name: '냉난방',     checked: true,     value: field["냉난방"] },
+        { name: '화장실',     checked: true,     value: field["화장실"] },
+        { name: '방향',       checked: false,       value: field["방향"] },
+        { name: '특징',       checked: true,       value: field["특징"] },
+
+        { name: '사용승인일',   checked: false,   value: field["사용승인일"] },
+        { name: '대지면적',   checked: false,   value: field["대지면적"] },
+        { name: '연면적',     checked: false,     value: field["연면적"] },
+        { name: '규모',       checked: false,       value: field["규모"] },
+        { name: '주구조',   checked: false,   value: field["주구조"] },
+        { name: '건폐율',   checked: false,   value: field["건폐율"] },
+        { name: '용적률',   checked: false,   value: field["용적률"] },
+    ];
+
+    const addressItem  = items.find(item => item.name === '주소'   && item.checked)?.value;
+    const buildingItem = items.find(item => item.name === '건물명' && item.checked)?.value;
+    const floorItem    = items.find(item => item.name === '층'     && item.checked)?.value;
+
+    let combineStr = "";
+
+    if (addressItem) {
+      combineStr = addressItem;
+    }
+
+    if (buildingItem) {
+      if (combineStr) {
+        combineStr += `, ${buildingItem}`;
+      } else {
+        combineStr = buildingItem;
+      }
+    }
+
+    if (floorItem) {
+      if (buildingItem) {
+        combineStr += ` ${floorItem}`;
+      } else if (addressItem) {
+        combineStr += `, ${floorItem}`;
+      } else {
+        combineStr = floorItem;
+      }
+    }
+
+
+    let template = `매물 ${currentIndex}. ${combineStr}<br><br>`;
+
+    // 보증금, 임대료, 관리비, 환산면적
+    if (items.find(item => item.name === '보증금' && item.checked)) {
+        template += `보증금 : ${items.find(item => item.name === '보증금' && item.checked)?.value || ''}<br>`;
+    }
+    if (items.find(item => item.name === '임대료' && item.checked)) {
+        template += `임대료 : ${items.find(item => item.name === '임대료' && item.checked)?.value || ''}<br>`;
+    }
+    if (items.find(item => item.name === '관리비' && item.checked)) {
+        template += `관리비 : ${items.find(item => item.name === '관리비' && item.checked)?.value || ''}<br>`;
+    }
+    if (items.find(item => item.name === '임+관' && item.checked)) {
+        template += `임+관 : ${items.find(item => item.name === '임+관' && item.checked)?.value || ''}<br>`;
+    }
+    if (items.find(item => item.name === 'NOC' && item.checked)) {
+        template += `NOC : ${items.find(item => item.name === 'NOC' && item.checked)?.value || ''}<br>`;
+    }
+
+    template += "<br>";
+
+    if (items.find(item => item.name === '임대면적' && item.checked)) {
+        template += `임대면적 : <font color='red'>${items.find(item => item.name === '임대면적' && item.checked)?.value || ''}</font><br>`;
+    }
+    if (items.find(item => item.name === '전용면적' && item.checked)) {
+        template += `전용면적 : <font color='red'>${items.find(item => item.name === '전용면적' && item.checked)?.value || ''}</font><br>`;
+    }
+
+    template += "<br>";
+
+    // 엘베, 주차, 냉난방, 화장실, 특징
+    if (items.find(item => item.name === '엘베' && item.checked)) {
+        template += `ㆍ엘베 ${items.find(item => item.name === '엘베' && item.checked)?.value || ''}<br>`;
+    }
+    if (items.find(item => item.name === '주차' && item.checked)) {
+        template += `ㆍ주차 <font color='red'>${items.find(item => item.name === '주차' && item.checked)?.value || ''}</font>대<br>`;
+    }
+    if (items.find(item => item.name === '냉난방' && item.checked)) {
+        template += `ㆍ<font color='red'>${items.find(item => item.name === '냉난방' && item.checked)?.value || ''}</font> 냉난방<br>`;
+    }
+    if (items.find(item => item.name === '화장실' && item.checked)) {
+        template += `ㆍ<font color='red'>${items.find(item => item.name === '화장실' && item.checked)?.value || ''}</font> 화장실<br>`;
+    }
+    if (items.find(item => item.name === '방향' && item.checked)) {
+        template += `ㆍ방향(주출입구 기준) : ${items.find(item => item.name === '방향' && item.checked)?.value || ''}<br>`;
+    }
+    if (items.find(item => item.name === '특징' && item.checked)) {
+        template += `ㆍ<font color='red'>${items.find(item => item.name === '특징' && item.checked)?.value || ''}</font><br>`;
+    }
+
+    template += '<br>';
+
+    // 나머지 체크된 항목들
+    items.forEach(item => {
+        if (
+            item.checked &&
+            ![
+                '주소','건물명','층',
+                '보증금','임대료','관리비','임+관','NOC',
+                '임대면적', '전용면적',
+                '엘베','주차','냉난방','화장실','방향','특징',
+            ].includes(item.name)
+        ) {
+            template += `ㆍ${item.name} : ${item.value}<br>`;
+        }
+    });
+
+    return template;
+}
+
 $(document).ready(function() {
     $('#loading-icon').show();
-    
+
     var table = $('#jjinbbaTable').DataTable({
         dom: 'Blfrtip',
         lengthChange: true,
@@ -83,19 +446,19 @@ $(document).ready(function() {
                 render: function(data, type, row) {
                     // data가 정수 배열이면 콤마로 join
                     if (Array.isArray(data)) {
-                        return data.join(", ");
+                        return data.join(" ");
                     }
                     return data;
                 }
             },
             { data: 'updated_at' },
-            { 
+            {
                 data: 'is_completed',
                 render: function(data, type, row) {
                     return data ? '완료' : '미완료';
                 }
             },
-            { 
+            {
                 data: 'id',
                 render: function(data, type, row) {
                     return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"></button>' +
@@ -134,20 +497,24 @@ $(document).ready(function() {
         var id = $(this).data('id');
         var checkboxes;
         var created_at;
+        var existingTemplates;
+        var existingRegionInfo;
         $.ajax({
             url: '/api/jjinbba/' + id,
             type: 'GET',
             success: function(itemData) {
-                // numbers 배열을 띄어쓰기로 구분된 문자열로 변환하여 textarea에 채움
-                $('#modifyJjinbbaModal').find('textarea[name="numbers"]').val(itemData.numbers.join(" "));
+                // 기존 매물번호를 기존 textarea에 설정
+                $('#modifyJjinbbaModal').find('textarea[name="existing_numbers"]').val(itemData.numbers.join(" "));
+                // 추가 매물번호는 빈칸으로 설정
+                $('#modifyJjinbbaModal').find('textarea[name="additional_numbers"]').val("");
                 $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
-                // 담당자는 input에서 select로 변경
                 $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
                 $('#modifyJjinbbaModal').find('input[name="customer"]').val(itemData.customer);
-                // is_completed 필드가 checkbox인 경우
                 $('#modifyJjinbbaModal').find('input[name="is_completed"]').prop('checked', itemData.is_completed);
                 checkboxes = itemData.checkboxes;
                 created_at = itemData.created_at;
+                existingTemplates = itemData.templates;
+                existingRegionInfo = itemData.region_info || "";
             },
             error: function(err) {
                 console.error('항목 데이터 불러오기 실패:', err);
@@ -155,28 +522,69 @@ $(document).ready(function() {
         });
         $('#modifyJjinbbaModal').modal('show');
 
-        // 기존 submit 이벤트 제거 후 재등록
-        $('#modifyJjinbbaModal form').off('submit').on('submit', function() {
+        $('#modifyJjinbbaModal form').off('submit').on('submit', async function() {
             var form = $(this);
-            // numbers textarea 값을 띄어쓰기로 분리한 후 정수 배열로 변환
-            var numbersStr = form.find('textarea[name="numbers"]').val();
-            var numbersArr = numbersStr.split(/\s+/).map(function(num) {
+            // 기존 매물번호 (순서 유지)
+            var existingNumbersStr = form.find('textarea[name="existing_numbers"]').val();
+            var existingNumbersArr = existingNumbersStr.split(/\s+/).map(function(num) {
                 return parseInt(num, 10);
-            }).filter(function(n) {
-                return !isNaN(n);
-            });
+            }).filter(function(n) { return !isNaN(n); });
+
+            // 추가 매물번호 (소팅 적용)
+            var additionalNumbersStr = form.find('textarea[name="additional_numbers"]').val();
+            var additionalNumbersArr = additionalNumbersStr.split(/\s+/).map(function(num) {
+                return parseInt(num, 10);
+            }).filter(function(n) { return !isNaN(n); });
+
+            let sortedAdditionalNumbers = [];
+            let newRegionInfo = "";
+            let newTemplates = {};
+            if (additionalNumbersArr.length > 0) {
+                const result = await processProperties(additionalNumbersArr);
+                sortedAdditionalNumbers = result.sortedNumbersArr;
+                newRegionInfo = result.region_info;
+                newTemplates = result.templates;
+
+                // 템플릿 인덱스 조정: 기존 템플릿 개수 이후로 번호 이어붙이기
+                let offset = Object.keys(existingTemplates).length;
+                let adjustedNewTemplates = {};
+                sortedAdditionalNumbers.forEach((propNumber, i) => {
+                    let template = newTemplates[propNumber];
+                    if (template) {
+                        let newIndex = offset + i + 1;
+                        // 템플릿의 시작부분 "매물 X."를 새로운 번호로 교체
+                        template = template.replace(/^매물\s+\d+\.\s*/, `매물 ${newIndex}. `);
+                        adjustedNewTemplates[propNumber] = template;
+                    }
+                });
+                newTemplates = adjustedNewTemplates;
+            }
+
+            // 기존 매물번호와 소팅된 추가 매물번호 이어붙이기
+            var combinedNumbers = existingNumbersArr.concat(sortedAdditionalNumbers);
+
+            // region_info 병합: 기존과 신규 정보 모두 있을 경우 쉼표로 결합
+            var combinedRegionInfo = "";
+            if(existingRegionInfo && newRegionInfo) {
+                combinedRegionInfo = existingRegionInfo + " / " + newRegionInfo;
+            } else {
+                combinedRegionInfo = existingRegionInfo || newRegionInfo;
+            }
+
+            // 기존 템플릿과 신규 템플릿 결합
+            var combinedTemplates = Object.assign({}, existingTemplates, newTemplates);
+
             var data = {
-                numbers: numbersArr,
+                numbers: combinedNumbers,
                 description: form.find('input[name="description"]').val(),
-                // 담당자는 select 요소에서 값 추출
                 person: form.find('select[name="person"]').val(),
                 customer: form.find('input[name="customer"]').val(),
-                // checkbox의 체크 상태로 is_completed 결정
                 is_completed: true,
-                // 수정 시 updated_at은 현재 시간으로 처리 (formatDate() 함수 활용)
                 updated_at: formatDate(),
                 created_at: created_at,
-                checkboxes: checkboxes
+                checkboxes: checkboxes,
+                region_info: combinedRegionInfo,
+                templates: combinedTemplates
             };
 
             $.ajax({
@@ -195,6 +603,7 @@ $(document).ready(function() {
             });
             return false;
         });
+
     });
 
 
@@ -234,32 +643,40 @@ $(document).ready(function() {
           "건폐율": false,
           "용적률": false
         };
-        var data = {
-            numbers: numbersArr,
-            description: form.find('input[name="description"]').val(),
-            person: form.find('select[name="person"]').val(),
-            customer: form.find('input[name="customer"]').val(),
-            is_completed: true,
-            created_at: formatDate(),
-            updated_at: formatDate(),
-            checkboxes: checkboxes
-        };
 
-        $.ajax({
-            type: 'POST',
-            url: '/api/jjinbba/',
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            success: function(response) {
-                console.log('등록 성공:', response);
-                $('#addJjinbbaModal').modal('hide');
-                table.ajax.reload();
-            },
-            error: function(error) {
-                console.error('등록 에러:', error);
-            }
-        });
-        return false;
+        (async function() {
+            // processProperties는 비동기 함수이므로 await가 필요합니다.
+            const { sortedNumbersArr, region_info, templates } = await processProperties(numbersArr);
+
+            var data = {
+                numbers: sortedNumbersArr,
+                description: form.find('input[name="description"]').val(),
+                person: form.find('select[name="person"]').val(),
+                customer: form.find('input[name="customer"]').val(),
+                is_completed: true,
+                created_at: formatDate(),
+                updated_at: formatDate(),
+                checkboxes: checkboxes,
+                region_info: region_info,
+                templates: templates
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/jjinbba/',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('등록 성공:', response);
+                    $('#addJjinbbaModal').modal('hide');
+                    table.ajax.reload();
+                },
+                error: function(error) {
+                    console.error('등록 에러:', error);
+                }
+            });
+            return false;
+        })();
     });
 
     $("#closeUploadModal").click(function(){

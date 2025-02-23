@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from backend.routers import auth, customer, property, contact, image, download, event, jjinbba
+from backend.routers import auth, customer, property, contact, image, download, event, jjinbba, jjinbba_child
 from backend.db.database import conn
 
 
@@ -43,6 +43,7 @@ app.include_router(download.FileRouter().router, tags=["download"], prefix="/api
 app.include_router(download.DataCategoryRouter().router, tags=["data_category"], prefix="/api/data_category")
 
 app.include_router(jjinbba.JjinbbaRouter().router, tags=["jjinbba"], prefix="/api/jjinbba")
+app.include_router(jjinbba_child.JjinbbaChildRouter().router, tags=["jjinbba_child"], prefix="/api/jjinbba_child")
 
 app.include_router(event.EventRouter().router, tags=["event"], prefix="/api/event")
 

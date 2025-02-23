@@ -38,12 +38,14 @@
     <div class="row m-3 flex-grow-1">
         <div class="col-12" style="height: 10vh; background-color: #f8f9fa; border: 1px solid #dee2e6;">
             매물번호 : <input id="id_number" name="name_ro_매물번호" readonly>
+            <br>
+            <textarea id="id_region_info" style="width: 100%" rows="3" readonly></textarea>
         </div>
     </div>
 
     <!-- Row 2: Three Columns -->
     <div class="row m-3 flex-grow-1">
-        <div class="col-5" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6; overflow-y: auto;">
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6; overflow-y: auto;">
             <form>
                 {% set items = [
                     ('주소', true), ('건물명', true), ('층', true),
@@ -80,8 +82,11 @@
                 {% endfor %}
             </form>
         </div>
-        <div class="col-7" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;" spellcheck="false">
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;" spellcheck="false">
             <div id="id_jjinbba_template" style="height:100%; overflow-y: auto; padding: 10px;" contenteditable="true"></div>
+        </div>
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;">
+            <div id="id_templates" style="height: 100%;width: 100%;"></div>
         </div>
         <div class="col-4 hidden" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;">
             <iframe id="id_naver_iframe" style="height: 100%;width: 100%;"></iframe>
