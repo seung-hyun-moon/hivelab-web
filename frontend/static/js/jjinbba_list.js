@@ -227,7 +227,9 @@ async function processProperties(numbersArr) {
     // 주소에서 'OO동' 패턴을 추출하여 동별 개수를 카운트
     const dongCounts = {};
     results.forEach(item => {
-        const match = item.address.match(/([가-힣]+동)/);
+        const addressWithoutRegion = item.address.replace(/^.*?구\s*/, '');
+        const match = addressWithoutRegion.match(/([가-힣]+동(?:\d가)?)/);
+        console.log(item.address, match);
         if (match) {
             const dong = match[1];
             dongCounts[dong] = (dongCounts[dong] || 0) + 1;
