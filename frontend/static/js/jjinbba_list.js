@@ -1,3 +1,36 @@
+function fetchCustomers(query = '') {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: '/api/customer/',
+      method: 'GET',
+      success: function(response) {
+        const customers = response.sort((a, b) => b.id - a.id); // Sort by ID in descending order
+        const filteredCustomers = customers.filter(customer =>
+          customer.id.toString().startsWith(query) || customer.industry.includes(query)
+        );
+
+        // Populate the dropdown with filtered customers
+        const dropdown = $('select[name="customer"]');
+        dropdown.empty();
+        dropdown.append('<option value="">고객을 선택하세요</option>');
+
+        filteredCustomers.forEach(function(customer) {
+          dropdown.append(
+            `<option value="${customer.id}">${customer.id} / ${customer.industry} / ${customer.head} / ${customer.deputy}</option>`
+          );
+        });
+
+        resolve(); // Resolve the promise once the dropdown is populated
+      },
+      error: function() {
+        console.log("Error fetching customer data.");
+        reject(); // Reject the promise if there is an error
+      }
+    });
+  });
+}
+
+
 async function fetchJSON(url) {
     try {
         const response = await fetch(url, { method: 'GET' });
@@ -198,22 +231,35 @@ async function processProperties(numbersArr) {
     // 각 매물정보를 병렬로 가져오기
     const results = await Promise.all(numbersArr.map(number => fetchPropertyInfo(number)));
 
-    console.log(results);
+    // 주소를 기준으로 그룹화
+    const groupedResults = results.reduce((acc, current) => {
+        const address = current.formFields["주소"];
+        // 주소가 이미 그룹화된 목록에 존재하면 해당 주소의 배열에 추가, 없으면 새로 배열을 생성
+        if (!acc[address]) {
+            acc[address] = [];
+        }
+        acc[address].push(current);
+        return acc;
+    }, {});
 
-    // 동일한 주소인 경우에만 "층"을 기준으로 정렬하고, 나머지는 원래 순서를 유지
-    results.sort((a, b) => {
-        if (a.formFields["주소"] === b.formFields["주소"]) {
-            // "층" 문자열에서 숫자만 추출하여 비교 (예: "3층" → 3)
+    // 각 주소별로 층을 기준으로 정렬하고, 결과 배열을 순차적으로 합침
+    const sortedResults = Object.keys(groupedResults).reduce((acc, address) => {
+        const groupedByAddress = groupedResults[address];
+
+        // "층" 기준으로 정렬
+        groupedByAddress.sort((a, b) => {
             const floorA = parseInt(a.formFields["층"]);
             const floorB = parseInt(b.formFields["층"]);
             return floorA - floorB;
-        }
-        // 주소가 다르면 기존 순서를 그대로 유지 (즉, 정렬하지 않음)
-        return 0;
-    });
+        });
+
+        // 정렬된 결과를 최종 배열에 추가
+        acc.push(...groupedByAddress);
+        return acc;
+    }, []);
 
     // 정렬된 매물번호 배열 (매물번호만 추출)
-    const sortedNumbersArr = results.map(item => item.number);
+    const sortedNumbersArr = sortedResults.map(item => item.number);
 
     numbersArr = sortedNumbersArr;
 
@@ -391,6 +437,7 @@ $(document).ready(function() {
                 text: '추가',
                 action: function (e, dt, node, config) {
                     $('#addJjinbbaModal').modal('show');
+                    fetchCustomers();
                 }
             }
         ],
@@ -473,6 +520,51 @@ $(document).ready(function() {
                 var id = data.id;
                 window.location.href = window.location.pathname + '/' + id;
             });
+
+            // Handle hover on the 'customer' column (index 1)
+            $('td', row).eq(1).hover(
+                function(event) {
+                    var $this = $(this);
+                    var customerValue = $this.text().trim();
+
+                    if (!customerValue || isNaN(customerValue)) {
+                        console.log('Invalid customer value:', customerValue); // You can log it or handle this case however you'd like
+                        return; // Exit early if the value is invalid
+                    }
+
+                    // 툴팁 요소를 생성하고 body에 추가
+                    var $tooltip = $('<div class="tooltip" style="opacity: 1;position: absolute; z-index: 999999; background-color: white; padding: 10px; border: 1px solid #ccc; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); visibility: hidden; white-space: nowrap;"></div>').appendTo('body');
+
+                    $.ajax({
+                        url: '/api/customer/' + customerValue,
+                        method: 'GET',
+                        success: function(response) {
+                            $tooltip.html(`
+                                <p>${response.industry}</p>
+                                <p>PO : ${response.head}</p>
+                                <p>PA : ${response.deputy}</p>
+                            `);
+
+                            // 마우스 움직임에 따라 툴팁 위치 업데이트
+                            $this.mousemove(function(e) {
+                                $tooltip.css({
+                                    top: e.pageY + 10,
+                                    left: e.pageX + 10,
+                                    visibility: 'visible'
+                                });
+                            });
+                        },
+                        error: function() {
+                            console.log('Failed to fetch customer data');
+                            return;
+                        }
+                    });
+                },
+                function() {
+                    // 마우스가 떠나면 툴팁 제거
+                    $('.tooltip').remove();
+                }
+            );
         },
     });
 
@@ -505,18 +597,23 @@ $(document).ready(function() {
             url: '/api/jjinbba/' + id,
             type: 'GET',
             success: function(itemData) {
-                // 기존 매물번호를 기존 textarea에 설정
-                $('#modifyJjinbbaModal').find('textarea[name="existing_numbers"]').val(itemData.numbers.join(" "));
-                // 추가 매물번호는 빈칸으로 설정
-                $('#modifyJjinbbaModal').find('textarea[name="additional_numbers"]').val("");
-                $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
-                $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
-                $('#modifyJjinbbaModal').find('input[name="customer"]').val(itemData.customer);
-                $('#modifyJjinbbaModal').find('input[name="is_completed"]').prop('checked', itemData.is_completed);
-                checkboxes = itemData.checkboxes;
-                created_at = itemData.created_at;
-                existingTemplates = itemData.templates;
-                existingRegionInfo = itemData.region_info || "";
+                fetchCustomers().then(() => {
+                    // 기존 매물번호를 기존 textarea에 설정
+                    $('#modifyJjinbbaModal').find('textarea[name="existing_numbers"]').val(itemData.numbers.join(" "));
+                    // 추가 매물번호는 빈칸으로 설정
+                    $('#modifyJjinbbaModal').find('textarea[name="additional_numbers"]').val("");
+                    $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
+                    console.log($('#modifyJjinbbaModal').find('select[name="person"]'), itemData.person);
+                    console.log($('#modifyJjinbbaModal').find('select[name="customer"]'), itemData.customer);
+                    $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
+
+                    $('#modifyJjinbbaModal').find('input[name="is_completed"]').prop('checked', itemData.is_completed);
+                    checkboxes = itemData.checkboxes;
+                    created_at = itemData.created_at;
+                    existingTemplates = itemData.templates;
+                    existingRegionInfo = itemData.region_info || "";
+                    $('#modifyJjinbbaModal').find('select[name="customer"]').val(itemData.customer);
+                });
             },
             error: function(err) {
                 console.error('항목 데이터 불러오기 실패:', err);
@@ -565,13 +662,10 @@ $(document).ready(function() {
             // 기존 매물번호와 소팅된 추가 매물번호 이어붙이기
             var combinedNumbers = existingNumbersArr.concat(sortedAdditionalNumbers);
 
+            const resultall = await processProperties(combinedNumbers);
+
             // region_info 병합: 기존과 신규 정보 모두 있을 경우 쉼표로 결합
-            var combinedRegionInfo = "";
-            if(existingRegionInfo && newRegionInfo) {
-                combinedRegionInfo = existingRegionInfo + " / " + newRegionInfo;
-            } else {
-                combinedRegionInfo = existingRegionInfo || newRegionInfo;
-            }
+            var combinedRegionInfo = resultall.region_info;
 
             // 기존 템플릿과 신규 템플릿 결합
             var combinedTemplates = Object.assign({}, existingTemplates, newTemplates);
@@ -580,7 +674,7 @@ $(document).ready(function() {
                 numbers: combinedNumbers,
                 description: form.find('input[name="description"]').val(),
                 person: form.find('select[name="person"]').val(),
-                customer: form.find('input[name="customer"]').val(),
+                customer: form.find('select[name="customer"]').val(),
                 is_completed: true,
                 updated_at: formatDate(),
                 created_at: created_at,
@@ -654,7 +748,7 @@ $(document).ready(function() {
                 numbers: sortedNumbersArr,
                 description: form.find('input[name="description"]').val(),
                 person: form.find('select[name="person"]').val(),
-                customer: form.find('input[name="customer"]').val(),
+                customer: form.find('select[name="customer"]').val(),
                 is_completed: true,
                 created_at: formatDate(),
                 updated_at: formatDate(),

@@ -35,7 +35,7 @@ async function scheduleTemplateUpdate() {
             if (patchResponse.ok) {
                 console.log('Template updated successfully.');
                 // 업데이트 후 id_templates 컨테이너 재갱신 (필요 시)
-                updateTemplateContainer();
+//                updateTemplateContainer();
             } else {
                 console.error('Template update failed, status:', patchResponse.status);
             }
@@ -599,17 +599,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             number = propertyList[0];
         }
 
-        if (data.templates) {
-            const templateContainer = document.getElementById('id_templates');
-            templateContainer.style.overflowY = 'auto';
-            templateContainer.innerHTML = "";  // 기존 내용 초기화
-            propertyList.forEach(key => {
-                templateContainer.innerHTML += data.templates[key];
-            });
-        }
+//        if (data.templates) {
+//            const templateContainer = document.getElementById('id_templates');
+//            templateContainer.style.overflowY = 'auto';
+//            templateContainer.innerHTML = "";  // 기존 내용 초기화
+//            propertyList.forEach(key => {
+//                templateContainer.innerHTML += data.templates[key];
+//            });
+//        }
 
         document.getElementById('id_number').value = number;
-        document.getElementById('id_region_info').value = "현재 매물번호들을 종합해봤을 때, ("+ region_info + ") 입니다."+"\n현재 규칙 : 동일한 주소인 경우에만 층을 기준으로 정렬하고, 나머지는 원래 순서를 유지 / 수정 시 기존 매물정보는 유지, 추가 매물은 규칙 적용\n체크박스 일괄 적용 후 수정해주세요. 왼쪽 입력칸을 이용한 수정은 버그가 발생하여 확인 중에 있습니다.";
+        document.getElementById('id_region_info').value = "현재 매물번호들을 종합해봤을 때, ("+ region_info + ") 입니다.";
 
         const btnContainer = document.getElementById('btn_numbers');
         // propertyList의 각 요소마다 버튼 생성
@@ -663,8 +663,27 @@ document.addEventListener('DOMContentLoaded', async function() {
               deleteItem.style.backgroundColor = '#fff';
             });
             deleteItem.addEventListener('click', async () => {
+              $('#loading-icon').show();
               // 현재 리스트에서 해당 property를 제외한 새 리스트 생성
-              const updatedNumbers = propertyList.filter(p => Number(p) !== Number(property));
+                const updatedNumbers = propertyList.filter(p => Number(p) !== Number(property));
+                const results = await Promise.all(updatedNumbers.map(number => fetchPropertyInfo(number)));
+                const dongCounts = {};
+                results.forEach(item => {
+                    const addressWithoutRegion = item.address.replace(/^.*?구\s*/, '');
+                    const match = addressWithoutRegion.match(/([가-힣]+동(?:\d가)?)/);
+                    console.log(item.address, match);
+                    if (match) {
+                        const dong = match[1];
+                        dongCounts[dong] = (dongCounts[dong] || 0) + 1;
+                    }
+                });
+
+                // 동별 개수를 문자열로 생성 (예: "논현동 1개, 강남동 2개, ...")
+                const region_info = Object.keys(dongCounts)
+                    .sort((a, b) => a.localeCompare(b, 'ko'))
+                    .map(dong => `${dong} ${dongCounts[dong]}개`)
+                    .join(', ');
+
               try {
                 const response = await fetch(`/api/jjinbba/${jjinbba_id}`, {
                   method: 'PATCH',
@@ -673,7 +692,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                   body: JSON.stringify({
                         numbers: updatedNumbers,
                         updated_at: formatDate(),
-                        id: jjinbba_id
+                        id: jjinbba_id,
+                        region_info: region_info
                     })
                 });
                 if (!response.ok) {
@@ -682,6 +702,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 // 삭제 성공 시 버튼 제거 및 전역 리스트 업데이트
                 btn.remove();
                 propertyList = updatedNumbers;
+                document.getElementById('id_region_info').value = "현재 매물번호들을 종합해봤을 때, ("+ region_info + ") 입니다.";
+                $('#loading-icon').hide();
                 alert(`${property} 번호가 삭제되었습니다.`);
               } catch (error) {
                 console.error('삭제 에러:', error);
@@ -792,7 +814,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (patchResponse.ok) {
                     console.log('Template updated successfully.');
                     // 업데이트 후 id_templates 컨테이너 재갱신 (필요 시)
-                    updateTemplateContainer();
+//                    updateTemplateContainer();
                     document.getElementById('id_jjinbba_template').innerHTML = new_templates[number];
                 } else {
                     console.error('Template update failed, status:', patchResponse.status);
@@ -852,7 +874,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     if (patchResponse.ok) {
                         console.log('Template updated successfully.');
                         // 업데이트 후 id_templates 컨테이너 재갱신 (필요 시)
-                        updateTemplateContainer();
+//                        updateTemplateContainer();
                         document.getElementById('id_jjinbba_template').innerHTML = new_templates[number];
                     } else {
                         console.error('Template update failed, status:', patchResponse.status);
