@@ -457,7 +457,7 @@ $(document).ready(function() {
             {
                 data: 'is_completed',
                 render: function(data, type, row) {
-                    return data ? '완료' : '미완료';
+                    return '완료';
                 }
             },
             {
