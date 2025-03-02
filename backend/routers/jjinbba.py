@@ -18,6 +18,7 @@ from typing import List, Dict
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse, FileResponse
 from datetime import datetime
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from backend.schemas.jjinbba import Jjinbba, JjinbbaCreate, JjinbbaUpdate, ImageRequest, AllImagesRequest
@@ -57,6 +58,25 @@ class JjinbbaRouter(BaseCRUD):
         self.router.add_api_route('/nif/{number}', self.get_naver_iframe, response_model=None, methods=['GET'])
         self.router.add_api_route('/each_down', self.download_each_images_as_zip, response_model=None, methods=['POST'])
         self.router.add_api_route('/all_down', self.download_all_images_as_zip, response_model=None, methods=['POST'])
+        # 새로 추가하는 라우터: 특정 customer 값으로 조회(최근 업데이트순)
+        self.router.add_api_route(
+            '/by_customer/{customer}',
+            self.get_items_by_customer,
+            response_model=List[self.get_schema],  # 필요하다면 None 대신 적절한 스키마 지정
+            methods=['GET']
+        )
+
+    def get_items_by_customer(self, customer: str, db: Session = Depends(get_db)):
+        """
+        특정 customer 값을 가진 레코드를 updated_at 기준으로 내림차순 정렬하여 반환
+        """
+        items = (
+            db.query(self.model)
+            .filter(self.model.customer == customer)
+            .order_by(self.model.created_at)
+            .all()
+        )
+        return items
 
     def create_item(self, item: JjinbbaCreate, db: Session = Depends(get_db)):
         return super().create_item(item=item, db=db)
@@ -66,6 +86,8 @@ class JjinbbaRouter(BaseCRUD):
 
     def patch_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
         return super().patch_item(item_id=item_id, item=item, db=db)
+
+
 
     async def get_naver_iframe(self, number: str):
         naver_url = f"https://new.land.naver.com/offices?articleNo={number}"

@@ -5,7 +5,6 @@ let first_number = 1;
 let updateTemplateTimeout = null;
 
 // scheduleTemplateUpdate: 3초 동안 추가 변경 없으면 PUT 요청 실행
-// scheduleTemplateUpdate: 3초 동안 추가 변경 없으면 PUT 요청 실행
 async function scheduleTemplateUpdate() {
     // 이전 타이머 취소
     if (updateTemplateTimeout) {
@@ -29,6 +28,7 @@ async function scheduleTemplateUpdate() {
                 body: JSON.stringify({
                     templates: currentTemplates,
                     updated_at: formatDate(),
+                    first_number: first_number,
                     id: jjinbba_id
                 })
             });
@@ -78,6 +78,40 @@ async function updateTemplateContainer() {
     }
 }
 
+// 이전 브리핑한 매물 정보 가져오기
+async function get_same_customer(customer_id, my_jjinbba_id) {
+    try {
+        const response = await fetch(`/api/jjinbba/by_customer/${customer_id}`);
+        const data = await response.json();
+        if (data) {
+            const container = document.getElementById("id_btn_customers");
+            container.innerHTML = ""; // 기존 버튼 초기화
+
+            let count = 1;
+            data.forEach(item => {
+                let className = "btn btn-sm btn-secondary me-2";
+                // my_jjinbba_id와 동일한 항목은 생성하지 않음
+                if (item.id == my_jjinbba_id) {
+                    className = "btn btn-sm btn-dark me-2";
+                }
+
+                const btn = document.createElement("button");
+                btn.id = `id_btn_${item.id}`;
+                btn.className = className;
+                // 순차적으로 1차, 2차 ... 브리핑 텍스트와 updated_at 정보 추가
+                btn.textContent = `${count}차 브리핑 : ${item.created_at}`;
+                btn.addEventListener("click", () => {
+                    window.location.href = `/jjinbba_list/${item.id}`;
+                });
+                container.appendChild(btn);
+                count++;
+            });
+        }
+    } catch (error) {
+        console.error('Error Get Same Customers:', error);
+    }
+}
+
 
 /**
  * 공통 Fetch → JSON 호출 함수
@@ -117,6 +151,7 @@ async function setupCheckboxUpdater(jjinbbaId) {
                         // checkboxes 필드의 해당 항목만 업데이트
                         checkboxes: currentCheckboxes,
                         updated_at: formatDate(),
+                        first_number: first_number,
                         id: jjinbba_id
                     })
                 });
@@ -419,6 +454,7 @@ function applyFormFields(formFields) {
  * 체크된 항목들을 바탕으로 템플릿 HTML 생성 후 id_jjinbba_template에 삽입
  */
 function generateTemplate(currentIndex, field) {
+    console.log('generateTemplate 실행', first_number, currentIndex);
     const items = [
       { name: '주소',       checked: document.getElementById('id_checkbox_주소').checked,       value: field["주소"] },
       { name: '건물명',     checked: document.getElementById('id_checkbox_건물명').checked,     value: field["건물명"] },
@@ -592,6 +628,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const response = await fetch(`/api/jjinbba/${jjinbba_id}`);
         const data = await response.json();
         first_number = data.first_number;
+        $('#id_number_input').val(first_number);
+
         propertyList = data.numbers;
         const region_info = data.region_info;
         templates = data.templates;
@@ -665,6 +703,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             deleteItem.addEventListener('click', async () => {
               $('#loading-icon').show();
               // 현재 리스트에서 해당 property를 제외한 새 리스트 생성
+                const currentIndex = propertyList.findIndex(p => Number(p) === Number(property));
                 const updatedNumbers = propertyList.filter(p => Number(p) !== Number(property));
                 const results = await Promise.all(updatedNumbers.map(number => fetchPropertyInfo(number)));
                 const dongCounts = {};
@@ -676,6 +715,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                         const dong = match[1];
                         dongCounts[dong] = (dongCounts[dong] || 0) + 1;
                     }
+                });
+
+                let new_templates = {};
+                results.forEach((item, index) => {
+                // 필요하다면 아래처럼 템플릿을 생성할 수 있습니다.
+                 new_templates[item.number] = generateTemplate(index + 1, item.formFields);
                 });
 
                 // 동별 개수를 문자열로 생성 (예: "논현동 1개, 강남동 2개, ...")
@@ -691,9 +736,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                   // 백엔드에서 numbers 필드를 업데이트하도록 처리
                   body: JSON.stringify({
                         numbers: updatedNumbers,
+                        templates: new_templates,
                         updated_at: formatDate(),
                         id: jjinbba_id,
-                        region_info: region_info
+                        region_info: region_info,
+                        first_number: first_number
                     })
                 });
                 if (!response.ok) {
@@ -705,6 +752,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                 document.getElementById('id_region_info').value = "현재 매물번호들을 종합해봤을 때, ("+ region_info + ") 입니다.";
                 $('#loading-icon').hide();
                 alert(`${property} 번호가 삭제되었습니다.`);
+                // 삭제 후 다음 페이지로 이동 (다음 항목이 없으면 이전 항목으로)
+                if (updatedNumbers.length > 0) {
+                  let nextProperty;
+                  // 현재 인덱스가 아직 유효하면 (삭제된 항목이 마지막이 아니면) 그 인덱스의 항목으로,
+                  // 삭제된 항목이 마지막이었다면 이전 항목으로 이동
+                  if (currentIndex < updatedNumbers.length) {
+                    nextProperty = updatedNumbers[currentIndex];
+                  } else {
+                    nextProperty = updatedNumbers[currentIndex - 1];
+                  }
+                  window.location.href = `/jjinbba_list/${jjinbba_id}/${nextProperty}`;
+                } else {
+                  // 만약 삭제 후 남은 항목이 없으면 리스트 페이지로 이동
+                  window.location.href = `/jjinbba_list/${jjinbba_id}`;
+                }
               } catch (error) {
                 console.error('삭제 에러:', error);
                 alert('삭제에 실패했습니다.');
@@ -752,6 +814,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 1) 체크 박스 정보 가져오기!!!
     const infos = await getCheckBoxesData(jjinbba_id);
+
     if (infos && infos.checkboxes) {
         currentCheckboxes = infos.checkboxes;
         Object.keys(currentCheckboxes).forEach(key => {
@@ -763,6 +826,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
     setupCheckboxUpdater(jjinbba_id);
 
+    // 브리핑한 데이터 가져오기
+    if (infos && infos.checkboxes) {
+        get_same_customer(infos.customer, jjinbba_id);
+    }
+
     // 2) 두 가지 API 데이터 가져오기 (실패 시 null 반환)
     const buildingData = await getBuildingData(number);
     const pnu = buildingData?.articleDetail?.pnu || "";
@@ -773,6 +841,30 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 4) formFields 생성 (둘 중 하나만 성공해도 partial data 사용 가능)
     const formFields = populateFormFields(buildingData, buildingReg, address);
+
+    // 위치 정보 가져오기
+    if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
+      const templatesDiv = document.getElementById('id_templates');
+
+      // 지도 이미지 업데이트 함수
+      function updateMap() {
+        const w = templatesDiv.offsetWidth;
+        const h = templatesDiv.offsetHeight;
+        const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=${w}&h=${h}`;
+        templatesDiv.innerHTML = `<img src="${mapUrl}" alt="Map Image" style="width: 100%; height: auto;">`;
+        console.log(mapUrl);
+      }
+
+      // 초기 지도 이미지 업데이트
+      updateMap();
+
+      // ResizeObserver를 사용하여 div 크기 변경 시 업데이트 수행
+      const resizeObserver = new ResizeObserver(() => {
+        updateMap();
+      });
+      resizeObserver.observe(templatesDiv);
+    }
+
 
     // 5) formFields를 화면 input들에 적용
     applyFormFields(formFields);
@@ -808,7 +900,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     body: JSON.stringify({
                         templates: new_templates,
                         updated_at: formatDate(),
-                        id: jjinbba_id
+                        id: jjinbba_id,
+                        first_number: first_number
                     })
                 });
                 if (patchResponse.ok) {
@@ -868,7 +961,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                         body: JSON.stringify({
                             templates: new_templates,
                             updated_at: formatDate(),
-                            id: jjinbba_id
+                            id: jjinbba_id,
+                            first_number: first_number
                         })
                     });
                     if (patchResponse.ok) {
@@ -889,17 +983,17 @@ document.addEventListener('DOMContentLoaded', async function() {
       });
 
 
-    document.getElementById('id_naver_info')?.addEventListener('click', async () => {
-        // 8) iframe 로드 (NIF)
-        try {
-            const iframeResponse = await fetch(`/api/jjinbba/nif/${number}`, { method: 'GET' });
-            if (!iframeResponse.ok) throw new Error('Network response was not ok');
-            const iframeContent = await iframeResponse.json();
-            document.getElementById('id_naver_iframe').srcdoc = iframeContent;
-        } catch (error) {
-            console.error('Error loading iframe content:', error);
-        }
-    });
+//    document.getElementById('id_naver_info')?.addEventListener('click', async () => {
+//        // 8) iframe 로드 (NIF)
+//        try {
+//            const iframeResponse = await fetch(`/api/jjinbba/nif/${number}`, { method: 'GET' });
+//            if (!iframeResponse.ok) throw new Error('Network response was not ok');
+//            const iframeContent = await iframeResponse.json();
+//            document.getElementById('id_naver_iframe').srcdoc = iframeContent;
+//        } catch (error) {
+//            console.error('Error loading iframe content:', error);
+//        }
+//    });
 
 
       // 클릭 이벤트 리스너 등록

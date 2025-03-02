@@ -265,14 +265,14 @@ async function processProperties(numbersArr) {
 
     // 각 매물에 대해 generateTemplate을 호출하여 템플릿 딕셔너리 생성 (매물번호 : 템플릿)
     const templates = {};
-    results.forEach((item, index) => {
+    sortedResults.forEach((item, index) => {
         // index는 0부터 시작하므로 index+1을 넘겨줍니다.
         templates[item.number] = generateTemplate(index + 1, item.formFields);
     });
 
     // 주소에서 'OO동' 패턴을 추출하여 동별 개수를 카운트
     const dongCounts = {};
-    results.forEach(item => {
+    sortedResults.forEach(item => {
         const addressWithoutRegion = item.address.replace(/^.*?구\s*/, '');
         const match = addressWithoutRegion.match(/([가-힣]+동(?:\d가)?)/);
         console.log(item.address, match);
@@ -500,7 +500,9 @@ $(document).ready(function() {
                     return data;
                 }
             },
-            { data: 'updated_at' },
+            { data: 'updated_at',
+
+            },
             {
                 data: 'is_completed',
                 render: function(data, type, row) {
@@ -593,24 +595,22 @@ $(document).ready(function() {
         var created_at;
         var existingTemplates;
         var existingRegionInfo;
+        var first_number;
         $.ajax({
             url: '/api/jjinbba/' + id,
             type: 'GET',
             success: function(itemData) {
                 fetchCustomers().then(() => {
                     // 기존 매물번호를 기존 textarea에 설정
-                    $('#modifyJjinbbaModal').find('textarea[name="existing_numbers"]').val(itemData.numbers.join(" "));
+                    $('#modifyJjinbbaModal').find('textarea[name="numbers"]').val(itemData.numbers.join(" "));
                     // 추가 매물번호는 빈칸으로 설정
-                    $('#modifyJjinbbaModal').find('textarea[name="additional_numbers"]').val("");
+//                    $('#modifyJjinbbaModal').find('textarea[name="additional_numbers"]').val("");
                     $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
-                    console.log($('#modifyJjinbbaModal').find('select[name="person"]'), itemData.person);
-                    console.log($('#modifyJjinbbaModal').find('select[name="customer"]'), itemData.customer);
                     $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
-
-                    $('#modifyJjinbbaModal').find('input[name="is_completed"]').prop('checked', itemData.is_completed);
                     checkboxes = itemData.checkboxes;
                     created_at = itemData.created_at;
                     existingTemplates = itemData.templates;
+                    first_number = itemData.first_number;
                     existingRegionInfo = itemData.region_info || "";
                     $('#modifyJjinbbaModal').find('select[name="customer"]').val(itemData.customer);
                 });
@@ -624,54 +624,15 @@ $(document).ready(function() {
         $('#modifyJjinbbaModal form').off('submit').on('submit', async function() {
             var form = $(this);
             // 기존 매물번호 (순서 유지)
-            var existingNumbersStr = form.find('textarea[name="existing_numbers"]').val();
-            var existingNumbersArr = existingNumbersStr.split(/\s+/).map(function(num) {
+            var numbersStr = form.find('textarea[name="numbers"]').val();
+            var numbersArr = numbersStr.split(/\s+/).map(function(num) {
                 return parseInt(num, 10);
             }).filter(function(n) { return !isNaN(n); });
 
-            // 추가 매물번호 (소팅 적용)
-            var additionalNumbersStr = form.find('textarea[name="additional_numbers"]').val();
-            var additionalNumbersArr = additionalNumbersStr.split(/\s+/).map(function(num) {
-                return parseInt(num, 10);
-            }).filter(function(n) { return !isNaN(n); });
-
-            let sortedAdditionalNumbers = [];
-            let newRegionInfo = "";
-            let newTemplates = {};
-            if (additionalNumbersArr.length > 0) {
-                const result = await processProperties(additionalNumbersArr);
-                sortedAdditionalNumbers = result.sortedNumbersArr;
-                newRegionInfo = result.region_info;
-                newTemplates = result.templates;
-
-                // 템플릿 인덱스 조정: 기존 템플릿 개수 이후로 번호 이어붙이기
-                let offset = Object.keys(existingTemplates).length;
-                let adjustedNewTemplates = {};
-                sortedAdditionalNumbers.forEach((propNumber, i) => {
-                    let template = newTemplates[propNumber];
-                    if (template) {
-                        let newIndex = offset + i + 1;
-                        // 템플릿의 시작부분 "매물 X."를 새로운 번호로 교체
-                        template = template.replace(/^매물\s+\d+\.\s*/, `매물 ${newIndex}. `);
-                        adjustedNewTemplates[propNumber] = template;
-                    }
-                });
-                newTemplates = adjustedNewTemplates;
-            }
-
-            // 기존 매물번호와 소팅된 추가 매물번호 이어붙이기
-            var combinedNumbers = existingNumbersArr.concat(sortedAdditionalNumbers);
-
-            const resultall = await processProperties(combinedNumbers);
-
-            // region_info 병합: 기존과 신규 정보 모두 있을 경우 쉼표로 결합
-            var combinedRegionInfo = resultall.region_info;
-
-            // 기존 템플릿과 신규 템플릿 결합
-            var combinedTemplates = Object.assign({}, existingTemplates, newTemplates);
+            const { sortedNumbersArr, region_info, templates } = await processProperties(numbersArr);
 
             var data = {
-                numbers: combinedNumbers,
+                numbers: sortedNumbersArr,
                 description: form.find('input[name="description"]').val(),
                 person: form.find('select[name="person"]').val(),
                 customer: form.find('select[name="customer"]').val(),
@@ -679,8 +640,9 @@ $(document).ready(function() {
                 updated_at: formatDate(),
                 created_at: created_at,
                 checkboxes: checkboxes,
-                region_info: combinedRegionInfo,
-                templates: combinedTemplates
+                region_info: region_info,
+                templates: templates,
+                first_number: first_number
             };
 
             $.ajax({
