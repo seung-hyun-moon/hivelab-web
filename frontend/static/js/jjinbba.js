@@ -461,6 +461,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!match) return;
     const number = match[1];
 
+    document.getElementById('id_number').value = number;
+
     // 2) 두 가지 API 데이터 가져오기 (실패 시 null 반환)
     const buildingData = await getBuildingData(number);
     const pnu = buildingData?.articleDetail?.pnu || "";
@@ -471,6 +473,35 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 4) formFields 생성 (둘 중 하나만 성공해도 partial data 사용 가능)
     const formFields = populateFormFields(buildingData, buildingReg, address);
+
+    // 특징 표시
+    if (buildingData?.articleAddition?.articleFeatureDesc) {
+        const featureDiv = document.getElementById('id_feature');
+        featureDiv.innerHTML = `<p style="color: #808080;">${buildingData?.articleAddition?.articleFeatureDesc}</p>`
+    }
+    document.getElementById('id_checkbox_특징').disabled = true;
+
+    // 위치 정보 가져오기
+    if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
+      const templatesDiv = document.getElementById('id_templates');
+
+      // 지도 이미지 업데이트 함수
+      function updateMap() {
+        const w = templatesDiv.offsetWidth;
+        const h = templatesDiv.offsetHeight;
+        const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=${w}&h=${h}`;
+        templatesDiv.innerHTML = `<img src="${mapUrl}" alt="Map Image" style="width: 100%; height: auto;">`;
+      }
+
+      // 초기 지도 이미지 업데이트
+      updateMap();
+
+      // ResizeObserver를 사용하여 div 크기 변경 시 업데이트 수행
+      const resizeObserver = new ResizeObserver(() => {
+        updateMap();
+      });
+      resizeObserver.observe(templatesDiv);
+    }
 
     // 5) formFields를 화면 input들에 적용
     applyFormFields(formFields);

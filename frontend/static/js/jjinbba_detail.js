@@ -842,6 +842,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 4) formFields 생성 (둘 중 하나만 성공해도 partial data 사용 가능)
     const formFields = populateFormFields(buildingData, buildingReg, address);
 
+    // 특징 표시
+    if (buildingData?.articleAddition?.articleFeatureDesc) {
+        const featureDiv = document.getElementById('id_feature');
+        featureDiv.innerHTML = `<p style="color: #808080;">${buildingData?.articleAddition?.articleFeatureDesc}</p>`
+    }
+    document.getElementById('id_checkbox_특징').disabled = true;
+
+
     // 위치 정보 가져오기
     if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
       const templatesDiv = document.getElementById('id_templates');
@@ -852,7 +860,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const h = templatesDiv.offsetHeight;
         const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=${w}&h=${h}`;
         templatesDiv.innerHTML = `<img src="${mapUrl}" alt="Map Image" style="width: 100%; height: auto;">`;
-        console.log(mapUrl);
       }
 
       // 초기 지도 이미지 업데이트

@@ -311,7 +311,7 @@ function generateTemplate(currentIndex, field) {
         { name: '냉난방',     checked: true,     value: field["냉난방"] },
         { name: '화장실',     checked: true,     value: field["화장실"] },
         { name: '방향',       checked: false,       value: field["방향"] },
-        { name: '특징',       checked: true,       value: field["특징"] },
+        { name: '특징',       checked: false,       value: field["특징"] },
 
         { name: '사용승인일',   checked: false,   value: field["사용승인일"] },
         { name: '대지면적',   checked: false,   value: field["대지면적"] },
@@ -692,7 +692,7 @@ $(document).ready(function() {
           "냉난방": true,
           "화장실": true,
           "방향": false,
-          "특징": true,
+          "특징": false,
           "사용승인일": false,
           "대지면적": false,
           "연면적": false,
