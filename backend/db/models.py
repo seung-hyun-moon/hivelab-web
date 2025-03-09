@@ -127,30 +127,36 @@ class JjinbbaChildModel(Base):
     rent = Column(String, comment="임대료")  # rentPrc -> "만"
     management_fee = Column(String, comment="관리비")  # mgmtCost -> "만"
     rent_and_mgmt = Column(String, comment="임+관")  # rent와 management_fee의 합산 결과
-
-    # 면적 관련
-    lease_area = Column(String, comment="임대면적")  # supplySpace * 0.3025 + "평"
-    exclusive_area = Column(String, comment="전용면적")  # (supplySpace * 0.3025 * 0.8) + "평"
+    rate = Column(String, comment="이율") # 이율
+    noc = Column(String, comment="NOC")
+    rf = Column(String, comment="RF")
 
     # 기타 건물 정보
+    exclusive_area = Column(String, comment="전용면적")  # (supplySpace * 0.3025 * 0.8) + "평"
     elevator = Column(String, comment="엘베")  # (rideUseElvtCnt + emgenUseElvtCnt) + "대"
     parking = Column(String, comment="주차")  # "Y"이면 "1", 아니면 "0"
     heating = Column(String, comment="냉난방")  # "중앙" 또는 "개별"
     restroom = Column(String, comment="화장실")  # 고정값 "외부 분리"
-    direction = Column(String, comment="방향")  # buildingData.articleAddition.direction
-    feature = Column(String, comment="특징")  # buildingData.articleAddition.articleFeatureDesc
 
+    lease_area = Column(String, comment="임대면적")  # supplySpace * 0.3025 + "평"
+    use = Column(String, comment="용도")
     usage_approval_date = Column(String, comment="사용승인일")  # useAprDay를 formatKoreaDate로 변환한 값
-    land_area = Column(String, comment="대지면적")  # platArea * 0.3025 + "평"
-    total_area = Column(String, comment="연면적")  # totArea * 0.3025 + "평"
-
     scale = Column(String, comment="규모")  # `지{ugrndFlrCnt}층 / {grndFlrCnt}층`
+    direction = Column(String, comment="방향")  # buildingData.articleAddition.direction
+    land_area = Column(String, comment="대지면적")  # platArea * 0.3025 + "평"
+    building_area = Column(String, comment="건축면적")
+    total_area = Column(String, comment="연면적")  # totArea * 0.3025 + "평"
     main_structure = Column(String, comment="주구조")  # etcStrct
     building_coverage = Column(String, comment="건폐율")  # bcRat + "%"
     floor_area_ratio = Column(String, comment="용적률")  # vlRat + "%"
+    land_price = Column(String, comment="개별공시지가")
+
+    feature = Column(String, comment="특징")  # buildingData.articleAddition.articleFeatureDesc
+    note = Column(String, comment="특이사항")
 
     template = Column(String, comment="템플릿")
     img_urls = Column(JSON, default=list)
+    rocation_url = Column(String, comment="위치정보")
 
     # 부모와의 관계 설정 (부모 모델에서 children 속성도 함께 정의하면 양방향 관계 사용 가능)
     parent = relationship("JjinbbaModel", back_populates="children")

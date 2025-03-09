@@ -203,6 +203,37 @@ async function getBuildingReg(pnu) {
     return await fetchJSON(apiUrl);
 }
 
+
+async function getUseInfo(pnu, floor) {
+    if (!pnu) return "";
+
+    const sigunguCd = pnu.slice(0, 5);
+    const bjdongCd  = pnu.slice(5, 10);
+    const bun       = pnu.slice(11, 15);
+    const ji        = pnu.slice(15, 19);
+    const serviceKey = "BMGIafb6F%2BbjVUOgBpP0KhMFt2Xo%2B35JLYUc2Eu2AX%2BE69WIN4TwkM3a2YYb3XgUSmdv1CXPYOCFaYyyhwXEgw%3D%3D";
+
+    const apiUrl = `https://apis.data.go.kr/1613000/BldRgstHubService/getBrFlrOulnInfo?serviceKey=${serviceKey}&sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bun}&ji=${ji}&_type=json&numOfRows=100&pageNo=1`;
+
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        const items = data?.response?.body?.items?.item;
+
+        if (!items || !Array.isArray(items)) return "";
+
+        return items
+            .filter(item => String(item.flrNo) === String(floor)) // 층 번호가 같은 경우 필터링
+            .map(item => item.etcPurps) // etcPurps 값만 추출
+            .filter(Boolean) // 빈 값 제거
+            .join(", "); // 쉼표로 연결
+    } catch (error) {
+        console.error("API 호출 오류:", error);
+        return "";
+    }
+}
+
 /**
  * 주소 추출 로직:
  * 1. 건축물대장 정보(buildingReg)에 주소가 있으면 사용
@@ -358,7 +389,9 @@ function calculateExcelFormula() {
  * @param {string} address
  * @returns {object} formFields
  */
-function populateFormFields(buildingData, buildingReg, address) {
+function populateFormFields(buildingData, buildingReg, address, useInfo) {
+    console.log(buildingData);
+    console.log(buildingReg);
     // 필요한 정보가 하나도 없을 수 있으니, optional chaining + 기본값 사용
     const warrantPrc   = buildingData?.articleAddition?.dealOrWarrantPrc  || "";
     const rentPrc      = buildingData?.articleAddition?.rentPrc          || "";
@@ -377,6 +410,7 @@ function populateFormFields(buildingData, buildingReg, address) {
     const bcRat         = buildingReg?.response?.body?.items?.item[0]?.bcRat          || "";
     const etcStrct      = buildingReg?.response?.body?.items?.item[0]?.etcStrct || "";
     const platArea      = buildingReg?.response?.body?.items?.item[0]?.platArea || "";
+    const archArea      = buildingReg?.response?.body?.items?.item[0]?.archArea || ""; // 건축면적
 
     // 주소에서 "서울특별시 00구 " 이런 부분 제거
     // 또한 "번지"라는 단어 제거
@@ -400,8 +434,10 @@ function populateFormFields(buildingData, buildingReg, address) {
         '임대면적':   (supplySpace*0.3025).toFixed(1) + "평",
         '전용면적':   (supplySpace*0.3025*0.8).toFixed(1) + "평",
 
+        "용도":       useInfo,
+
         '엘베':       (rideUseElvtCnt+emgenUseElvtCnt) + "대",
-        '주차':       ((buildingData?.articleDetail?.parkingPossibleYN || "") === "Y") ? "1" : "0",
+        '주차':       ((buildingData?.articleDetail?.parkingPossibleYN || "") === "Y") ? "1대" : "0대",
         '냉난방':     ((buildingData?.articleFacility?.heatMethodTypeName || "").includes("중앙")) ? "중앙" : "개별",
         '화장실':     "외부 분리", // 고정
         '방향':       buildingData?.articleAddition?.direction || "",
@@ -409,6 +445,7 @@ function populateFormFields(buildingData, buildingReg, address) {
 
         '사용승인일':   formatKoreaDate(useAprDay),
         '대지면적':    (platArea*0.3025).toFixed(1) + "평",
+        '건축면적':    (archArea*0.3025).toFixed(1) + "평",
         '연면적':     (totArea*0.3025).toFixed(1) + "평",
 
         '규모':       `지${ugrndFlrCnt}층 / ${grndFlrCnt}층`,
@@ -454,137 +491,54 @@ function applyFormFields(formFields) {
  * 체크된 항목들을 바탕으로 템플릿 HTML 생성 후 id_jjinbba_template에 삽입
  */
 function generateTemplate(currentIndex, field) {
-    console.log('generateTemplate 실행', first_number, currentIndex);
-    const items = [
-      { name: '주소',       checked: document.getElementById('id_checkbox_주소').checked,       value: field["주소"] },
-      { name: '건물명',     checked: document.getElementById('id_checkbox_건물명').checked,     value: field["건물명"] },
-      { name: '층',         checked: document.getElementById('id_checkbox_층').checked,         value: field["층"] },
+  console.log('generateTemplate 실행', first_number, currentIndex);
 
-      { name: '보증금',     checked: document.getElementById('id_checkbox_보증금').checked,     value: field["보증금"] },
-      { name: '임대료',     checked: document.getElementById('id_checkbox_임대료').checked,     value: field["임대료"] },
-      { name: '관리비',     checked: document.getElementById('id_checkbox_관리비').checked,     value: field["관리비"] },
-      { name: '임+관',      checked: document.getElementById('id_checkbox_임+관').checked,      value: field["임+관"] },
+  const fieldNames = [
+    '주소', '건물명', '층', '보증금', '임대료', '관리비', '임+관', 'NOC', '이율(%)', 'RF(개월)',
+    '임대면적', '전용면적',
+    '엘베', '주차', '냉난방', '화장실',
+    '용도', '사용승인일', '규모', '방향', '대지면적', '건축면적', '연면적', '주구조', '건폐율', '용적률', '개별공시지가', '특징',
+    '특이사항'
+  ];
 
-      { name: '이율(%)',    checked: document.getElementById('id_checkbox_이율(%)').checked,    value: field["이율(%)"] },
-      { name: 'RF(개월)',   checked: document.getElementById('id_checkbox_RF(개월)').checked,   value: field["RF(개월)"] },
-      { name: 'NOC',       checked: document.getElementById('id_checkbox_NOC').checked,       value: field["NOC"] },
+  const items = fieldNames.map(name => ({
+    name,
+    checked: document.getElementById(`id_checkbox_${name}`).checked,
+    value: field[name]
+  }));
 
-      { name: '임대면적',   checked: document.getElementById('id_checkbox_임대면적').checked,   value: field["임대면적"] },
-      { name: '전용면적',   checked: document.getElementById('id_checkbox_전용면적').checked,   value: field["전용면적"] },
+  const addressItem = items.find(i => i.name === '주소' && i.checked)?.value;
+  const buildingItem = items.find(i => i.name === '건물명' && i.checked)?.value;
+  const floorItem = items.find(i => i.name === '층' && i.checked)?.value;
 
-      { name: '엘베',       checked: document.getElementById('id_checkbox_엘베').checked,       value: field["엘베"] },
-      { name: '주차',       checked: document.getElementById('id_checkbox_주차').checked,       value: field["주차"] },
-      { name: '냉난방',     checked: document.getElementById('id_checkbox_냉난방').checked,     value: field["냉난방"] },
-      { name: '화장실',     checked: document.getElementById('id_checkbox_화장실').checked,     value: field["화장실"] },
-      { name: '방향',       checked: document.getElementById('id_checkbox_방향').checked,       value: field["방향"] },
-      { name: '특징',       checked: document.getElementById('id_checkbox_특징').checked,       value: field["특징"] },
+  const combineStr = [addressItem, buildingItem].filter(Boolean).join(', ') +
+                     (floorItem ? (buildingItem || addressItem ? ` ${floorItem}` : floorItem) : '');
 
-      { name: '사용승인일', checked: document.getElementById('id_checkbox_사용승인일').checked, value: field["사용승인일"] },
-      { name: '대지면적',   checked: document.getElementById('id_checkbox_대지면적').checked,   value: field["대지면적"] },
-      { name: '연면적',     checked: document.getElementById('id_checkbox_연면적').checked,     value: field["연면적"] },
-      { name: '규모',       checked: document.getElementById('id_checkbox_규모').checked,       value: field["규모"] },
-      { name: '주구조',     checked: document.getElementById('id_checkbox_주구조').checked,     value: field["주구조"] },
-      { name: '건폐율',     checked: document.getElementById('id_checkbox_건폐율').checked,     value: field["건폐율"] },
-      { name: '용적률',     checked: document.getElementById('id_checkbox_용적률').checked,     value: field["용적률"] },
-    ];
+  let template = `매물 ${Number(first_number) + currentIndex - 1}. ${combineStr}<br><br>`;
 
-    const addressItem  = items.find(item => item.name === '주소'   && item.checked)?.value;
-    const buildingItem = items.find(item => item.name === '건물명' && item.checked)?.value;
-    const floorItem    = items.find(item => item.name === '층'     && item.checked)?.value;
+  const sections = [
+    ['보증금', '임대료', '관리비', '임+관', 'NOC', '이율(%)', 'RF(개월)'],
+    ['임대면적', '전용면적'],
+    ['엘베', '주차', '냉난방', '화장실'],
+    ['용도', '사용승인일', '규모', '방향', '대지면적', '건축면적', '연면적', '주구조', '건폐율', '용적률', '개별공시지가'],
+    ['특이사항']
+  ];
 
-    let combineStr = "";
-
-    if (addressItem) {
-      combineStr = addressItem;
-    }
-
-    if (buildingItem) {
-      if (combineStr) {
-        combineStr += `, ${buildingItem}`;
-      } else {
-        combineStr = buildingItem;
-      }
-    }
-
-    if (floorItem) {
-      if (buildingItem) {
-        combineStr += ` ${floorItem}`;
-      } else if (addressItem) {
-        combineStr += `, ${floorItem}`;
-      } else {
-        combineStr = floorItem;
-      }
-    }
-
-
-    let template = `매물 ${Number(first_number)+currentIndex-1}. ${combineStr}<br><br>`;
-
-    // 보증금, 임대료, 관리비, 환산면적
-    if (items.find(item => item.name === '보증금' && item.checked)) {
-        template += `보증금 : ${items.find(item => item.name === '보증금' && item.checked)?.value || ''}<br>`;
-    }
-    if (items.find(item => item.name === '임대료' && item.checked)) {
-        template += `임대료 : ${items.find(item => item.name === '임대료' && item.checked)?.value || ''}<br>`;
-    }
-    if (items.find(item => item.name === '관리비' && item.checked)) {
-        template += `관리비 : ${items.find(item => item.name === '관리비' && item.checked)?.value || ''}<br>`;
-    }
-    if (items.find(item => item.name === '임+관' && item.checked)) {
-        template += `임+관 : ${items.find(item => item.name === '임+관' && item.checked)?.value || ''}<br>`;
-    }
-    if (items.find(item => item.name === 'NOC' && item.checked)) {
-        template += `NOC : ${items.find(item => item.name === 'NOC' && item.checked)?.value || ''}<br>`;
-    }
-
-    template += "<br>";
-
-    if (items.find(item => item.name === '임대면적' && item.checked)) {
-        template += `임대면적 : <font color='red'>${items.find(item => item.name === '임대면적' && item.checked)?.value || ''}</font><br>`;
-    }
-    if (items.find(item => item.name === '전용면적' && item.checked)) {
-        template += `전용면적 : <font color='red'>${items.find(item => item.name === '전용면적' && item.checked)?.value || ''}</font><br>`;
-    }
-
-    template += "<br>";
-
-    // 엘베, 주차, 냉난방, 화장실, 특징
-    if (items.find(item => item.name === '엘베' && item.checked)) {
-        template += `ㆍ엘베 ${items.find(item => item.name === '엘베' && item.checked)?.value || ''}<br>`;
-    }
-    if (items.find(item => item.name === '주차' && item.checked)) {
-        template += `ㆍ주차 <font color='red'>${items.find(item => item.name === '주차' && item.checked)?.value || ''}</font>대<br>`;
-    }
-    if (items.find(item => item.name === '냉난방' && item.checked)) {
-        template += `ㆍ<font color='red'>${items.find(item => item.name === '냉난방' && item.checked)?.value || ''}</font> 냉난방<br>`;
-    }
-    if (items.find(item => item.name === '화장실' && item.checked)) {
-        template += `ㆍ<font color='red'>${items.find(item => item.name === '화장실' && item.checked)?.value || ''}</font> 화장실<br>`;
-    }
-    if (items.find(item => item.name === '방향' && item.checked)) {
-        template += `ㆍ방향(주출입구 기준) : ${items.find(item => item.name === '방향' && item.checked)?.value || ''}<br>`;
-    }
-    if (items.find(item => item.name === '특징' && item.checked)) {
-        template += `ㆍ<font color='red'>${items.find(item => item.name === '특징' && item.checked)?.value || ''}</font><br>`;
-    }
-
-    template += '<br>';
-
-    // 나머지 체크된 항목들
-    items.forEach(item => {
-        if (
-            item.checked &&
-            ![
-                '주소','건물명','층',
-                '보증금','임대료','관리비','임+관','NOC',
-                '임대면적', '전용면적',
-                '엘베','주차','냉난방','화장실','방향','특징',
-            ].includes(item.name)
-        ) {
-            template += `ㆍ${item.name} : ${item.value}<br>`;
+  sections.forEach(section => {
+    section.forEach(name => {
+      const item = items.find(i => i.name === name && i.checked);
+      if (item) {
+        let itemvalue = "";
+        if (item.value) {
+            itemvalue = item.value
         }
+        template += `ㆍ${item.name} : ${itemvalue}<br>`;
+      }
     });
+    template += "<br>";
+  });
 
-    return template;
+  return template;
 }
 
 document.getElementById('id_move_number')?.addEventListener('click', function() {
@@ -599,8 +553,10 @@ async function fetchPropertyInfo(number) {
     const buildingData = await getBuildingData(number);
     const pnu = buildingData?.articleDetail?.pnu || "";
     const buildingReg = await getBuildingReg(pnu);
+    const floor = buildingData.articleAddition?.floorInfo?.split("/")[0] || "";
+    const useInfo = await getUseInfo(pnu, floor);
     const address = await getAddress(buildingReg, buildingData);
-    const formFields = populateFormFields(buildingData, buildingReg, address);
+    const formFields = populateFormFields(buildingData, buildingReg, address, useInfo);
     return { number, address, formFields };
 }
 
@@ -794,6 +750,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 
         currentIndex = propertyList.indexOf(Number(number));
+        // id_edit_매물에 currentIndex 표시
+        document.getElementById('id_number_input').value = first_number + currentIndex;
+        // currentIndex가 0이 아니면 document.getElementById('id_number_input') 비활성화
+        if (currentIndex !== 0) {
+            document.getElementById('id_number_input').disabled = true;
+        }
+
         document.getElementById('prevBtn').addEventListener('click', () => {
             if(currentIndex > 0) {
                 currentIndex = currentIndex - 1;
@@ -838,9 +801,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 3) 주소 결정
     const address = await getAddress(buildingReg, buildingData);
+    const floor = buildingData.articleAddition?.floorInfo?.split("/")[0] || "";
+    const useInfo = await getUseInfo(pnu, floor);
 
     // 4) formFields 생성 (둘 중 하나만 성공해도 partial data 사용 가능)
-    const formFields = populateFormFields(buildingData, buildingReg, address);
+    const formFields = populateFormFields(buildingData, buildingReg, address, useInfo);
 
     // 특징 표시
     if (buildingData?.articleAddition?.articleFeatureDesc) {
@@ -882,9 +847,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupTemplateObserver();
 
     // 7) 이벤트 리스너 등록(입력값 변경 시 템플릿 재생성)
-    document.querySelectorAll('input[name^="name_edit_"]').forEach(editInput => {
+    document.querySelectorAll('input[name^="name_edit_"], textarea[name^="name_edit_"]').forEach(editInput => {
         editInput.addEventListener('input', event => {
-//            generateTemplate(currentIndex+1);
+            const fieldNames = [
+                '주소', '건물명', '층', '보증금', '임대료', '관리비', '임+관', 'NOC', '이율(%)', 'RF(개월)',
+                '임대면적', '전용면적',
+                '엘베', '주차', '냉난방', '화장실',
+                '용도', '사용승인일', '규모', '방향', '대지면적', '건축면적', '연면적', '주구조', '건폐율', '용적률', '개별공시지가', '특징',
+                '특이사항'
+              ];
+              let formFields = {};
+                fieldNames.forEach(name => {
+                  formFields[name] = document.getElementById(`id_edit_${name}`).value;
+                });
+            document.getElementById('id_jjinbba_template').innerHTML = generateTemplate(currentIndex+1, formFields);
         });
         editInput.addEventListener('input', calculateExcelFormula);
     });
@@ -1146,3 +1122,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
 });
+
+function toggleSection(group, btn) {
+    const rows = document.querySelectorAll(`[data-group='${group}'].extra-row`);
+    rows.forEach(row => row.classList.toggle('hidden'));
+    btn.querySelector('svg').classList.toggle('rotate-180');
+}

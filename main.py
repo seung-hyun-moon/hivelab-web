@@ -22,7 +22,7 @@ auth_handler = auth.AuthHandler()
 
 
 origins = [
-    "http://0.0.0.0:80"
+    "*"
 ]
 
 app.add_middleware(

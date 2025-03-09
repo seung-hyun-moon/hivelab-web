@@ -50,31 +50,45 @@ class JjinbbaChildBase(BaseModel):
     parent_id: int  # 부모와 연결하기 위한 아이디
     number: Optional[int] = None
 
+    # 건물 기본 정보
     address: Optional[str] = None
     building_name: Optional[str] = None
     floor: Optional[str] = None
+
+    # 금액 관련
     deposit: Optional[str] = None
     rent: Optional[str] = None
     management_fee: Optional[str] = None
     rent_and_mgmt: Optional[str] = None
+    rate: Optional[str] = None
+    noc: Optional[str] = None
+    rf: Optional[str] = None
+
+    # 기타 건물 정보
     lease_area: Optional[str] = None
     exclusive_area: Optional[str] = None
     elevator: Optional[str] = None
     parking: Optional[str] = None
     heating: Optional[str] = None
     restroom: Optional[str] = None
-    direction: Optional[str] = None
-    feature: Optional[str] = None
+    use: Optional[str] = None
     usage_approval_date: Optional[str] = None
-    land_area: Optional[str] = None
-    total_area: Optional[str] = None
     scale: Optional[str] = None
+    direction: Optional[str] = None
+    land_area: Optional[str] = None
+    building_area: Optional[str] = None
+    total_area: Optional[str] = None
     main_structure: Optional[str] = None
     building_coverage: Optional[str] = None
     floor_area_ratio: Optional[str] = None
+    land_price: Optional[str] = None
+
+    feature: Optional[str] = None
+    note: Optional[str] = None
 
     template: Optional[str] = None
     img_urls: Optional[List[str]] = None
+    rocation_url: Optional[str] = None  # 위치정보
 
 class Config:
         from_attributes = True
