@@ -1,3 +1,15 @@
+/* ⚙️ 1) 서버에 번호 리스트 전송 → {sorted_numbers, region_info} 수신 */
+async function processProperties(numbersArr, parentId = null) {
+  const res = await fetch('/api/jjinbba_child/process', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ parent_id: parentId ?? 0, numbers: numbersArr })
+  });
+  if (!res.ok) throw new Error('서버 처리 실패');
+  return await res.json();        // {sorted_numbers, region_info}
+}
+
+
 function fetchCustomers(query = '') {
   return new Promise((resolve, reject) => {
     $.ajax({

@@ -158,6 +158,9 @@ class JjinbbaChildModel(Base):
     img_urls = Column(JSON, default=list)
     rocation_url = Column(String, comment="위치정보")
 
+    latitude = Column(String, comment="위도")
+    longitude = Column(String, comment="경도")
+
     # 부모와의 관계 설정 (부모 모델에서 children 속성도 함께 정의하면 양방향 관계 사용 가능)
     parent = relationship("JjinbbaModel", back_populates="children")
 

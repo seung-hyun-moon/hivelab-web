@@ -20,11 +20,13 @@ from fastapi.responses import StreamingResponse, FileResponse
 from datetime import datetime
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
+from starlette.requests import Request
 
 from backend.schemas.jjinbba import Jjinbba, JjinbbaCreate, JjinbbaUpdate, ImageRequest, AllImagesRequest
-from backend.db.models import JjinbbaModel
+from backend.db.models import JjinbbaModel, JjinbbaChildModel
 from backend.db.database import get_db
-from backend.routers.basecurd import BaseCRUD
+from backend.routers.basecurd import BaseCRUD, TUpdate
+from backend.utils import get_infos
 
 import urllib.parse
 
@@ -78,14 +80,138 @@ class JjinbbaRouter(BaseCRUD):
         )
         return items
 
-    def create_item(self, item: JjinbbaCreate, db: Session = Depends(get_db)):
-        return super().create_item(item=item, db=db)
-
-    def update_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
-        return super().update_item(item_id=item_id, item=item, db=db)
-
     def patch_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
         return super().patch_item(item_id=item_id, item=item, db=db)
+
+    # ──────────────────────────────────────────
+    # 부모 + 자식  ▶  생성
+    # ──────────────────────────────────────────
+    async def create_item(self, item: JjinbbaCreate, db: Session = Depends(get_db)):
+        parent = JjinbbaModel(**item.model_dump(exclude={"id"}))
+        db.add(parent)
+        db.commit()
+        db.refresh(parent)
+
+        try:
+            crawl = await get_infos.process_properties(parent.numbers)
+        except Exception as exc:
+            db.delete(parent)
+            db.commit()
+            raise HTTPException(500, f"크롤링 실패: {exc}")
+
+        # parent 메타 갱신
+        parent.region_info = crawl["region_info"]
+        db.commit()
+
+        # children INSERT
+        for c in crawl["children"]:
+            child = JjinbbaChildModel(parent_id=parent.id, **{
+                "number": c["number"],
+                "address": c["address"],
+                "building_name": c["building_name"],
+                "floor": c["floor"],
+                "deposit": c["deposit"],
+                "rent": c["rent"],
+                "management_fee": c["management_fee"],
+                "rent_and_mgmt": c["rent_and_mgmt"],
+                "rate": c["rate"],
+                "noc": c["noc"],
+                "rf": c["rf"],
+                "exclusive_area": c["exclusive_area"],
+                "elevator": c["elevator"],
+                "parking": c["parking"],
+                "heating": c["heating"],
+                "restroom": c["restroom"],
+                "lease_area": c["lease_area"],
+                "use": c["use"],
+                "usage_approval_date": c["usage_approval_date"],
+                "scale": c["scale"],
+                "direction": c["direction"],
+                "land_area": c["land_area"],
+                "building_area": c["building_area"],
+                "total_area": c["total_area"],
+                "main_structure": c["main_structure"],
+                "building_coverage": c["building_coverage"],
+                "floor_area_ratio": c["floor_area_ratio"],
+                "land_price": c["land_price"],
+                "feature": c["feature"],
+                "note": c["note"],
+                "img_urls": c["img_urls"],
+                "rocation_url": c["rocation_url"],
+                "latitude": c["latitude"],
+                "longitude": c["longitude"],
+            })
+            db.add(child)
+
+        db.commit()
+        db.refresh(parent)
+        return parent
+
+    # ──────────────────────────────────────────
+    # 부모 + 자식  ▶  수정
+    # ──────────────────────────────────────────
+    async def update_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
+        parent: JjinbbaModel = db.get(JjinbbaModel, item_id)
+        if not parent:
+            raise HTTPException(404, "존재하지 않는 레코드")
+
+        # 부모 필드 업데이트
+        for k, v in item.model_dump(exclude_unset=True).items():
+            setattr(parent, k, v)
+
+        # 자식 전부 삭제
+        db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent.id).delete()
+        db.commit()
+
+        # 새 매물번호 크롤링
+        try:
+            crawl = await get_infos.process_properties(parent.numbers)
+        except Exception as exc:
+            raise HTTPException(500, f"크롤링 실패: {exc}")
+
+        parent.region_info = crawl["region_info"]
+        # 자식 재삽입
+        for c in crawl["children"]:
+            db.add(JjinbbaChildModel(parent_id=parent.id, **{
+                "number": c["number"],
+                "address": c["address"],
+                "building_name": c["building_name"],
+                "floor": c["floor"],
+                "deposit": c["deposit"],
+                "rent": c["rent"],
+                "management_fee": c["management_fee"],
+                "rent_and_mgmt": c["rent_and_mgmt"],
+                "rate": c["rate"],
+                "noc": c["noc"],
+                "rf": c["rf"],
+                "exclusive_area": c["exclusive_area"],
+                "elevator": c["elevator"],
+                "parking": c["parking"],
+                "heating": c["heating"],
+                "restroom": c["restroom"],
+                "lease_area": c["lease_area"],
+                "use": c["use"],
+                "usage_approval_date": c["usage_approval_date"],
+                "scale": c["scale"],
+                "direction": c["direction"],
+                "land_area": c["land_area"],
+                "building_area": c["building_area"],
+                "total_area": c["total_area"],
+                "main_structure": c["main_structure"],
+                "building_coverage": c["building_coverage"],
+                "floor_area_ratio": c["floor_area_ratio"],
+                "land_price": c["land_price"],
+                "feature": c["feature"],
+                "note": c["note"],
+                "img_urls": c["img_urls"],
+                "rocation_url": c["rocation_url"],
+                "latitude": c["latitude"],
+                "longitude": c["longitude"],
+            }))
+
+        db.commit()
+        db.refresh(parent)
+        return parent
 
 
 

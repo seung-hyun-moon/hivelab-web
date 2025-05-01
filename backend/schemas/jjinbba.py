@@ -45,9 +45,13 @@ class AllImagesRequest(BaseModel):
     zip_name: str                # 오늘 날짜 "YYYY.MM.DD" 등이 전달됨
     properties: List[ImageRequest]
 
+class NumbersPayload(BaseModel):
+    parent_id: int                               # 상위 JjinbbaModel id
+    numbers: List[int]                           # 매물번호 리스트
+
 
 class JjinbbaChildBase(BaseModel):
-    parent_id: int  # 부모와 연결하기 위한 아이디
+    parent_id: Optional[int] = None  # 부모와 연결하기 위한 아이디
     number: Optional[int] = None
 
     # 건물 기본 정보
@@ -89,6 +93,9 @@ class JjinbbaChildBase(BaseModel):
     template: Optional[str] = None
     img_urls: Optional[List[str]] = None
     rocation_url: Optional[str] = None  # 위치정보
+
+    latitude: Optional[str] = None
+    longitude: Optional[str] = None
 
 class Config:
         from_attributes = True
