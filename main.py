@@ -56,7 +56,7 @@ async def root(request: Request):
     # If already logged in, redirect to customer page
     if request.cookies.get("access_token"):
         return RedirectResponse(url="/customer", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("login.html", {"request": request, "hide_buttons": True})
+    return templates.TemplateResponse("login.html", {"request": request, "hide_sidebar": True})
 
 
 # Define routes (simplified - no auth check needed as it's handled by middleware)
@@ -65,7 +65,7 @@ async def move_customer(request: Request):
     access_token = request.cookies.get("access_token")
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("customer.html", {"request": request})
+    return templates.TemplateResponse("customer.html", {"request": request, "hide_sidebar": False})
 
 
 @app.get("/contact")
@@ -73,7 +73,7 @@ async def move_contact(request: Request):
     access_token = request.cookies.get("access_token")
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("contact.html", {"request": request})
+    return templates.TemplateResponse("contact.html", {"request": request, "hide_sidebar": False})
 
 
 @app.get("/property")
@@ -81,7 +81,7 @@ async def move_property(request: Request):
     access_token = request.cookies.get("access_token")
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("property.html", {"request": request})
+    return templates.TemplateResponse("property.html", {"request": request, "hide_sidebar": False})
 
 
 @app.get("/jjinbba")
@@ -90,7 +90,7 @@ async def move_jjinbba(request: Request, number: int = None):
     access_token = request.cookies.get("access_token")
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("jjinbba.html", {"number": number, "request": request})
+    return templates.TemplateResponse("jjinbba.html", {"number": number, "request": request, "hide_sidebar": False})
 
 
 @app.get("/jjinbba_list")
@@ -98,7 +98,7 @@ async def move_jjinbba_list(request: Request):
     access_token = request.cookies.get("access_token")
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("jjinbba_list.html", {"request": request})
+    return templates.TemplateResponse("jjinbba_list.html", {"request": request, "hide_sidebar": False})
 
 
 @app.get("/jjinbba_list/{jjinbba_id}")
@@ -108,7 +108,7 @@ async def move_jjinbba_detail(request: Request, jjinbba_id: int, number: int = N
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("jjinbba_detail.html",
-                                      {"jjinbba_id": jjinbba_id, "number": number, "request": request})
+                                      {"jjinbba_id": jjinbba_id, "number": number, "request": request, "hide_sidebar": False})
 
 
 @app.get("/download/{category}/{data_category_id}")
@@ -116,7 +116,7 @@ async def move_download(request: Request, category: str, data_category_id: int):
     access_token = request.cookies.get("access_token")
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("download.html", {"data_category_id": data_category_id, "request": request})
+    return templates.TemplateResponse("download.html", {"data_category_id": data_category_id, "request": request, "hide_sidebar": False})
 
 
 @app.get("/download/{category}/{data_category_id}/{board_id}")
@@ -125,7 +125,7 @@ async def move_board(request: Request, category: str, data_category_id: int, boa
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("board.html",
-                                      {"data_category_id": data_category_id, "board_id": board_id, "request": request})
+                                      {"data_category_id": data_category_id, "board_id": board_id, "request": request, "hide_sidebar": False})
 
 
 @app.get("/calendar")
@@ -133,7 +133,7 @@ async def move_calendar(request: Request):
     access_token = request.cookies.get("access_token")
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("calendar.html", {"request": request})
+    return templates.TemplateResponse("calendar.html", {"request": request, "hide_sidebar": False})
 
 
 @app.get("/oauth/logout")
