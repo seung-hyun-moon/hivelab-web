@@ -11,17 +11,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleButton = document.getElementById('id_btn_toggle_sidebar');
     const toggleBtnFixed = document.getElementById('id_btn_toggle_sidebar_fixed');
 
+    // Ensure everything is initialized in the hidden state for mobile
+    if (window.innerWidth < 768) {
+        // Force the correct initial state for mobile
+        sidebar.classList.add('hidden');
+        mainContent.classList.remove('ml-64');
+        toggleBtnFixed.classList.remove('hidden');
+    }
+
+    // Toggle sidebar with buttons
     toggleButton.addEventListener('click', function() {
-        sidebar.classList.toggle('hidden');
-        toggleBtnFixed.classList.toggle('hidden');
-        if (sidebar.classList.contains('hidden')) {
-            mainContent.classList.remove('ml-64');
-        } else {
-            mainContent.classList.add('ml-64');
-        }
+        toggleSidebar();
     });
 
     toggleBtnFixed.addEventListener('click', function() {
+        toggleSidebar();
+    });
+
+    // Function to toggle sidebar
+    function toggleSidebar() {
         sidebar.classList.toggle('hidden');
         toggleBtnFixed.classList.toggle('hidden');
         if (sidebar.classList.contains('hidden')) {
@@ -29,23 +37,43 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             mainContent.classList.add('ml-64');
         }
-    });
+    }
 
+    // Button hover effects
     toggleButton.addEventListener('mouseover', function() {
-      toggleButton.querySelector('svg path').setAttribute('d', 'm15 19-7-7 7-7');
+        toggleButton.querySelector('svg path').setAttribute('d', 'm15 19-7-7 7-7');
     });
 
     toggleButton.addEventListener('mouseout', function() {
-      toggleButton.querySelector('svg path').setAttribute('d', 'M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z');
+        toggleButton.querySelector('svg path').setAttribute('d', 'M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z');
     });
 
     toggleBtnFixed.addEventListener('mouseover', function() {
-      toggleBtnFixed.querySelector('svg path').setAttribute('d', 'm9 5 7 7-7 7');
+        toggleBtnFixed.querySelector('svg path').setAttribute('d', 'm9 5 7 7-7 7');
     });
 
     toggleBtnFixed.addEventListener('mouseout', function() {
-      toggleBtnFixed.querySelector('svg path').setAttribute('d', 'M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z');
+        toggleBtnFixed.querySelector('svg path').setAttribute('d', 'M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z');
     });
+
+    // Add responsive behavior
+    function handleResize() {
+        if (window.innerWidth < 768) {
+            sidebar.classList.add('hidden');
+            mainContent.classList.remove('ml-64');
+            toggleBtnFixed.classList.remove('hidden');
+        } else {
+            sidebar.classList.remove('hidden');
+            mainContent.classList.add('ml-64');
+            toggleBtnFixed.classList.add('hidden');
+        }
+    }
+
+    // Initial check on page load
+    handleResize();
+
+    // Listen for window resize events
+    window.addEventListener('resize', handleResize);
 });
 
 $(document).ready(function() {

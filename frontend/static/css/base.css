@@ -399,3 +399,8 @@ input[type="checkbox"]:checked + .person-label {
 #notes, #notes2 {
     transition: max-height 0.3s ease;
 }
+
+#id_btn_toggle_sidebar,
+#id_btn_toggle_sidebar_fixed {
+    z-index: 99991;       /* 다른 요소 위에 떠 있도록 */
+}
