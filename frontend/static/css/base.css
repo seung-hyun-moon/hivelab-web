@@ -335,7 +335,7 @@ textarea {
 */
 
 #id_btn_toggle_sidebar {
-    z-index: 51; /* 햄버거 버튼이 사이드바 위에 표시되도록 설정 */
+    z-index: 999991; /* 햄버거 버튼이 사이드바 위에 표시되도록 설정 */
 }
 
 #id_sidebar {

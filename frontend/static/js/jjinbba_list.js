@@ -620,6 +620,7 @@ $(document).ready(function() {
         $('#modifyJjinbbaModal').modal('show');
 
         $('#modifyJjinbbaModal form').off('submit').on('submit', async function() {
+            $('#loading-icon').show();
             var form = $(this);
             // 기존 매물번호 (순서 유지)
             var numbersStr = form.find('textarea[name="numbers"]').val();
@@ -657,6 +658,7 @@ $(document).ready(function() {
                     console.error('수정 실패:', error);
                 }
             });
+            $('#loading-icon').hide();
             return false;
         });
 
@@ -668,6 +670,7 @@ $(document).ready(function() {
         $("#addJjinbbaModal").modal("hide");
     });
     $('#addJjinbbaModal form').on('submit', function() {
+        $('#loading-icon').show();
         var form = $(this);
         var numbersStr = form.find('textarea[name="numbers"]').val();
         var numbersArr = numbersStr.split(" ").map(function(num) { return parseInt(num, 10); })
@@ -731,6 +734,7 @@ $(document).ready(function() {
                     console.error('등록 에러:', error);
                 }
             });
+            $('#loading-icon').hide();
             return false;
         })();
     });
