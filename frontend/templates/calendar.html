@@ -2,7 +2,7 @@
 
 {% block content %}
 <div>
-    <div class="mx-auto px-4 py-6 mt-10">
+    <div class="mx-auto px-4 py-6 mt-10 min-w-[768px]">
         <article class="content">
         <aside class="sidebar">
           <hr>
@@ -62,16 +62,10 @@
             <button class="button is-rounded today">오늘</button>
             <button class="button is-rounded prev">
 
-              <img alt="prev" src="{{ url_for('static', path='3rd-party/calendar/images/ic-arrow-line-left.png') }}" srcset="
-                  ./images/ic-arrow-line-left@2x.png 2x,
-                  ./images/ic-arrow-line-left@3x.png 3x
-                ">
+              <img alt="prev" src="{{ url_for('static', path='3rd-party/calendar/images/ic-arrow-line-left.png') }}">
             </button>
             <button class="button is-rounded next">
-              <img alt="prev" src="{{ url_for('static', path='3rd-party/calendar/images/ic-arrow-line-right.png') }}" srcset="
-                  ./images/ic-arrow-line-right@2x.png 2x,
-                  ./images/ic-arrow-line-right@3x.png 3x
-                ">
+              <img alt="prev" src="{{ url_for('static', path='3rd-party/calendar/images/ic-arrow-line-right.png') }}">
             </button>
             <span class="navbar--range"></span>
             <div class="nav-checkbox">
