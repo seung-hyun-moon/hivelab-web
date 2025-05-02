@@ -755,7 +755,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                             }
 
                             // 삭제 후 지역 정보 분석 및 업데이트
-                            const regionResponse = await fetch(`/api/jjinbba/analyze_region/${jjinbba_id}`);
+                            const regionResponse = await fetch(`/api/jjinbba/analyze_region`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ updatedNumbers: updatedNumbers })
+                                });
                             const regionData = await regionResponse.json();
 
                             // 부모 정보 업데이트

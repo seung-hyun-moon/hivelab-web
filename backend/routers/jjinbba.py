@@ -6,6 +6,7 @@ import zipfile
 from io import BytesIO
 import tempfile
 import os
+import re
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -67,6 +68,7 @@ class JjinbbaRouter(BaseCRUD):
             response_model=List[self.get_schema],  # 필요하다면 None 대신 적절한 스키마 지정
             methods=['GET']
         )
+        self.router.add_api_route('/analyze_region', self.analyze_region, response_model=dict, methods=['POST'])
 
     def get_items_by_customer(self, customer: str, db: Session = Depends(get_db)):
         """
@@ -79,6 +81,31 @@ class JjinbbaRouter(BaseCRUD):
             .all()
         )
         return items
+
+    async def analyze_region(self, data: dict):
+        updated_numbers = data.get("updatedNumbers", [])
+        async with aiohttp.ClientSession() as session:
+            # Fetch properties info for each number
+            tasks = [get_infos.fetch_property_info(session, num) for num in updated_numbers]
+            results = await asyncio.gather(*tasks)
+
+        # Count properties by dong
+        dong_counts = {}
+        for item in results:
+            addr = item.get("address", "")
+            if not addr:
+                continue
+
+            addr_cleaned = re.sub(r'^.*?구\s*', '', addr)  # '...구 ' removed
+            match = re.search(r'([가-힣]+동(?:\d가)?)', addr_cleaned)
+            if match:
+                dong = match.group(1)
+                dong_counts[dong] = dong_counts.get(dong, 0) + 1
+
+        # Format the region_info string
+        region_info = ", ".join([f"{dong} {count}개" for dong, count in dong_counts.items()])
+
+        return {"region_info": region_info}
 
     def patch_item(self, item_id: int, item: JjinbbaUpdate, db: Session = Depends(get_db)):
         return super().patch_item(item_id=item_id, item=item, db=db)

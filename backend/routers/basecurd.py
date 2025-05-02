@@ -100,9 +100,8 @@ class BaseCRUD(Generic[TGet, TCreate, TUpdate]):
         db_item = db.query(self.model).get(item_id)
         if db_item is None:
             raise HTTPException(status_code=404, detail="Item not found")
-        for key, value in item.model_dump().items():
-            if value is not None:
-                setattr(db_item, key, value)
+        for key, value in item.model_dump(exclude_unset=True).items():
+            setattr(db_item, key, value)
         db.commit()
         db.refresh(db_item)
         return db_item
