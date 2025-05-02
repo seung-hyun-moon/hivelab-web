@@ -50,38 +50,6 @@ app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 templates = Jinja2Templates(directory="frontend/templates")
 
-
-# Middleware for authentication verification
-@app.middleware("http")
-async def verify_authentication(request: Request, call_next):
-    # Exclude paths that don't need authentication
-    exempt_paths = ["/", "/oauth/login", "/oauth/callback", "/static", "/api"]
-
-    # Check if current path is exempt
-    is_exempt = False
-    for path in exempt_paths:
-        if request.url.path.startswith(path):
-            # Special case for API routes that need auth vs those that don't
-            if path == "/api" and not any(request.url.path.startswith(p) for p in ["/api/auth"]):
-                is_exempt = False
-            else:
-                is_exempt = True
-                break
-
-    if is_exempt:
-        return await call_next(request)
-
-    # Check for authentication
-    cookies = request.cookies
-    access_token = cookies.get("access_token")
-
-    if not access_token:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-
-    # Continue with the request if authenticated
-    return await call_next(request)
-
-
 # Root endpoint - Login page is accessible without authentication
 @app.get("/")
 async def root(request: Request):
@@ -167,25 +135,6 @@ async def move_calendar(request: Request):
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("calendar.html", {"request": request})
 
-
-# Override the OAuth callback to set a cookie properly
-@app.get("/oauth/callback")
-async def oauth_callback(request: Request, code: str, state: Optional[str] = None):
-    oauth_client = auth.kakao_client
-    token_response = await oauth_client.get_tokens(code, state)
-    access_token = token_response.get('access_token')
-
-    # Create a response that sets a cookie and redirects
-    response = RedirectResponse(url='/')
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        max_age=token_response.get('expires_in', 7200),  # Set cookie expiration
-        samesite="lax"  # Important for security while allowing redirects
-    )
-
-    return response
 
 @app.get("/oauth/logout")
 async def logout():

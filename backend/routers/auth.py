@@ -3,11 +3,21 @@ from typing import Optional
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi import Depends, FastAPI, Header, Query, Request, HTTPException, status, APIRouter
 from backend.auth.oauth_client import OAuthClient
+from fastapi.templating import Jinja2Templates
+
+templates = Jinja2Templates(directory="frontend/templates")
+
+users = [
+    '-.-cooluk@hanmail.net',
+    'ccoccabi@naver.com',
+    'gilllllll@naver.com',
+    'kj4784@nate.com',
+    ]
 
 kakao_client = OAuthClient(
             client_id="d96da7ca7c6250bdd4223796d4878d43",
             client_secret_id="fL7s4KDzqW8ALK9INFY8mZcBDNBiUGCn",
-            redirect_uri="http://1.234.222.31/oauth/callback",
+            redirect_uri="http://1.234.222.31:8000/oauth/callback",  # http://1.234.222.31:8000
             authentication_uri="https://kauth.kakao.com/oauth",
             resource_uri="https://kapi.kakao.com/v2/user/me",
             verify_uri="https://kapi.kakao.com/v1/user/access_token_info",
@@ -31,7 +41,6 @@ class AuthHandler(object):
 
     @staticmethod
     def get_authorization_token(authorization: str = Header(...)) -> str:
-        print('get_authorization_token', authorization)
         scheme, _, param = authorization.partition(" ")
         if not authorization or scheme.lower() != "bearer":
             raise HTTPException(
@@ -60,9 +69,18 @@ class AuthHandler(object):
         )
         return RedirectResponse(login_url)
 
-    async def callback(self, code: str, state: Optional[str] = None, oauth_client=Depends(get_oauth_client)):
+    async def callback(self, code: str, state: Optional[str] = None, oauth_client=Depends(get_oauth_client), request: Request=None):
         token_response = await oauth_client.get_tokens(code, state)
         access_token = token_response.get('access_token')
+
+        user_info = await oauth_client.get_user_info(access_token)
+        user_info = user_info.get('kakao_account').get('email')
+        if user_info not in users:
+            return templates.TemplateResponse(
+                "401.html",
+                {"request": request},
+                status_code=401
+            )
 
         # Create a response that sets a cookie and redirects
         response = RedirectResponse(url='/customer')
@@ -78,7 +96,6 @@ class AuthHandler(object):
         user_info = await oauth_client.get_user_info(access_token=access_token)
         return {"user": user_info}
 
-    # Add this method to your AuthHandler class in auth.py
     async def is_token_valid(self, access_token: Optional[str] = None):
         if not access_token:
             return False
