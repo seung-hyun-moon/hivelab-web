@@ -1,56 +1,56 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div>
-    <div class="mt-10">
-        <table id="customerTable" class="hover compact stripe cell-border" style="width:100%">
+<div class="mx-auto px-4 py-6 mt-10">
+    <!-- Datatable Wrapper -->
+    <div class="overflow-x-auto shadow-lg rounded-xl ring-1 ring-gray-200 animate-fade-in">
+        <table id="customerTable" class="stripe hover cell-border w-full whitespace-nowrap text-left text-gray-700 text-sm sm:text-base">
             <colgroup>
-                <col width="3%" /><!-- 체크박스 0 -->
-                <col width="3%" /><!-- 구분 1 -->
-<!--                <col width="3%" />&lt;!&ndash; 중요도 2&ndash;&gt;-->
-                <col width="8%" /><!-- 컨택일 3-->
-<!--                <col width="8%" />&lt;!&ndash; 입주시기 4&ndash;&gt;-->
-                <col width="10%" /><!-- 업종 5-->
-                <col width="8%" /><!-- 연락처 6-->
-                <col width="34%" /><!-- 비고 7-->
-
-                <col width="5%" /><!-- 컨택 8-->
-                <col width="5%" /><!-- 정 9-->
-                <col width="5%" /><!-- 부 10-->
-
-                <col width="4%" /><!-- 수정날짜 11-->
-                <col width="4%" /><!-- 만든날짜 12-->
-                <col width="0" /><!-- 마케팅 13-->
-                <col width="0" /><!-- 상태 14-->
+                <col width="3%" /> <!-- 체크박스 -->
+                <col width="3%" /> <!-- 구분 -->
+<!--                <col width="3%" /> &lt;!&ndash; 중요도 &ndash;&gt;-->
+                <col width="8%" /> <!-- 컨택일 -->
+                <col width="10%" /> <!-- 업종 -->
+                <col width="8%" /> <!-- 연락처 -->
+<!--                <col width="10%" /> &lt;!&ndash; 입주시기 &ndash;&gt;-->
+                <col width="34%" /> <!-- 비고 -->
+                <col width="5%" /> <!-- 컨택 -->
+                <col width="5%" /> <!-- 정 -->
+                <col width="5%" /> <!-- 부 -->
+                <col width="4%" /> <!-- 수정날짜 -->
+                <col width="4%" /> <!-- 만든날짜 -->
+                <col width="0" /> <!-- 마케팅 -->
+                <col width="0" /> <!-- 상태 -->
                 <col width="0" />
-                <col width="0" /><!-- 삭제 15-->
+                <col width="0" /> <!-- 삭제 -->
             </colgroup>
-            <thead>
+            <thead class="bg-[#eacd49]/90 backdrop-blur-sm text-gray-900">
                 <tr>
-                    <th><input type="checkbox" id="checkAll"></th>
-                    <th class="align-middle">구분</th>
-                    <th class="align-middle">중요</th>
-                    <th class="align-middle">컨택일</th>
-                    <th class="align-middle">업종 | 회사명</th>
-                    <th class="align-middle">연락처</th>
-                    <th class="align-middle">입주시기</th>
-                    <th class="align-middle">컨디션 및 진행상황</th>
-                    <th class="align-middle">컨택</th>
-                    <th class="align-middle">PO</th>
-                    <th class="align-middle">PA</th>
-                    <th class="align-middle">수정일</th>
-                    <th class="align-middle">만든일</th>
-                    <th class="align-middle">마케팅</th>
-                    <th class="align-middle">상태</th>
-                    <th class="align-middle">변경</th>
+                    <th class="py-3 px-2 text-center">
+                        <input type="checkbox" id="checkAll">
+                    </th>
+                    <th class="py-3 px-2">구분</th>
+                    <th class="py-3 px-2">중요</th>
+                    <th class="py-3 px-2">컨택일</th>
+                    <th class="py-3 px-2">업종 | 회사명</th>
+                    <th class="py-3 px-2">연락처</th>
+                    <th class="py-3 px-2">입주시기</th>
+                    <th class="py-3 px-2">컨디션 및 진행상황</th>
+                    <th class="py-3 px-2">컨택</th>
+                    <th class="py-3 px-2">PO</th>
+                    <th class="py-3 px-2">PA</th>
+                    <th class="py-3 px-2">수정일</th>
+                    <th class="py-3 px-2">만든일</th>
+                    <th class="py-3 px-2">마케팅</th>
+                    <th class="py-3 px-2">상태</th>
+                    <th class="py-3 px-2">변경</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-100">
             </tbody>
         </table>
     </div>
 </div>
-
 
 <!-- Add Customer Modal -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
@@ -485,3 +485,49 @@
 <script src="{{ url_for('static', path='js/customer.js') }}"></script>
 
 {% endblock %}
+
+<style>
+    @keyframes fade-in {
+        0%   {opacity:0;transform:translateY(10px)}
+        100% {opacity:1;transform:translateY(0)}
+    }
+    .animate-fade-in {animation: fade-in 0.6s ease-out both;}
+
+    table.dataTable tbody tr {
+        transition: background-color .2s ease-in-out;
+    }
+    table.dataTable tbody tr:hover {
+        background-color: #fffbe6;
+    }
+
+    .btn-outline-warning {
+        border: 1px solid #eacd49 !important;
+        color: #eacd49 !important;
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-warning:hover {
+        background:#eacd49 !important;
+        color:#1f1f1f !important;
+        transform:scale(1.05);
+    }
+    .btn-outline-danger {
+        border: 1px solid #9f9f9f !important;
+        color: #9f9f9f !important;
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-danger:hover {
+        background:#9f9f9f !important;
+        color:#ffffff !important;
+        transform:scale(1.05);
+    }
+
+    @media(max-width:640px){
+        div.dataTables_wrapper .dataTables_filter,
+        div.dataTables_wrapper .dataTables_length{
+            text-align:left;
+            margin-bottom:1rem;
+        }
+    }
+</style>

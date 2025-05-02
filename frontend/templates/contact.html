@@ -1,29 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div>
-    <div class="mt-10">
-        <table id="contactTable" class="hover compact stripe cell-border" style="width:100%">
+<div class="mx-auto px-4 py-6 mt-10">
+
+    <!-- Datatable Wrapper -->
+    <div class="overflow-x-auto shadow-lg rounded-xl ring-1 ring-gray-200 animate-fade-in">
+        <table id="contactTable" class="stripe hover cell-border w-full whitespace-nowrap text-left text-gray-700 text-sm sm:text-base">
             <colgroup>
-                <col width="20%" /><!-- 이름 -->
-                <col width="20%" /><!-- 전화 -->
-                <col width="20%" /><!-- 주소 -->
-                <col width="20%" /><!-- 설명 -->
-                <col width="15%" /><!-- 등록일 -->
-                <col width="5%" /><!-- 삭제 -->
+                <col width="20%" /> <!-- 이름 -->
+                <col width="20%" /> <!-- 전화 -->
+                <col width="20%" /> <!-- 주소 -->
+                <col width="20%" /> <!-- 설명 -->
+                <col width="15%" /> <!-- 등록일 -->
+                <col width="5%" />  <!-- 삭제 -->
             </colgroup>
-            <thead>
+            <thead class="bg-[#eacd49]/90 backdrop-blur-sm text-gray-900">
                 <tr>
-                    <th class="align-middle">이름</th>
-                    <th class="align-middle">전화</th>
-                    <th class="align-middle">주소</th>
-                    <th class="align-middle">설명</th>
-                    <th class="align-middle">등록일</th>
-                    <th class="align-middle">삭제</th>
+                    <th scope="col" class="py-3 px-4 font-medium">이름</th>
+                    <th scope="col" class="py-3 px-4 font-medium">전화</th>
+                    <th scope="col" class="py-3 px-4 font-medium">주소</th>
+                    <th scope="col" class="py-3 px-4 font-medium">설명</th>
+                    <th scope="col" class="py-3 px-4 font-medium">등록일</th>
+                    <th scope="col" class="py-3 px-4 font-medium">삭제</th>
                 </tr>
             </thead>
-            <tbody>
-            </tbody>
+            <tbody class="divide-y divide-gray-100"></tbody>
         </table>
     </div>
 </div>
@@ -31,22 +32,30 @@
 <!-- Add Contact Modal -->
 <div class="modal fade" id="addContactModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addContactModalLabel">연락처 추가</h5>
-                <button type="button" class="btn btn-secondary" id="closeContactModal">&times;</button>
+        <div class="modal-content rounded-xl shadow-2xl">
+            <div class="modal-header bg-[#eacd49]/10 border-0 flex items-center justify-between px-6 py-4 rounded-t-xl">
+                <h5 class="modal-title text-lg font-semibold text-gray-800" id="addContactModalLabel">연락처 추가</h5>
+                <button type="button" class="btn btn-secondary text-xl leading-none" id="closeContactModal">&times;</button>
             </div>
-            <div class="modal-body">
-                <form onsubmit="return false;">
-                    <label for="name">이름</label>
-                    <input type="text" id="name" name="name" class="form-control" required>
-                    <label for="phone">전화</label>
-                    <input type="text" id="phone" name="phone" class="form-control">
-                    <label for="address">주소</label>
-                    <input type="text" id="address" name="address" class="form-control">
-                    <label for="description">설명</label>
-                    <input type="text" id="description" name="description" class="form-control">
-                    <button type="submit" class="btn btn-primary">연락처 추가</button>
+            <div class="modal-body p-6 space-y-4">
+                <form onsubmit="return false;" class="space-y-3">
+                    <div class="flex flex-col gap-1">
+                        <label for="name" class="text-sm font-medium">이름</label>
+                        <input type="text" id="name" name="name" class="form-control focus:ring-2 focus:ring-[#eacd49]/60" required>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="phone" class="text-sm font-medium">전화</label>
+                        <input type="text" id="phone" name="phone" class="form-control focus:ring-2 focus:ring-[#eacd49]/60">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="address" class="text-sm font-medium">주소</label>
+                        <input type="text" id="address" name="address" class="form-control focus:ring-2 focus:ring-[#eacd49]/60">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="description" class="text-sm font-medium">설명</label>
+                        <input type="text" id="description" name="description" class="form-control focus:ring-2 focus:ring-[#eacd49]/60">
+                    </div>
+                    <button type="submit" class="w-full bg-[#eacd49] hover:bg-[#d9b937] text-gray-900 font-semibold py-2 rounded-lg transition-transform duration-300 ease-in-out hover:scale-105">연락처 추가</button>
                 </form>
             </div>
         </div>
@@ -56,15 +65,15 @@
 <!-- Upload Modal -->
 <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadModalLabel">Excel Upload</h5>
-                <button type="button" class="btn btn-secondary" id="closeUploadModal">&times;</button>
+        <div class="modal-content rounded-xl shadow-2xl">
+            <div class="modal-header bg-[#eacd49]/10 border-0 flex items-center justify-between px-6 py-4 rounded-t-xl">
+                <h5 class="modal-title text-lg font-semibold text-gray-800" id="uploadModalLabel">Excel Upload</h5>
+                <button type="button" class="btn btn-secondary text-xl leading-none" id="closeUploadModal">&times;</button>
             </div>
-            <div class="modal-body">
-                <form id="uploadForm" onsubmit="return false;">
-                    <input type="file" id="fileUpload" name="fileUpload" class="form-control" required>
-                    <button type="submit" class="btn btn-primary">Upload</button>
+            <div class="modal-body p-6 space-y-4">
+                <form id="uploadForm" onsubmit="return false;" class="space-y-4">
+                    <input type="file" id="fileUpload" name="fileUpload" class="form-control focus:ring-2 focus:ring-[#eacd49]/60" required>
+                    <button type="submit" class="w-full bg-[#eacd49] hover:bg-[#d9b937] text-gray-900 font-semibold py-2 rounded-lg transition-transform duration-300 ease-in-out hover:scale-105">Upload</button>
                 </form>
             </div>
         </div>
@@ -74,28 +83,85 @@
 <!-- Modify Contact Modal -->
 <div class="modal fade" id="modifyContactModal" tabindex="-1" role="dialog" aria-labelledby="modifyContactModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modifyContactModalLabel">연락처 수정</h5>
-                <button type="button" class="btn btn-secondary" id="closeModifyContactModal">&times;</button>
+        <div class="modal-content rounded-xl shadow-2xl">
+            <div class="modal-header bg-[#eacd49]/10 border-0 flex items-center justify-between px-6 py-4 rounded-t-xl">
+                <h5 class="modal-title text-lg font-semibold text-gray-800" id="modifyContactModalLabel">연락처 수정</h5>
+                <button type="button" class="btn btn-secondary text-xl leading-none" id="closeModifyContactModal">&times;</button>
             </div>
-            <div class="modal-body">
-                <form onsubmit="return false;">
-                    <label for="modify_name">이름</label>
-                    <input type="text" id="modify_name" name="name" class="form-control" required>
-                    <label for="modify_phone">전화</label>
-                    <input type="text" id="modify_phone" name="phone" class="form-control">
-                    <label for="modify_address">주소</label>
-                    <input type="text" id="modify_address" name="address" class="form-control">
-                    <label for="modify_description">설명</label>
-                    <input type="text" id="modify_description" name="description" class="form-control">
-                    <button type="submit" class="btn btn-primary">연락처 수정</button>
+            <div class="modal-body p-6 space-y-4">
+                <form onsubmit="return false;" class="space-y-3">
+                    <div class="flex flex-col gap-1">
+                        <label for="modify_name" class="text-sm font-medium">이름</label>
+                        <input type="text" id="modify_name" name="name" class="form-control focus:ring-2 focus:ring-[#eacd49]/60" required>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="modify_phone" class="text-sm font-medium">전화</label>
+                        <input type="text" id="modify_phone" name="phone" class="form-control focus:ring-2 focus:ring-[#eacd49]/60">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="modify_address" class="text-sm font-medium">주소</label>
+                        <input type="text" id="modify_address" name="address" class="form-control focus:ring-2 focus:ring-[#eacd49]/60">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="modify_description" class="text-sm font-medium">설명</label>
+                        <input type="text" id="modify_description" name="description" class="form-control focus:ring-2 focus:ring-[#eacd49]/60">
+                    </div>
+                    <button type="submit" class="w-full bg-[#eacd49] hover:bg-[#d9b937] text-gray-900 font-semibold py-2 rounded-lg transition-transform duration-300 ease-in-out hover:scale-105">연락처 수정</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<script src="{{ url_for('static', path='js/contact.js') }}"></script>
+<!-- Custom Styles to blend Bootstrap & Tailwind nicely -->
+<style>
+    /* fade‑in utility */
+    @keyframes fade-in {
+        0%   {opacity:0;transform:translateY(10px)}
+        100% {opacity:1;transform:translateY(0)}
+    }
+    .animate-fade-in {animation: fade-in 0.6s ease-out both;}
 
+    /* Harmonise DataTables row hover & zebra striping */
+    table.dataTable tbody tr {
+        transition: background-color .2s ease-in-out;
+    }
+    table.dataTable tbody tr:hover {
+        background-color: #fffbe6;
+    }
+
+    /* Override Bootstrap outline buttons with brand colours */
+    .btn-outline-warning {
+        border: 1px solid #eacd49 !important;
+        color: #eacd49 !important;
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-warning:hover {
+        background:#eacd49 !important;
+        color:#1f1f1f !important;
+        transform:scale(1.05);
+    }
+    .btn-outline-danger {
+        border: 1px solid #9f9f9f !important;
+        color: #9f9f9f !important;
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-danger:hover {
+        background:#9f9f9f !important;
+        color:#ffffff !important;
+        transform:scale(1.05);
+    }
+    /* Make DataTables search & length controls play nice on mobile */
+    @media(max-width:640px){
+        div.dataTables_wrapper .dataTables_filter,
+        div.dataTables_wrapper .dataTables_length{
+            text-align:left;
+            margin-bottom:1rem;
+        }
+    }
+</style>
+
+<script src="{{ url_for('static', path='js/contact.js') }}"></script>
 {% endblock %}

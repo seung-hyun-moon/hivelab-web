@@ -108,7 +108,7 @@
     <div id="loading-icon" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);z-index: 9999;">
         <img src="{{ url_for('static', path='images/loading.svg') }}" alt="Loading...">
     </div>
-    <div id="id_main_content" class="{% if not hide_sidebar %}ml-64 {% endif %}p-6">
+    <div id="id_main_content" class="{% if not hide_sidebar %}ml-64 {% endif %}">
         {% block content %}
         {% endblock %}
     </div>

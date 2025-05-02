@@ -66,8 +66,17 @@ def safe_get(d: dict, path: List[Any], default=None):
 def convert_to_korean_unit(num: float) -> str:
     """
     숫자를 만(10,000) 단위로 나누어 한국식 만단위 표기로 변환.
-    예) 20000 -> '2', 35000 -> '3.5'
+    예) 20000 -> '2', 35000 -> '3.5', "31.9만원" -> "31.9"
     """
+    # 문자열이 입력된 경우 처리
+    if isinstance(num, str):
+        # 이미 "만원" 또는 "만"으로 끝나는 문자열인 경우
+        if "만원" in num or "만" in num:
+            # "만원" 또는 "만" 제거하고 숫자만 추출
+            clean_num = re.sub(r'[^0-9\.]', '', num)
+            return clean_num
+
+    # 숫자 타입 처리 (기존 로직)
     if not isinstance(num, (int, float)) or num < 0:
         return "0"
     man_value = num / 10000
@@ -75,6 +84,7 @@ def convert_to_korean_unit(num: float) -> str:
     # 소수점 제거 (ex: 2.0 -> 2, 3.5 -> 3.5)
     s = man_str.rstrip('0').rstrip('.') if '.' in man_str else man_str
     return s
+
 
 
 def format_number(value_str: str) -> str:
@@ -131,45 +141,41 @@ def format_korea_date(yyyymmdd: str) -> str:
 # 비동기 HTTP 통신 함수 (네이버 API 직접 호출)
 #########################################
 
-async def fetch_json(
-        session: aiohttp.ClientSession,
+def fetch_json(
         url: str,
         params: Optional[dict] = None,
         headers: Optional[dict] = None
 ) -> Optional[dict]:
     """
-    aiohttp를 사용한 비동기 GET 요청 후 JSON 응답을 파싱하여 반환.
+    requests를 사용한 동기 GET 요청 후 JSON 응답을 파싱하여 반환.
     """
     if params is None:
         params = {}
     try:
-        async with session.get(url, params=params, headers=headers, timeout=10) as resp:
-            resp.raise_for_status()
-            return await resp.json()
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
     except Exception as e:
         print(f"[fetch_json] 예외 발생: {e} (URL={url})")
         return None
 
-
-async def fetch_text(
-        session: aiohttp.ClientSession,
+def fetch_text(
         url: str,
         params: Optional[dict] = None,
         headers: Optional[dict] = None
 ) -> Optional[str]:
     """
-    aiohttp를 사용한 비동기 GET 요청 후 일반 텍스트(예: XML) 응답을 반환.
+    requests를 사용한 동기 GET 요청 후 일반 텍스트(예: XML) 응답을 반환.
     """
     if params is None:
         params = {}
     try:
-        async with session.get(url, params=params, headers=headers) as response:
-            # Check if the response is successful
-            if response.status == 200:
-                return await response.text()
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            return resp.text
     except Exception as e:
         print(f"[fetch_text] 예외 발생: {e} (URL={url})")
-        return None
+    return None
 
 
 async def get_naver_article_info(
@@ -181,7 +187,7 @@ async def get_naver_article_info(
     (ex: https://new.land.naver.com/api/articles/2518851595)
     """
     naver_url = f"https://new.land.naver.com/api/articles/{number}"
-    data = await fetch_json(session, naver_url, headers=NAVER_HEADERS)
+    data = fetch_json(naver_url, headers=NAVER_HEADERS)
     return data
 
 
@@ -287,7 +293,10 @@ async def fetch_building_register(
         "&_type=json&numOfRows=1&pageNo=1"
     )
 
-    return await fetch_json(session, url)
+    # 딜레이
+    await asyncio.sleep(1)
+
+    return fetch_json(url)
 
 
 async def fetch_floor_outline(
@@ -308,7 +317,9 @@ async def fetch_floor_outline(
         "&_type=json&numOfRows=100&pageNo=1"
     )
 
-    data = await fetch_json(session, url)
+    await asyncio.sleep(1)  # 딜레이
+
+    data = fetch_json(url)
 
     # JS와 동일하게 아이템 추출 로직 적용
     items = safe_get(data, ['response', 'body', 'items', 'item'], [])
@@ -433,12 +444,19 @@ def populate_form_fields(
 
     # 3-3. 금액
     deposit_str = format_number(warrant_prc) + "만"
-    rent_str    = format_number(rent_prc)    + "만"
-    mgmt_str    = convert_to_korean_unit(mgmt_cost) + "만"
+    rent_str = format_number(rent_prc) + "만"
+    mgmt_str = convert_to_korean_unit(mgmt_cost) + "만"
 
-    rent_value  = int(format_number(rent_prc).replace(",", "") or 0)
-    mgmt_value  = int(convert_to_korean_unit(mgmt_cost).replace(",", "") or 0)
-    rent_plus_mgmt = f"{rent_value + mgmt_value:,}만"
+    # 소수점을 유지하여 float로 변환
+    rent_value = float(format_number(rent_prc).replace(",", "") or 0)
+    mgmt_value = float(convert_to_korean_unit(mgmt_cost).replace(",", "") or 0)
+
+    # 소수점 한 자리까지 표시하고, 소수점이 .0인 경우 정수로 표시
+    sum_value = rent_value + mgmt_value
+    if sum_value == int(sum_value):
+        rent_plus_mgmt = f"{int(sum_value):,}만"
+    else:
+        rent_plus_mgmt = f"{sum_value:,.1f}만"
 
     # 3-4. 면적(㎡ → 평, 1평≈0.3025㎡)
     supply_area_py   = f"{supply_space * 0.3025:.1f}평" if supply_space else ""
@@ -639,7 +657,7 @@ async def process_properties(numbers_arr: List[int]) -> Dict[str, Any]:
 #########################################
 if __name__ == "__main__":
     async def main():
-        numbers = [2523028350, 2522034748]  # 예시 매물번호
+        numbers = [2518870844]  # 예시 매물번호
         result = await process_properties(numbers)
         print("정렬된 매물번호 목록:", result["sortedNumbersArr"])
         print("동별 매물 개수:", result["region_info"])

@@ -1,15 +1,15 @@
 @echo off
 
 REM Activate the Python virtual environment
-CALL C:\Hivelab\venv\Scripts\activate
+CALL C:\hivelab\hivelab-web\.venv\Scripts\activate
 
 REM Change to the project directory
-cd C:\Hivelab\hivelab-web
+cd C:\hivelab\hivelab-web
 
 REM Update the repository and switch to feature/update_borad branch
 git fetch origin
-git checkout feature/update_borad
-git pull origin feature/update_borad
+git checkout feature/add_db_and_login
+git pull origin feature/add_db_and_login
 
 REM Run the main.py script
 echo Running main.py...

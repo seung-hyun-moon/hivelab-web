@@ -1,38 +1,40 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div>
-    <div class="mt-10">
-        <table id="jjinbbaTable" class="hover compact stripe cell-border" style="width:100%">
+<div class="mx-auto px-4 py-6 mt-10">
+    <!-- Datatable Wrapper -->
+    <div class="overflow-x-auto shadow-lg rounded-xl ring-1 ring-gray-200 animate-fade-in">
+        <table id="jjinbbaTable" class="stripe hover cell-border w-full whitespace-nowrap text-left text-gray-700 text-sm sm:text-base">
             <colgroup>
-                <col width="10%" /><!-- 담당자 -->
-                <col width="10%" /><!-- 고객정보 -->
-                <col width="20%" /><!-- 제목 -->
-                <col width="3%" /><!-- 총개수 -->
-                <col width="17%" /><!-- 행정동(개수) -->
-                <col width="20%" /><!-- 매물번호 -->
-                <col width="10%" /><!-- 수정날짜 -->
-                <col width="5%" /><!-- 완료여부 -->
-                <col width="5%" /><!-- 액션 -->
+                <col width="10%" /> <!-- 담당자 -->
+                <col width="10%" /> <!-- 고객정보 -->
+                <col width="20%" /> <!-- 제목 -->
+                <col width="3%" /> <!-- 총개수 -->
+                <col width="17%" /> <!-- 행정동(개수) -->
+                <col width="20%" /> <!-- 매물번호 -->
+                <col width="10%" /> <!-- 수정날짜 -->
+                <col width="5%" />  <!-- 완료여부 -->
+                <col width="5%" />  <!-- 액션 -->
             </colgroup>
-            <thead class="table-light">
+            <thead class="bg-[#eacd49]/90 backdrop-blur-sm text-gray-900">
                 <tr>
-                    <th>담당자</th>
-                    <th>고객정보</th>
-                    <th>제목</th>
-                    <th>총개수</th>
-                    <th>행정동(개수)</th>
-                    <th>매물번호</th>
-                    <th>수정날짜</th>
-                    <th>완료여부</th>
-                    <th>액션</th>
+                    <th class="py-3 px-2">담당자</th>
+                    <th class="py-3 px-2">고객정보</th>
+                    <th class="py-3 px-2">제목</th>
+                    <th class="py-3 px-2">총개수</th>
+                    <th class="py-3 px-2">행정동(개수)</th>
+                    <th class="py-3 px-2">매물번호</th>
+                    <th class="py-3 px-2">수정날짜</th>
+                    <th class="py-3 px-2">완료여부</th>
+                    <th class="py-3 px-2">액션</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-100">
             </tbody>
         </table>
     </div>
 </div>
+
 <!-- 신규 등록 모달 -->
 <div class="modal fade" id="addJjinbbaModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
@@ -174,6 +176,52 @@
   </div>
 </div>
 
+
+<style>
+    @keyframes fade-in {
+        0%   {opacity:0;transform:translateY(10px)}
+        100% {opacity:1;transform:translateY(0)}
+    }
+    .animate-fade-in {animation: fade-in 0.6s ease-out both;}
+
+    table.dataTable tbody tr {
+        transition: background-color .2s ease-in-out;
+    }
+    table.dataTable tbody tr:hover {
+        background-color: #fffbe6;
+    }
+
+    .btn-outline-warning {
+        border: 1px solid #eacd49 !important;
+        color: #eacd49 !important;
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-warning:hover {
+        background:#eacd49 !important;
+        color:#1f1f1f !important;
+        transform:scale(1.05);
+    }
+    .btn-outline-danger {
+        border: 1px solid #9f9f9f !important;
+        color: #9f9f9f !important;
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-danger:hover {
+        background:#9f9f9f !important;
+        color:#ffffff !important;
+        transform:scale(1.05);
+    }
+
+    @media(max-width:640px){
+        div.dataTables_wrapper .dataTables_filter,
+        div.dataTables_wrapper .dataTables_length{
+            text-align:left;
+            margin-bottom:1rem;
+        }
+    }
+</style>
 
 <script src="{{ url_for('static', path='js/jjinbba_list.js') }}"></script>
 {% endblock %}

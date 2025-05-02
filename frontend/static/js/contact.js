@@ -81,7 +81,7 @@ $(document).ready(function() {
             { data: 'registration_date' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
-                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"></button>' +
+                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"></button><br>' +
                '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>';
                 }
             },
