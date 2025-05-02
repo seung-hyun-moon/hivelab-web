@@ -277,7 +277,7 @@ $(document).ready(function() {
             { data: 'status' },
             { data: 'id',
                 "render": function ( data, type, row ) { 
-                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + ' data-create_date="' + row.create_date + '"></button>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + ' data-create_date="' + row.create_date + '"></button><br>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
             { data: 'company_name' },
