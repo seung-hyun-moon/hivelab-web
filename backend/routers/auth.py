@@ -7,7 +7,7 @@ from backend.auth.oauth_client import OAuthClient
 kakao_client = OAuthClient(
             client_id="d96da7ca7c6250bdd4223796d4878d43",
             client_secret_id="fL7s4KDzqW8ALK9INFY8mZcBDNBiUGCn",
-            redirect_uri="http://localhost/oauth/callback",
+            redirect_uri="http://1.234.222.31/oauth/callback",
             authentication_uri="https://kauth.kakao.com/oauth",
             resource_uri="https://kapi.kakao.com/v2/user/me",
             verify_uri="https://kapi.kakao.com/v1/user/access_token_info",
