@@ -104,6 +104,7 @@
 <body>
     {% if not hide_sidebar %}
         {% include "sidebar.html" %}
+        {% include "chat.html" %}
     {% endif %}
     <div id="loading-icon" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);z-index: 999999;">
         <img src="{{ url_for('static', path='images/loading.svg') }}" alt="Loading...">

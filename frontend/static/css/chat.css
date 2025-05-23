@@ -1,0 +1,145 @@
+/* Modal Styles */
+#chat-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  /* 화면 중앙에 모달 창 배치 */
+
+  /* 배경 오버레이 제거하여 원래 창 사용 가능하게 함 */
+  /* background-color: rgba(0, 0, 0, 0.5); */
+}
+
+#chat-modal-content {
+  background-color: #f3f4f6; /* Light gray background */
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  width: 50%;
+  max-width: 600px;
+  height: 600px; /* 고정된 높이 */
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px; /* Rounded corners */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  /* 초기 위치 설정 */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden; /* 내용이 넘치지 않도록 숨김 */
+}
+
+#chat-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  position: relative;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #fff;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  cursor: move; /* 드래그 가능한 영역 표시 */
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
+
+#chat-modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #dfc555; /* Blue color */
+  margin: 0 auto;
+}
+
+.close {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #6b7280; /* Gray color */
+}
+
+/* Chat History */
+.chat-history {
+  flex-grow: 1;
+  overflow-y: auto; /* 스크롤바 표시 */
+  padding: 16px;
+  font-size: 0.9375rem; /* 15px */
+  line-height: 1.5;
+  color: #374151; /* Dark gray */
+  background-color: #f9fafb; /* Light background */
+}
+
+/* Messages */
+.message {
+  margin-bottom: 12px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.user-message {
+  align-self: flex-end;
+  background-color: #dfc555; /* Blue background */
+  color: #fff;
+  padding: 12px;
+  border-radius: 16px 16px 0 16px;
+}
+
+.bot-message {
+  align-self: flex-start;
+  background-color: #e5e7eb; /* Gray background */
+  color: #374151; /* Dark gray */
+  padding: 12px;
+  border-radius: 16px 16px 16px 0;
+}
+
+/* Chat Form */
+.chat-form {
+  border-top: 1px solid #e5e7eb;
+  background-color: #fff;
+  padding: 8px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.user-input {
+  flex-grow: 1;
+  resize: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 48px 12px 12px;
+  font-size: 1rem;
+  color: #374151;
+  outline: none;
+}
+
+.user-input:focus {
+  border-color: #dfc555;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+}
+
+.send-button {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Scrollbar Styling (Optional) */
+.chat-history::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
