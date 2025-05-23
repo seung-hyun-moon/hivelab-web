@@ -121,7 +121,7 @@
     // ----------------------------------------------------------------
     // fetch streamed response
     // ----------------------------------------------------------------
-    fetch("api/predict", {
+    fetch("/api/predict", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, chat_history: chatHistory }),
