@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mx-auto px-4 py-6 mt-10">
+    <!-- Datatable Wrapper -->
+    <div class="overflow-x-auto shadow-lg ring-1 ring-gray-200 animate-fade-in min-w-[768px]">
+        <table id="customerLawTable" class="stripe hover cell-border w-full text-left text-gray-700 text-sm sm:text-base">
+            <colgroup>
+                <col width="3%" /> <!-- 체크박스 -->
+                <col width="3%" /> <!-- 구분 -->
+                <col width="5%" /> <!-- 업종 -->
+                <col width="5%" /> <!-- 회사명 (성명) -->
+                <col width="5%" /> <!-- 직급 -->
+                <col width="8%" /> <!-- 연락처 -->
+                <col width="3%" /> <!-- 인원 -->
+                <col width="5%" /> <!-- 입주시기 -->
+                <col width="34%" /> <!-- 특이사항 -->
+                <col width="4%" /> <!-- 수정일 -->
+                <col width="4%" /> <!-- 상담 -->
+                <col width="4%" /> <!-- 변경 -->
+                <col width="1%" /> <!-- 상태 -->
+            </colgroup>
+            <thead class="bg-[#eacd49]/90 backdrop-blur-sm text-gray-900">
+                <tr>
+                    <th class=" text-center">
+                        <input type="checkbox" id="checkAll">
+                    </th>
+                    <th class="">구분</th>
+                    <th class="">업종</th>
+                    <th class="">회사명 (성명)</th>
+                    <th class="">직급</th>
+                    <th class="">연락처</th>
+                    <th class="">인원</th>
+                    <th class="">입주시기</th>
+                    <th class="">특이사항</th>
+                    <th class="">수정일</th>
+                    <th class="">상담</th>
+                    <th class="">변경</th>
+                    <th class="">상태</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add CustomerLaw Modal -->
+<div class="modal fade" id="addCustomerLawModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerLawModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCustomerLawModalLabel">고객정보 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="return false;" class="grid-form">
+                    <!-- 기본정보 -->
+                    <fieldset class="border p-2 mb-3">
+                        <legend class="w-full pb-3 d-flex justify-content-between align-items-center">
+                            📝 기본정보
+                                <button type="button" class="text-right w-auto btn btn-sm btn-link" id="toggleBasicInfo">
+                                    <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e"
+                                         class="arrow-icon" alt="toggle arrow" width="20px" height="20px"/>
+                                </button>
+                        </legend>
+                        <div id="basicInfoContent">
+                            <fieldset class="border p-2 mb-3">
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="industry" class="form-label">업종</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select id="industry" name="industry" class="form-select">
+                                            <option value=변호사>변호사</option>
+                                            <option value=변리사>변리사</option>
+                                            <option value=회계사>회계사</option>
+                                            <option value=세무사>세무사</option>
+                                            <option value=행정사>행정사</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="company_name" class="form-label">회사명 (성명)</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" id="company_name" name="company_name" class="form-control" placeholder="하이브메이트">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="grade" class="form-label">직급</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" id="grade" name="grade" class="form-control" placeholder="과장">
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_info" class="form-label">연락처</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">성별</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="male" value="남자" checked>
+                                            <label class="form-check-label" for="male">남자</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="female" value="여자">
+                                            <label class="form-check-label" for="female">여자</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_date" class="form-label">컨택일</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="group" class="form-label">그룹</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <select id="group" name="group" class="form-select">
+                                            <option value=0>진행</option>
+                                            <option value=4>대기</option>
+                                            <option value=2>보류</option>
+                                            <option value=1>완료</option>
+                                            <option value=3>폐기</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </fieldset>
+
+                    <!-- 컨디션 -->
+                    <fieldset class="border p-2 mb-3">
+                        <legend class="w-auto pb-3">📑 컨디션</legend>
+                        <fieldset class="border p-2 mb-3">
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-md-1">
+                                    <label for="move_in_date" class="form-label">입주</label>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" id="move_in_date" name="move_in_date" class="form-control" placeholder="△월/즉시">
+                                </div>
+                                <div class="col-md-1">
+                                    <label for="personnel" class="form-label">인원</label>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" id="personnel" name="personnel" class="form-control" placeholder="2">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-1">
+                                    <label for="special_notes" class="form-label">특이<br>사항</label>
+                                </div>
+                                <div class="col-md-11">
+                                    <textarea id="special_notes" name="special_notes" class="form-control" rows="2" placeholder="고객님의 특별한 요청사항이나 특이사항이 있다면 기재해주세요." style="overflow-y: auto;"></textarea>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </fieldset>
+
+                    <!-- 진행사항 -->
+                    <fieldset class="border p-2 mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <legend class="w-auto pb-3">⏳ 진행사항</legend>
+                            </div>
+                            <div class="col-md-12">
+                                <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="진행사항 입력 (Shift + 오른쪽 Ctrl 오늘 날짜)" style="overflow-y: auto;"></textarea>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- 변경 -->
+                    <fieldset class="border p-2">
+                        <legend class="w-auto pb-3">🧑 변경</legend>
+                        <fieldset class="border p-2 mb-3">
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-md-1">
+                                    <label for="counsel" class="form-label">상담</label>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="counsel" name="counsel" class="form-select">
+                                        <option value="대기">대기</option>
+                                        <option value="부재">부재</option>
+                                        <option value="완료">완료</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </fieldset>
+
+                    <div class="text-end pt-2">
+                        <button type="submit" class="btn btn-primary">고객정보 추가</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Modify CustomerLaw Modal -->
+<div class="modal fade" id="modifyCustomerLawModal" tabindex="-1" role="dialog" aria-labelledby="modifyCustomerLawModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modifyCustomerLawModalLabel">고객정보 수정</h5>
+                <button type="button" class="btn btn-secondary" id="closeModifyCustomerLawModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="return false;" class="grid-form">
+                    <!-- 기본정보 -->
+                    <fieldset class="border p-2 mb-3">
+                        <legend class="w-full pb-3 d-flex justify-content-between align-items-center">
+                            📝 기본정보
+                                <button type="button" class="text-right w-auto btn btn-sm btn-link" id="toggleBasicInfo2">
+                                    <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e"
+                                         class="arrow-icon" alt="toggle arrow" width="20px" height="20px"/>
+                                </button>
+                        </legend>
+                        <div id="basicInfoContent2" class="collapsed">
+                            <fieldset class="border p-2 mb-3">
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="industry" class="form-label">업종</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select id="industry" name="industry" class="form-select">
+                                            <option value=변호사>변호사</option>
+                                            <option value=변리사>변리사</option>
+                                            <option value=회계사>회계사</option>
+                                            <option value=세무사>세무사</option>
+                                            <option value=행정사>행정사</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="company_name" class="form-label">회사명 (성명)</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" id="company_name" name="company_name" class="form-control" placeholder="하이브메이트">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="grade" class="form-label">직급</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" id="grade" name="grade" class="form-control" placeholder="과장">
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_info" class="form-label">연락처</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_info" name="contact_info" class="form-control" placeholder="010-1234-5678">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">성별</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="male" value="남자" checked>
+                                            <label class="form-check-label" for="male">남자</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="gender" id="female" value="여자">
+                                            <label class="form-check-label" for="female">여자</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-1">
+                                        <label for="contact_date" class="form-label">컨택일</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" id="contact_date" name="contact_date" class="form-control" placeholder="24.12.25">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label for="group" class="form-label">그룹</label>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <select id="group" name="group" class="form-select">
+                                            <option value=0>진행</option>
+                                            <option value=4>대기</option>
+                                            <option value=2>보류</option>
+                                            <option value=1>완료</option>
+                                            <option value=3>폐기</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </fieldset>
+
+                    <!-- 컨디션 -->
+                    <fieldset class="border p-2 mb-3">
+                        <legend class="w-auto pb-3">📑 컨디션</legend>
+                        <fieldset class="border p-2 mb-3">
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-md-1">
+                                    <label for="move_in_date" class="form-label">입주</label>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" id="move_in_date" name="move_in_date" class="form-control" placeholder="△월/즉시">
+                                </div>
+                                <div class="col-md-1">
+                                    <label for="personnel" class="form-label">인원</label>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" id="personnel" name="personnel" class="form-control" placeholder="2">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-1">
+                                    <label for="special_notes" class="form-label">특이<br>사항</label>
+                                </div>
+                                <div class="col-md-11">
+                                    <textarea id="special_notes2" name="special_notes" class="form-control" rows="2" placeholder="고객님의 특별한 요청사항이나 특이사항이 있다면 기재해주세요." style="overflow-y: auto;"></textarea>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </fieldset>
+
+                    <!-- 진행사항 -->
+                    <fieldset class="border p-2 mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <legend class="w-auto pb-3">⏳ 진행사항</legend>
+                            </div>
+                            <div class="col-md-12">
+                                <textarea id="notes2" name="notes" class="form-control" rows="13" placeholder="진행사항 입력 (Shift + 오른쪽 Ctrl 오늘 날짜)" style="overflow-y: auto;"></textarea>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- 변경 -->
+                    <fieldset class="border p-2">
+                        <legend class="w-auto pb-3">🧑 변경</legend>
+                        <fieldset class="border p-2 mb-3">
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-md-1">
+                                    <label for="counsel" class="form-label">상담</label>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="counsel" name="counsel" class="form-select">
+                                        <option value="대기">대기</option>
+                                        <option value="부재">부재</option>
+                                        <option value="완료">완료</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </fieldset>
+
+                    <div class="text-end pt-2">
+                        <button type="submit" class="btn btn-primary">고객정보 추가</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<div class="modal fade" id="statisticsModal" tabindex="-1" role="dialog" aria-labelledby="statisticsModalLabel" aria-hidden="true">-->
+<!--    <div class="modal-dialog" role="document">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title" id="statisticsModalModalLabel">통계</h5>-->
+<!--                <button type="button" class="btn btn-secondary" id="closestatisticsModal">&times;</button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+
+<script src="{{ url_for('static', path='js/customer_law.js') }}"></script>
+
+{% endblock %}
+
+<style>
+    @keyframes fade-in {
+        0%   {opacity:0;transform:translateY(10px)}
+        100% {opacity:1;transform:translateY(0)}
+    }
+    .animate-fade-in {animation: fade-in 0.6s ease-out both;}
+
+    table.dataTable tbody tr {
+        transition: background-color .2s ease-in-out;
+    }
+    table.dataTable tbody tr:hover {
+        background-color: #fffbe6;
+    }
+
+    .btn-outline-warning {
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-warning:hover {
+        transform:scale(1.05);
+    }
+    .btn-outline-danger {
+        background: transparent !important;
+        transition: transform .3s ease, background-color .3s ease, color .3s ease;
+    }
+    .btn-outline-danger:hover {
+        transform:scale(1.05);
+    }
+
+    @media(max-width:768px){
+        div.dataTables_wrapper .dataTables_filter,
+        div.dataTables_wrapper .dataTables_length{
+            text-align:left;
+            margin-bottom:1rem;
+        }
+    }
+</style>

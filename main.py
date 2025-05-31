@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from backend.routers import auth, customer, property, contact, image, download, event, jjinbba, jjinbba_child
+from backend.routers import auth, customer, property, contact, image, download, event, jjinbba, jjinbba_child, customer_law
 from backend.db.database import conn
 
 
@@ -37,6 +37,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.AuthHandler().router, tags=["oauth"], prefix="/oauth")
 app.include_router(customer.CustomerRouter().router, tags=["customer"], prefix="/api/customer")
+app.include_router(customer_law.CustomerLawRouter().router, tags=["customer_law"], prefix="/api/customer_law")
 app.include_router(property.router, tags=["property"], prefix="/api/property")
 app.include_router(contact.ContactRouter().router, tags=["contact"], prefix="/api/contact")
 app.include_router(download.FileRouter().router, tags=["download"], prefix="/api/download")
@@ -66,6 +67,14 @@ async def move_customer(request: Request):
     if not access_token:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("customer.html", {"request": request, "hide_sidebar": False})
+
+
+@app.get("/customer_law")
+async def move_customer_law(request: Request):
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("customer_law.html", {"request": request, "hide_sidebar": False})
 
 
 @app.get("/contact")

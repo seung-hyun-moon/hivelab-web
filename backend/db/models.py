@@ -47,6 +47,28 @@ class CustomerModel(Base):
     special_notes = Column(String)
 
 
+class CustomerLawModel(Base):
+    __tablename__ = "law_customers"
+
+    id = Column(Integer, primary_key=True, index=True)  # 구분
+    industry = Column(String)                           # 업종
+    company_name = Column(String)                       # 회사명
+    grade = Column(String)                              # 직급
+    contact_info = Column(String)                       # 연락처
+    personnel = Column(String)                          # 인원
+    move_in_date = Column(String)                       # 입주시기
+
+    notes = Column(String)                              # 진행사항
+    special_notes = Column(String)                      # 특이사항
+    edit_date = Column(String)                          # 수정 날짜
+    counsel = Column(String)                            # 상담
+
+    create_date = Column(String)                        # 만든 날짜
+    gender = Column(String)                             # 성별
+    status = Column(Integer)                            # 상태 (0: 진행, 1: 완료, 2: 보류, 3: 폐기, 4: 잠재)
+    contact_date = Column(String)                       # 컨택일
+
+
 class Property(Base):
     __tablename__ = "properties"
 
