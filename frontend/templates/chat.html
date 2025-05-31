@@ -1,0 +1,190 @@
+<!-- chat_modal.html -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', path='css/chat.css') }}" />
+
+<!-- The Modal -->
+<div id="chat-modal" class="modal">
+  <!-- Modal content -->
+  <div id="chat-modal-content" class="modal-content">
+    <div id="chat-modal-header" class="modal-header">
+      <h2>Hivemate AI</h2>
+      <span id="close-chat" class="close">&times;</span>
+    </div>
+    <div id="chat-history" class="chat-history"></div>
+    <form id="chat-form" class="chat-form">
+      <div class="input-group">
+        <input
+          type="text"
+          id="user-input"
+          class="user-input"
+          placeholder="질문을 입력해주세요."
+          autocomplete="off"
+          required
+        />
+        <button type="submit" id="send-button" class="send-button">Send</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  //------------------------------------------------------------------
+  // DOM references
+  //------------------------------------------------------------------
+  const modal = document.getElementById("chat-modal");
+  const openChatBtn = document.getElementById("open-chat");
+  const closeChatBtn = document.getElementById("close-chat");
+  const chatForm = document.getElementById("chat-form");
+  const userInput = document.getElementById("user-input");
+  const chatHistoryDiv = document.getElementById("chat-history");
+  const chatModalContent = document.getElementById("chat-modal-content");
+  const chatModalHeader = document.getElementById("chat-modal-header");
+
+  //------------------------------------------------------------------
+  // State – we mirror the Python signature: List[Tuple[str, str]]
+  //------------------------------------------------------------------
+  let chatHistory = [];
+
+  //------------------------------------------------------------------
+  // Helpers
+  //------------------------------------------------------------------
+  function appendMessage(text, role) {
+    const div = document.createElement("div");
+    div.className = `message ${role}-message`;
+    div.innerHTML = text; // text is already sanitized/markdown‑to‑HTML
+    chatHistoryDiv.appendChild(div);
+    chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+    return div;
+  }
+
+  //------------------------------------------------------------------
+  // Modal open / close logic
+  //------------------------------------------------------------------
+  openChatBtn.addEventListener("click", () => {
+    modal.style.display = "block";
+
+    // reset state & UI
+    chatHistory = [];
+    chatHistoryDiv.innerHTML = "";
+    appendMessage("AI: 안녕하세요. 하이브메이트 AI입니다. 무엇을 도와드릴까요?", "bot");
+
+    // --------------------------------------------------------------
+    // draggable modal
+    // --------------------------------------------------------------
+    const rect = chatModalContent.getBoundingClientRect();
+    chatModalContent.style.left = `${rect.left}px`;
+    chatModalContent.style.top = `${rect.top}px`;
+    chatModalContent.style.transform = "none";
+
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    chatModalHeader.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      offsetX = e.clientX - chatModalContent.offsetLeft;
+      offsetY = e.clientY - chatModalContent.offsetTop;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (isDragging) {
+        chatModalContent.style.left = `${e.clientX - offsetX}px`;
+        chatModalContent.style.top = `${e.clientY - offsetY}px`;
+        chatModalContent.style.transform = "none";
+      }
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+  });
+
+  closeChatBtn.onclick = () => (modal.style.display = "none");
+  window.onclick = (event) => {
+    if (event.target === modal) modal.style.display = "none";
+  };
+
+  //------------------------------------------------------------------
+  // Chat form submit → call FastAPI /predict (stream)
+  //------------------------------------------------------------------
+  chatForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    // show user message instantly
+    appendMessage(`You: ${message}`, "user");
+    userInput.value = "";
+
+    // placeholder for bot response
+    const botDiv = appendMessage("AI: ", "bot");
+
+    // ----------------------------------------------------------------
+    // fetch streamed response
+    // ----------------------------------------------------------------
+    fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, chat_history: chatHistory }),
+    })
+      .then((response) => {
+        if (!response.body) throw new Error("Streaming not supported");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let accumulated = "";
+
+        function read() {
+          return reader.read().then(({ done, value }) => {
+            if (done) {
+              // on end, push tuple to chatHistory and stop
+              chatHistory.push([message, accumulated]);
+              return;
+            }
+            const chunk = decoder.decode(value, { stream: true });
+            accumulated += chunk;
+            botDiv.innerHTML = `AI: ${parseMarkdown(accumulated)}`;
+            return read();
+          });
+        }
+        return read();
+      })
+      .catch((err) => {
+        console.error(err);
+        botDiv.innerText += "\n[Error]";
+      });
+  });
+
+  //------------------------------------------------------------------
+  // Very lightweight Markdown → HTML converter (same as before)
+  //------------------------------------------------------------------
+  function parseMarkdown(text) {
+    text = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    // headings
+    text = text
+      .replace(/^###### (.*$)/gim, "<h6>$1</h6>")
+      .replace(/^##### (.*$)/gim, "<h5>$1</h5>")
+      .replace(/^#### (.*$)/gim, "<h4>$1</h4>")
+      .replace(/^### (.*$)/gim, "<h3>$1</h3>")
+      .replace(/^## (.*$)/gim, "<h2>$1</h2>")
+      .replace(/^# (.*$)/gim, "<h1>$1</h1>");
+
+    // bold / italic / code / links
+    text = text
+      .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
+      .replace(/__(.*?)__/gim, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/gim, "<em>$1</em>")
+      .replace(/_(.*?)_/gim, "<em>$1</em>")
+      .replace(/`([^`]+)`/gim, "<code>$1</code>")
+      .replace(/```([\s\S]*?)```/gim, "<pre><code>$1</code></pre>")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>');
+
+    // unordered / ordered lists (simple version)
+    text = text.replace(/^\s*[-*+] (.*)/gim, "<ul><li>$1</li></ul>");
+    text = text.replace(/^\s*\d+\. (.*)/gim, "<ol><li>$1</li></ol>");
+
+    return text.trim();
+  }
+</script>

@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from backend.routers import auth, customer, property, contact, image, download, event, jjinbba, jjinbba_child, customer_law
+from backend.routers import auth, customer, property, contact, image, download, event, jjinbba, jjinbba_child, customer_law, chat
 from backend.db.database import conn
 
 
@@ -46,6 +46,7 @@ app.include_router(jjinbba.JjinbbaRouter().router, tags=["jjinbba"], prefix="/ap
 app.include_router(jjinbba_child.JjinbbaChildRouter().router, tags=["jjinbba_child"], prefix="/api/jjinbba_child")
 app.include_router(event.EventRouter().router, tags=["event"], prefix="/api/event")
 app.include_router(image.router, tags=["image"], prefix="/api/image")
+app.include_router(chat.ChatRouter().router, tags=["chat"], prefix="/api/predict")
 
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
