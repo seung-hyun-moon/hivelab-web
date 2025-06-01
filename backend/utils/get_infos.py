@@ -460,7 +460,7 @@ def populate_form_fields(
 
     # 3-4. 면적(㎡ → 평, 1평≈0.3025㎡)
     supply_area_py   = f"{supply_space * 0.3025:.1f}평" if supply_space else ""
-    exclusive_area_py = f"{exclusive_space * 0.3025 * 0.8:.1f}평" if exclusive_space else ""
+    exclusive_area_py = f"{supply_space * 0.3025 * 0.8:.1f}평" if supply_space else ""
 
     land_area_py     = f"{plat_area * 0.3025:.1f}평" if plat_area else ""
     building_area_py = f"{arch_area * 0.3025:.1f}평" if arch_area else ""
