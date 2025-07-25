@@ -1,3 +1,24 @@
+const copyRecords = [];
+const WINDOW_MS = 60 * 1000; // 예: 1분
+const MAX_COPIES = 5;
+
+document.addEventListener('copy', () => {
+  const now = Date.now();
+  copyRecords.push(now);
+  // 윈도우 밖 타임스탬프 제거
+  while (copyRecords.length && copyRecords[0] < now - WINDOW_MS) {
+    copyRecords.shift();
+  }
+
+  if (copyRecords.length > MAX_COPIES) {
+    alert('복사 횟수가 제한을 초과하여 관리자에게 알림이 전송됩니다.');
+    // 서버 로그 호출 등 추가 조치
+  } else {
+    // 기록 로그 또는 UI 표시 가능
+    console.log(`복사 횟수: ${copyRecords.length}`);
+  }
+});
+
 function formatDate() {
     var date = new Date();
     var year = date.getFullYear().toString();
@@ -123,8 +144,10 @@ $(document).ready(function() {
         // Open the modal
         $('#modifyContactModal').modal('show');
 
-        $('#modifyContactModal form').on('submit', function() {
+        $('#modifyContactModal form').off('submit').on('submit', function() {
             var form = $(this);
+            var $submitBtn = form.find('button[type="submit"]');
+            $submitBtn.prop('disabled', true); // 중복 방지
             var data = {
                 name: form.find('input[name="name"]').val(),
                 phone: form.find('input[name="phone"]').val(),
@@ -145,6 +168,9 @@ $(document).ready(function() {
                 },
                 error: function(error) {
                     console.error('Error:', error);
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false); // 다시 활성화
                 }
             });
 
@@ -157,8 +183,10 @@ $(document).ready(function() {
         $("#addContactModal").modal("hide");
     });
 
-    $('#addContactModal form').on('submit', function() {
+    $('#addContactModal form').off('submit').on('submit', function() {
         var form = $(this);
+        var $submitBtn = form.find('button[type="submit"]');
+        $submitBtn.prop('disabled', true); // 중복 방지
         var data = {
             name: form.find('input[name="name"]').val(),
             phone: form.find('input[name="phone"]').val(),
@@ -179,6 +207,9 @@ $(document).ready(function() {
             },
             error: function(error) {
                 console.error('Error:', error);
+            },
+            complete: function() {
+                $submitBtn.prop('disabled', false); // 다시 활성화
             }
         });
     

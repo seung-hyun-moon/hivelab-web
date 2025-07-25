@@ -186,61 +186,67 @@ class JjinbbaRouter(BaseCRUD):
         for k, v in item.model_dump(exclude_unset=True).items():
             setattr(parent, k, v)
 
-        # 자식 전부 삭제
-        db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent.id).delete()
         db.commit()
 
-        # 새 매물번호 크롤링
-        try:
-            crawl = await get_infos.process_properties(parent.numbers)
-        except Exception as exc:
-            raise HTTPException(500, f"크롤링 실패: {exc}")
+        # 기존 자식의 number 수집
+        existing_children = db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent.id).all()
+        existing_numbers = {child.number for child in existing_children}
 
-        parent.region_info = crawl["region_info"]
-        # 자식 재삽입
-        for c in crawl["children"]:
-            db.add(JjinbbaChildModel(parent_id=parent.id, **{
-                "number": c["number"],
-                "address": c["address"],
-                "building_name": c["building_name"],
-                "floor": c["floor"],
-                "deposit": c["deposit"],
-                "rent": c["rent"],
-                "management_fee": c["management_fee"],
-                "rent_and_mgmt": c["rent_and_mgmt"],
-                "rate": c["rate"],
-                "noc": c["noc"],
-                "rf": c["rf"],
-                "exclusive_area": c["exclusive_area"],
-                "elevator": c["elevator"],
-                "parking": c["parking"],
-                "heating": c["heating"],
-                "restroom": c["restroom"],
-                "lease_area": c["lease_area"],
-                "use": c["use"],
-                "usage_approval_date": c["usage_approval_date"],
-                "scale": c["scale"],
-                "direction": c["direction"],
-                "land_area": c["land_area"],
-                "building_area": c["building_area"],
-                "total_area": c["total_area"],
-                "main_structure": c["main_structure"],
-                "building_coverage": c["building_coverage"],
-                "floor_area_ratio": c["floor_area_ratio"],
-                "land_price": c["land_price"],
-                "feature": c["feature"],
-                "note": c["note"],
-                "img_urls": c["img_urls"],
-                "rocation_url": c["rocation_url"],
-                "latitude": c["latitude"],
-                "longitude": c["longitude"],
-            }))
+        # 전체 numbers 중 새로운 number만 필터링
+        new_numbers = [num for num in parent.numbers if num not in existing_numbers]
 
-        db.commit()
+        if new_numbers:
+            try:
+                crawl = await get_infos.process_properties(new_numbers)
+            except Exception as exc:
+                raise HTTPException(500, f"크롤링 실패: {exc}")
+
+            # region_info 갱신 (전체로)
+            parent.region_info = crawl["region_info"]
+
+            # 새 children 추가
+            for c in crawl["children"]:
+                db.add(JjinbbaChildModel(parent_id=parent.id, **{
+                    "number": c["number"],
+                    "address": c["address"],
+                    "building_name": c["building_name"],
+                    "floor": c["floor"],
+                    "deposit": c["deposit"],
+                    "rent": c["rent"],
+                    "management_fee": c["management_fee"],
+                    "rent_and_mgmt": c["rent_and_mgmt"],
+                    "rate": c["rate"],
+                    "noc": c["noc"],
+                    "rf": c["rf"],
+                    "exclusive_area": c["exclusive_area"],
+                    "elevator": c["elevator"],
+                    "parking": c["parking"],
+                    "heating": c["heating"],
+                    "restroom": c["restroom"],
+                    "lease_area": c["lease_area"],
+                    "use": c["use"],
+                    "usage_approval_date": c["usage_approval_date"],
+                    "scale": c["scale"],
+                    "direction": c["direction"],
+                    "land_area": c["land_area"],
+                    "building_area": c["building_area"],
+                    "total_area": c["total_area"],
+                    "main_structure": c["main_structure"],
+                    "building_coverage": c["building_coverage"],
+                    "floor_area_ratio": c["floor_area_ratio"],
+                    "land_price": c["land_price"],
+                    "feature": c["feature"],
+                    "note": c["note"],
+                    "img_urls": c["img_urls"],
+                    "rocation_url": c["rocation_url"],
+                    "latitude": c["latitude"],
+                    "longitude": c["longitude"],
+                }))
+
+            db.commit()
+
         db.refresh(parent)
         return parent
-
-
 
     async def get_naver_iframe(self, number: str):
         naver_url = f"https://new.land.naver.com/offices?articleNo={number}"
