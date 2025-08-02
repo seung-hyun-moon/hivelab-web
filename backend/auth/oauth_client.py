@@ -3,6 +3,7 @@ from typing import Dict, Optional
 import aiohttp
 import ssl
 import certifi
+from config import DEBURG_MODE
 
 
 class InvalidToken(Exception):
@@ -97,8 +98,9 @@ class OAuthClient:
     async def get_user_info(self, access_token: str) -> Dict:
         headers = {self._header_name: f"{self._header_type} {access_token}"}
         user_info = await self._request_get_to(url=self._resource_uri, headers=headers)
-        if user_info is None:
-            raise InvalidToken
+        if not DEBURG_MODE:
+            if user_info is None:
+                raise InvalidToken
         return user_info
 
     async def is_authenticated(self, access_token: str) -> bool:

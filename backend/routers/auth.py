@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi import Depends, FastAPI, Header, Query, Request, HTTPException, status, APIRouter
 from backend.auth.oauth_client import OAuthClient
 from fastapi.templating import Jinja2Templates
+from config import DEBURG_MODE
 
 templates = Jinja2Templates(directory="frontend/templates")
 
@@ -72,15 +73,15 @@ class AuthHandler(object):
     async def callback(self, code: str, state: Optional[str] = None, oauth_client=Depends(get_oauth_client), request: Request=None):
         token_response = await oauth_client.get_tokens(code, state)
         access_token = token_response.get('access_token')
-
-        user_info = await oauth_client.get_user_info(access_token)
-        user_info = user_info.get('kakao_account').get('email')
-        if user_info not in users:
-            return templates.TemplateResponse(
-                "401.html",
-                {"request": request},
-                status_code=401
-            )
+        if not DEBURG_MODE:
+            user_info = await oauth_client.get_user_info(access_token)
+            user_info = user_info.get('kakao_account').get('email')
+            if user_info not in users:
+                return templates.TemplateResponse(
+                    "401.html",
+                    {"request": request},
+                    status_code=401
+                )
 
         # Create a response that sets a cookie and redirects
         response = RedirectResponse(url='/customer')
