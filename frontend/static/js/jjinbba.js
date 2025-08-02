@@ -18,17 +18,17 @@ async function fetchJSON(url) {
 }
 
 /**
- * /api/jjinbba/{number} 에서 매물 정보 가져오기
+ * /api/jjinbba/single/{number} 에서 매물 정보 가져오기
  * @param {number|string} number
  * @returns {Promise<object|null>}
  */
 async function getBuildingData(number) {
-    const naver_url = `/api/jjinbba/info/${number}`;
-    return await fetchJSON(naver_url);
+    const api_url = `/api/jjinbba/single/${number}`;
+    return await fetchJSON(api_url);
 }
 
 /**
- * 건축물대장 API 데이터 가져오기
+ * 건축물대장 API 데이터 가져오기 (기존 코드 유지)
  * @param {string} pnu
  * @returns {Promise<object|null>}
  */
@@ -37,7 +37,6 @@ async function getBuildingReg(pnu) {
 
     const sigunguCd = pnu.slice(0, 5);
     const bjdongCd  = pnu.slice(5, 10);
-    // platGbCd = pnu.slice(10, 11); // 사용하지 않아도 되면 생략 가능
     const bun       = pnu.slice(11, 15);
     const ji        = pnu.slice(15, 19);
     const serviceKey = "BMGIafb6F%2BbjVUOgBpP0KhMFt2Xo%2B35JLYUc2Eu2AX%2BE69WIN4TwkM3a2YYb3XgUSmdv1CXPYOCFaYyyhwXEgw%3D%3D";
@@ -47,31 +46,10 @@ async function getBuildingReg(pnu) {
 }
 
 /**
- * 주소 추출 로직:
- * 1. 건축물대장 정보(buildingReg)에 주소가 있으면 사용
- * 2. 없으면 lat,lng로 /api/jjinbba/adr/{lat}_{lng} 조회
- * 3. 둘 다 실패면 빈 문자열
+ * 주소는 API 응답에서 직접 가져옴 (기존 복잡한 로직 제거)
  */
-async function getAddress(buildingReg, buildingData) {
-    // 1. 건축물대장 정보에서 주소
-    const addressFromReg = buildingReg?.response?.body?.items?.item[0]?.platPlc;
-    if (addressFromReg) {
-        return addressFromReg;
-    }
-    // 2. 좌표로 주소 조회
-    try {
-        const lng = buildingData?.articleDetail?.longitude;
-        const lat = buildingData?.articleDetail?.latitude;
-        if (!lat || !lng) {
-            return "";
-        }
-        const adrUrl = `/api/jjinbba/adr/${lat}_${lng}`;
-        const adrData = await fetchJSON(adrUrl);
-        return adrData || "";
-    } catch (error) {
-        console.error("좌표 기반 주소조회 실패:", error);
-        return "";
-    }
+function getAddress(buildingData) {
+    return buildingData?.address || "";
 }
 
 /**
@@ -194,72 +172,78 @@ function calculateExcelFormula() {
 }
 
 /**
- * buildingData(매물 정보), buildingReg(건축물대장) + address를 합쳐 formFields 구성
- *
- * @param {object|null} buildingData
- * @param {object|null} buildingReg
- * @param {string} address
+ * 새로운 API 응답 구조에 맞춰 formFields 구성
+ * @param {object|null} buildingData - /api/jjinbba/single/{number}의 응답
+ * @param {object|null} buildingReg - 건축물대장 정보 (필요시 추가 정보용)
  * @returns {object} formFields
  */
-function populateFormFields(buildingData, buildingReg, address) {
-    console.log(buildingData);
-    console.log(buildingReg?.response?.body?.items?.item[0]);
-    // 필요한 정보가 하나도 없을 수 있으니, optional chaining + 기본값 사용
-    const warrantPrc   = buildingData?.articleAddition?.dealOrWarrantPrc  || "";
-    const rentPrc      = buildingData?.articleAddition?.rentPrc          || "";
-    const mgmtCost     = buildingData?.articleDetail?.monthlyManagementCost;
-    const supplySpace  = buildingData?.articleSpace?.supplySpace         || "";
-    const exclusiveSpace = buildingData?.articleSpace?.exclusiveSpace    || "";
-    const rideUseElvtCnt  = buildingReg?.response?.body?.items?.item[0]?.rideUseElvtCnt  ?? 0;
-    const emgenUseElvtCnt = buildingReg?.response?.body?.items?.item[0]?.emgenUseElvtCnt ?? 0;
-    const bldNm        = buildingReg?.response?.body?.items?.item[0]?.bldNm?.trim()      || "";
-    const ugrndFlrCnt  = buildingReg?.response?.body?.items?.item[0]?.ugrndFlrCnt        || "";
-    const grndFlrCnt   = buildingReg?.response?.body?.items?.item[0]?.grndFlrCnt         || "";
-    const totArea      = buildingReg?.response?.body?.items?.item[0]?.totArea            || "";
-    const useAprDay    = buildingReg?.response?.body?.items?.item[0]?.useAprDay          || "";
+function populateFormFields(buildingData, buildingReg) {
+    console.log("Building Data:", buildingData);
+    console.log("Building Reg:", buildingReg?.response?.body?.items?.item[0]);
 
-    const vlRat           = buildingReg?.response?.body?.items?.item[0]?.vlRat          || "";
-    const bcRat         = buildingReg?.response?.body?.items?.item[0]?.bcRat          || "";
-    const etcStrct      = buildingReg?.response?.body?.items?.item[0]?.etcStrct || "";
-    const platArea      = buildingReg?.response?.body?.items?.item[0]?.platArea || "";
+    if (!buildingData) {
+        return {};
+    }
 
-    // 주소에서 "서울특별시 00구 " 이런 부분 제거
-    // 또한 "번지"라는 단어 제거
-    const finalAddress = address
-        .replace(/^서울특별시.*?구\s/, "")
-        .replace(/번지/, "");
+    // 새로운 API 응답 구조에 맞춰 데이터 추출
+    const address = buildingData.address || "";
+    const buildingName = buildingData.building_name || "";
+    const floor = buildingData.floor || "";
+    const deposit = buildingData.deposit || "";
+    const rent = buildingData.rent || "";
+    const managementFee = buildingData.management_fee || "";
+    const rentAndMgmt = buildingData.rent_and_mgmt || "";
+    const rate = buildingData.rate || "";
+    const noc = buildingData.noc || "";
+    const rf = buildingData.rf || "";
+    const exclusiveArea = buildingData.exclusive_area || "";
+    const leaseArea = buildingData.lease_area || "";
+    const elevator = buildingData.elevator || "";
+    const parking = buildingData.parking || "";
+    const heating = buildingData.heating || "";
+    const restroom = buildingData.restroom || "";
+    const use = buildingData.use || "";
+    const usageApprovalDate = buildingData.usage_approval_date || "";
+    const scale = buildingData.scale || "";
+    const direction = buildingData.direction || "";
+    const landArea = buildingData.land_area || "";
+    const buildingArea = buildingData.building_area || "";
+    const totalArea = buildingData.total_area || "";
+    const mainStructure = buildingData.main_structure || "";
+    const buildingCoverage = buildingData.building_coverage || "";
+    const floorAreaRatio = buildingData.floor_area_ratio || "";
+    const landPrice = buildingData.land_price || "";
+    const feature = buildingData.feature || "";
 
     return {
-        '주소':       finalAddress,
-        '건물명':     bldNm,
-        '층':         (buildingData?.articleAddition?.floorInfo || "") + "층",
-
-        '보증금':     formatNumber(warrantPrc) + "만",
-        '임대료':     formatNumber(rentPrc) + "만",
-        '관리비':     convertToKoreanUnit(mgmtCost) + "만",
-        '임+관':         (
-            parseInt(formatNumber(rentPrc).replace(/,/g, '')) +
-            parseInt(convertToKoreanUnit(mgmtCost).replace(/,/g, ''))
-        ).toLocaleString() + "만",
-
-        '임대면적':   (supplySpace*0.3025).toFixed(1) + "평",
-        '전용면적':   (supplySpace*0.3025*0.8).toFixed(1) + "평",
-
-        '엘베':       (rideUseElvtCnt+emgenUseElvtCnt) + "대",
-        '주차':       buildingData?.articleDetail?.parkingPossibleYN || "",
-        '냉난방':     buildingData?.articleFacility?.heatMethodTypeName || "",
-        '화장실':     "외부 분리", // 고정
-        '방향':       buildingData?.articleAddition?.direction || "",
-        '특징':       buildingData?.articleAddition?.articleFeatureDesc || "",
-
-        '사용승인일':   formatKoreaDate(useAprDay),
-        '대지면적':    (platArea*0.3025).toFixed(1) + "평",
-        '연면적':     (totArea*0.3025).toFixed(1) + "평",
-
-        '규모':       `지${ugrndFlrCnt}층 / ${grndFlrCnt}층`,
-        '주구조':     etcStrct,
-        '건폐율':     bcRat + "%",
-        '용적률':     vlRat + "%",
+        '주소': address,
+        '건물명': buildingName,
+        '층': floor,
+        '보증금': deposit,
+        '임대료': rent,
+        '관리비': managementFee,
+        '임+관': rentAndMgmt,
+        '이율(%)': rate,
+        'NOC': noc,
+        'RF(개월)': rf,
+        '전용면적': exclusiveArea,
+        '임대면적': leaseArea,
+        '엘베': elevator,
+        '주차': parking,
+        '냉난방': heating,
+        '화장실': restroom,
+        '용도': use,
+        '사용승인일': usageApprovalDate,
+        '규모': scale,
+        '방향': direction,
+        '대지면적': landArea,
+        '건축면적': buildingArea,
+        '연면적': totalArea,
+        '주구조': mainStructure,
+        '건폐율': buildingCoverage,
+        '용적률': floorAreaRatio,
+        '개별공시지가': landPrice,
+        '특징': feature
     };
 }
 
@@ -285,24 +269,7 @@ function applyFormFields(formFields) {
         const editInputs = document.getElementsByName(`name_edit_${itemKey}`);
         editInputs.forEach(editInput => {
             if (!editInput) return;
-
-            switch (itemKey) {
-                case "층": {
-                    editInput.value = fieldValue.split('/')[0] + '층';
-                    break;
-                }
-                case "주차": {
-                    editInput.value = (fieldValue === "Y") ? "1" : "0";
-                    break;
-                }
-                case "냉난방": {
-                    editInput.value = (fieldValue.includes("중앙")) ? "중앙" : "개별";
-                    break;
-                }
-                default:
-                    editInput.value = fieldValue;
-                    break;
-            }
+            editInput.value = fieldValue;
         });
     }
 }
@@ -351,10 +318,8 @@ function generateTemplate() {
         });
         template += "<br>";
     });
-
     document.getElementById('id_jjinbba_template').innerHTML = template;
 }
-
 
 document.getElementById('id_move_number')?.addEventListener('click', function() {
     const inputValue = document.getElementById('id_input_number').value.trim();
@@ -376,53 +341,37 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('id_number').value = number;
 
-    // 2) 두 가지 API 데이터 가져오기 (실패 시 null 반환)
+    // 2) 새로운 API에서 매물 정보 가져오기
     const buildingData = await getBuildingData(number);
-    const pnu = buildingData?.articleDetail?.pnu || "";
-    const buildingReg = await getBuildingReg(pnu);
 
-    // 3) 주소 결정
-    const address = await getAddress(buildingReg, buildingData);
+    // 필요한 경우 건축물대장 정보도 가져오기 (현재는 사용하지 않음)
+    const buildingReg = null; // await getBuildingReg(pnu);
 
-    // 4) formFields 생성 (둘 중 하나만 성공해도 partial data 사용 가능)
-    const formFields = populateFormFields(buildingData, buildingReg, address);
+    // 3) formFields 생성
+    const formFields = populateFormFields(buildingData, buildingReg);
 
-    // 특징 표시
-    if (buildingData?.articleAddition?.articleFeatureDesc) {
+    // 4) 특징 표시
+    if (buildingData?.feature) {
         const featureDiv = document.getElementById('id_feature');
-        featureDiv.innerHTML = `<p style="color: #808080;">${buildingData?.articleAddition?.articleFeatureDesc}</p>`
+        featureDiv.innerHTML = `<p style="color: #808080;">${buildingData.feature}</p>`;
     }
     document.getElementById('id_checkbox_특징').disabled = true;
 
-    // 위치 정보 가져오기
-    if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
-      const templatesDiv = document.getElementById('id_templates');
+    // 5) 위치 정보 가져오기 (rocation_url 사용)
+    if (buildingData?.rocation_url) {
+        const templatesDiv = document.getElementById('id_templates');
 
-      // 지도 이미지 업데이트 함수
-      function updateMap() {
-        const w = templatesDiv.offsetWidth;
-        const h = templatesDiv.offsetHeight;
-        const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=${w}&h=${h}`;
-        templatesDiv.innerHTML = `<img src="${mapUrl}" alt="Map Image" style="width: 100%; height: auto;">`;
-      }
-
-      // 초기 지도 이미지 업데이트
-      updateMap();
-
-      // ResizeObserver를 사용하여 div 크기 변경 시 업데이트 수행
-      const resizeObserver = new ResizeObserver(() => {
-        updateMap();
-      });
-      resizeObserver.observe(templatesDiv);
+        // API에서 제공하는 지도 이미지 URL 직접 사용
+        templatesDiv.innerHTML = `<img src="${buildingData.rocation_url}" alt="Map Image" style="width: 100%; height: 100%; object-fit: cover;">`;
     }
 
-    // 5) formFields를 화면 input들에 적용
+    // 6) formFields를 화면 input들에 적용
     applyFormFields(formFields);
 
-    // 6) 템플릿 생성(초기 1회)
+    // 7) 템플릿 생성(초기 1회)
     generateTemplate();
 
-    // 7) 이벤트 리스너 등록(입력값 변경 시 템플릿 재생성)
+    // 8) 이벤트 리스너 등록(입력값 변경 시 템플릿 재생성)
     document.querySelectorAll('input[name^="name_edit_"]').forEach(editInput => {
         editInput.addEventListener('input', generateTemplate);
         editInput.addEventListener('input', calculateExcelFormula);
@@ -432,9 +381,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         checkbox.addEventListener('change', generateTemplate);
     });
 
-
+    // 9) 네이버 정보 가져오기 (기존 코드 유지)
     document.getElementById('id_naver_info')?.addEventListener('click', async () => {
-        // 8) iframe 로드 (NIF)
         try {
             const iframeResponse = await fetch(`/api/jjinbba/nif/${number}`, { method: 'GET' });
             if (!iframeResponse.ok) throw new Error('Network response was not ok');
@@ -445,16 +393,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-
-      // 클릭 이벤트 리스너 등록
-      document.getElementById('id_naver_info_new')?.addEventListener('click', () => {
-        // 원하는 링크를 지정 (예: 'https://www.example.com')
+    // 10) 네이버 새탭 열기
+    document.getElementById('id_naver_info_new')?.addEventListener('click', () => {
         const url = `https://new.land.naver.com/offices?articleNo=${number}`;
-        // 새 창(또는 새 탭)으로 링크 열기
         window.open(url, '_blank');
     });
 
-    // 10) 이미지 ZIP 다운로드
+    // 11) 이미지 ZIP 다운로드 (img_urls 사용)
     document.getElementById('id_each_img_download').addEventListener('click', async function() {
         // 클릭 시작 시 로딩 아이콘 표시
         $('#loading-icon').show();
@@ -464,15 +409,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.error('No buildingData available');
                 return;
             }
+
             // zipName 구성
             const zipName = formFields['층']
-                ? (formFields['주소'] + ", " + formFields['층'].split("/")[0] + "층")
+                ? (formFields['주소'] + ", " + formFields['층'])
                 : formFields['주소'];
 
-            const imageUrls = buildingData.articlePhotos?.map(photo => `https://landthumb-phinf.pstatic.net${photo.imageSrc}`) || [];
-            if (buildingData.articleDetail?.longitude && buildingData.articleDetail?.latitude) {
-                const mapUrl = `https://simg.pstatic.net/static.map/v2/map/staticmap.bin?crs=EPSG:4326&markers=type:d|size:mid|pos:${buildingData.articleDetail.longitude}%20${buildingData.articleDetail.latitude}|viewSizeRatio:0.7|color:black&scale=1&caller=mw_land&format=jpg&w=1006&h=493`;
-                imageUrls.push(mapUrl);
+            // API에서 제공하는 이미지 URL들 사용
+            const imageUrls = buildingData.img_urls || [];
+
+            // 지도 이미지도 추가
+            if (buildingData.rocation_url) {
+                imageUrls.push(buildingData.rocation_url);
             }
 
             if (!imageUrls.length) {

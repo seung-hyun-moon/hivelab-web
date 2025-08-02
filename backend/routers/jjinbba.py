@@ -69,6 +69,12 @@ class JjinbbaRouter(BaseCRUD):
             methods=['GET']
         )
         self.router.add_api_route('/analyze_region', self.analyze_region, response_model=dict, methods=['POST'])
+        self.router.add_api_route('/single/{item_id}', self.get_single_jjinbba, response_model=dict, methods=['GET'])
+
+    async def get_single_jjinbba(self, item_id: int):
+        crawl = await get_infos.process_properties([item_id])
+        return crawl['children'][0]
+
 
     def get_items_by_customer(self, customer: str, db: Session = Depends(get_db)):
         """

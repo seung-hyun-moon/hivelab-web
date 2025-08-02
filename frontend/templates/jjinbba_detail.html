@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="mx-auto px-4 py-6 mt-10 min-w-[768px]">
-    <!-- Navigation Controls -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <button id="prevBtn" class="btn btn-outline-secondary">
             <i class="bi bi-chevron-left"></i> 이전
@@ -13,20 +12,11 @@
         </button>
     </div>
 
-    <!-- 기존 상세 정보 구조 유지 -->
-    <!-- Top Buttons -->
     <div class="d-flex justify-content-between m-3">
         <div id="id_btn_customers" class="d-flex justify-content-end align-items-center" style="height: 5vh;">
 
         </div>
         <div class="d-flex justify-content-end align-items-center">
-<!--            <input-->
-<!--                id="id_number_input"-->
-<!--                type="number"-->
-<!--                class="form-control form-control-sm me-2"-->
-<!--                placeholder="1번 번호"-->
-<!--                style="width: 100px;"-->
-<!--            />-->
             <button id="id_all_img_download" class="btn btn-sm btn-success me-2">전체 매물 이미지 다운</button>
             <button id="id_each_img_download" class="btn btn-sm btn-warning me-2">해당 매물 이미지 다운</button>
             <button id="id_naver_info" class="btn btn-sm btn-danger hidden">네이버 가져오기</button>
@@ -34,7 +24,6 @@
         </div>
     </div>
 
-    <!-- Row 1: Full Width -->
     <div class="row m-3 flex-grow-1">
         <div class="col-12" style="height: 10vh; background-color: #f8f9fa; border: 1px solid #dee2e6;">
             매물번호 : <input id="id_number" name="name_ro_매물번호" readonly>
@@ -43,7 +32,6 @@
         </div>
     </div>
 
-    <!-- Row 2: Three Columns -->
     <div class="row m-3 flex-grow-1">
         <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6; overflow-y: auto;">
             <form>
@@ -58,29 +46,27 @@
                         ] %}
 
                         {% for group, items, r in groups %}
-                            {% for item, is_default_visible in items %}
-                            <tr class="{{ 'default-row' if is_default_visible else 'extra-row hidden' }}" data-group="{{ group }}">
+                            {% set visible_items = items | selectattr('1') | list %}
+                            {% set hidden_items = items | rejectattr('1') | list %}
+
+                            {# 기본으로 보이는 항목들 #}
+                            {% for item, is_default_visible in visible_items %}
+                            <tr class="default-row" data-group="{{ group }}">
                                 {% if loop.first %}
-                                <td rowspan="{{ r }}" class="border p-2 font-semibold bg-gray-200 text-center align-top">
+                                <td rowspan="{{ visible_items|length + (1 if hidden_items else 0) }}" class="border p-2 font-semibold bg-gray-200 text-center align-top">
                                     {{ group }}
                                 </td>
-                                {% endif %}
-                                {% if not is_default_visible %}
-                                <td></td>
                                 {% endif %}
                                 <td class="border p-2">
                                     {% if item == '특이사항' %}
                                     <input type="checkbox" id="id_checkbox_{{ item }}">
                                     {% else %}
-                                    <input type="checkbox" id="id_checkbox_{{ item }}" {% if is_default_visible %}checked{% endif %}>
+                                    <input type="checkbox" id="id_checkbox_{{ item }}" checked>
                                     {% endif %}
                                 </td>
                                 <td class="border p-2">
                                     <label for="id_checkbox_{{ item }}">{{ item }}</label>
                                 </td>
-<!--                                <td class="border p-2">-->
-                                    <input name="name_ro_{{ item }}" class="form-control w-full hidden" readonly>
-<!--                                </td>-->
                                 <td class="border p-2">
                                     {% if item == '특이사항' %}
                                     <textarea id="id_edit_특이사항" name="name_edit_특이사항" class="form-control w-full" rows="3"></textarea>
@@ -92,32 +78,50 @@
                                 </td>
                             </tr>
                             {% endfor %}
-                            {% if group in ['임대정보', '건물정보'] %}
-                            <tr>
-                                <td colspan="4">
-                                    <button type="button" onclick="toggleSection('{{ group }}', this)" class="w-full h-10 flex items-center justify-center">
-                                      <svg class="w-3 h-3 transition-transform duration-200 ease-in-out" aria-hidden="true"
-                                           xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="m1 1 4 4 4-4"/>
-                                      </svg>
+
+                            {# 토글 버튼 (숨겨진 항목이 있는 경우에만) #}
+                            {% if hidden_items %}
+                            <tr class="toggle-section">
+                                <td colspan="4" class="border p-0" style="background-color: #f8f9fa;">
+                                    <button type="button" onclick="toggleSection('{{ group }}', this)"
+                                            class="w-100 btn btn-light border-0 d-flex align-items-center justify-content-center"
+                                            style="height: 40px;">
+                                        <svg class="toggle-arrow" style="width: 12px; height: 12px; transition: transform 0.2s;"
+                                             fill="none" viewBox="0 0 10 6">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                                        </svg>
                                     </button>
                                 </td>
                             </tr>
+
+                            {# 숨겨진 항목들 #}
+                            {% for item, is_default_visible in hidden_items %}
+                            <tr class="extra-row hidden" data-group="{{ group }}">
+                                <td></td> {# 빈 셀 (rowspan 때문에) #}
+                                <td class="border p-2">
+                                    <input type="checkbox" id="id_checkbox_{{ item }}">
+                                </td>
+                                <td class="border p-2">
+                                    <label for="id_checkbox_{{ item }}">{{ item }}</label>
+                                </td>
+                                <td class="border p-2">
+                                    <input id="id_edit_{{ item }}" name="name_edit_{{ item }}" class="form-control w-full">
+                                </td>
+                            </tr>
+                            {% endfor %}
                             {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
             </form>
         </div>
-        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;" spellcheck="false">
-            <div class="d-flex justify-content-end mb-1">
-                <button class="btn btn-sm btn-outline-secondary" onclick="copyJjinbbaText()" title="복사하기">
-                    <i class="bi bi-clipboard"></i>
-                </button>
-            </div>
-            <div id="id_jjinbba_template" style="height:90%; overflow-y: auto; padding: 10px;"></div>
-            <div id="id_feature" style="height: 10%;width: 100%;overflow-y: auto;padding: 10px;"></div>
+        <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6; position: relative;">
+            <div id="id_jjinbba_template" contenteditable="true" spellcheck="false" style="height: calc(100% - 60px); overflow-y: auto; padding: 10px; user-select: text;"></div>
+            <div id="id_feature" style="height: 60px; width: 100%; overflow-y: auto; padding: 10px; box-sizing: border-box;"></div>
+
+            <button class="btn btn-sm btn-outline-secondary position-absolute" style="top: 12px; right: 12px; z-index: 10;" onclick="copyJjinbbaText()" title="복사하기">
+                <i class="bi bi-clipboard"></i> 복사
+            </button>
         </div>
         <div class="col-4" style="height: 60vh; background-color: #e9ecef; border: 1px solid #dee2e6;padding: 0px;">
             <div id="id_templates" style="height: 100%;width: 100%;"></div>
@@ -128,26 +132,46 @@
     </div>
 </div>
 
+<style>
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
+</style>
+
 <script>
     let jjinbba_id = "{{ jjinbba_id }}";
     let number = "{{ number }}";
+
+    function toggleSection(group, btn) {
+        const rows = document.querySelectorAll(`[data-group='${group}'].extra-row`);
+        const arrow = btn.querySelector('.toggle-arrow');
+
+        // 행들 토글
+        rows.forEach(row => {
+            row.classList.toggle('hidden');
+        });
+
+        // 화살표 회전
+        arrow.classList.toggle('rotate-180');
+    }
+
     function copyJjinbbaText() {
         const el = document.getElementById("id_jjinbba_template");
         const text = el.innerText || el.textContent;
 
         if (!text.trim()) {
-            alert("복사할 내용이 없습니다.");
+            // 복사할 내용이 없어도 alert를 띄우지 않음.
             return;
         }
 
-        // 최신 브라우저 지원
+        // 최신 브라우저 지원 (Navigator.clipboard API 사용)
         if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text)
-                .catch(() => alert("복사 실패"));
+            navigator.clipboard.writeText(text.trim())
+                .catch(err => console.error("복사 실패:", err)); // 실패 시 콘솔에만 기록
         } else {
-            // fallback: textarea 임시 생성
+            // 구형 브라우저 및 안전하지 않은 컨텍스트를 위한 fallback: textarea 임시 생성
             const textarea = document.createElement("textarea");
-            textarea.value = text;
+            textarea.value = text.trim();
             textarea.setAttribute("readonly", "");
             textarea.style.position = "absolute";
             textarea.style.left = "-9999px";
@@ -157,15 +181,32 @@
             try {
                 document.execCommand("copy");
             } catch (err) {
-                alert("복사 실패");
+                console.error("복사 실패:", err); // 실패 시 콘솔에만 기록
+            } finally {
+                document.body.removeChild(textarea);
             }
-
-            document.body.removeChild(textarea);
         }
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        const jjinbbaTemplate = document.getElementById('id_jjinbba_template');
+
+        // Ctrl+A (전체 선택) 기능
+        jjinbbaTemplate.addEventListener('keydown', function(event) {
+            // Ctrl+A (Mac에서는 Cmd+A) 조합 체크
+            if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+                event.preventDefault(); // 기본 브라우저 전체 선택 동작 방지 (페이지 전체 선택 방지)
+
+                // 특정 div 내부의 텍스트만 선택하도록 범위 지정
+                const range = document.createRange();
+                range.selectNodeContents(jjinbbaTemplate); // id_jjinbba_template의 내용 전체를 선택 범위로 지정
+                const selection = window.getSelection();
+                selection.removeAllRanges(); // 기존 선택 영역 제거
+                selection.addRange(range); // 새로운 선택 영역 추가
+            }
+        });
+    });
 </script>
 
-<!-- 기존 JavaScript 로직 유지 -->
 <script src="{{ url_for('static', path='js/jjinbba_detail.js') }}"></script>
 {% endblock %}
