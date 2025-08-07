@@ -404,3 +404,40 @@ input[type="checkbox"]:checked + .person-label {
 #id_btn_toggle_sidebar_fixed {
     z-index: 99991;       /* 다른 요소 위에 떠 있도록 */
 }
+
+/* 찐빠 매물번호 마우스 호버 */
+
+/* 툴팁을 포함할 컨테이너에 relative 포지션 설정 */
+.btn-container {
+  position: relative;
+}
+
+/* 버튼에 relative 포지션 설정 */
+.btn[data-tooltip] {
+  position: relative;
+}
+
+/* 툴팁 스타일 */
+.btn[data-tooltip]::after {
+  content: attr(data-tooltip); /* data-tooltip 속성 값 가져오기 */
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background-color: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 16px; /* 원하는 크기로 조절 */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 1000;
+}
+
+/* 호버 시 툴팁 표시 */
+.btn[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+}

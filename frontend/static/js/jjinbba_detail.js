@@ -663,6 +663,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('id_number').value = number;
         document.getElementById('id_region_info').value = "현재 매물번호들을 종합해봤을 때, ("+ region_info + ") 입니다.";
 
+        const childrenResponse = await fetch(`/api/jjinbba_child/parent/${jjinbba_id}`);
+        const children = await childrenResponse.json();
+
         // 매물 번호 버튼 생성
         const btnContainer = document.getElementById('btn_numbers');
         if (btnContainer) {
@@ -672,6 +675,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             propertyList.forEach(property => {
                 const btn = document.createElement('button');
                 btn.textContent = property;
+                const childData = children.find(child => child.number == property);
+                if (childData && childData.address) {
+                    const tooltipText = (childData.address || "") + (childData.floor ? " " + childData.floor : "");
+                    btn.setAttribute('data-tooltip', tooltipText); // 사용자 정의 툴팁 속성 추가
+                }
 
                 // 현재 매물 번호와 일치하면 활성화 스타일 적용
                 if (Number(property) === Number(number)) {
