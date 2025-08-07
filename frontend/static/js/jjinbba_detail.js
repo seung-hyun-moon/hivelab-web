@@ -724,9 +724,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                         $('#loading-icon').show();
 
                         try {
-                            // 현재 인덱스와 업데이트된 번호 배열 준비
+                            // 현재 인덱스 찾기
                             const currentIndex = propertyList.findIndex(p => Number(p) === Number(property));
-                            const updatedNumbers = propertyList.filter(p => Number(p) !== Number(property));
+
+                            // 하나만 삭제된 새로운 배열 생성
+                            const updatedNumbers = [...propertyList];
+                            if (currentIndex !== -1) {
+                                updatedNumbers.splice(currentIndex, 1); // 해당 인덱스에서 하나만 제거
+                            }
 
                             // 해당 자식 레코드 삭제
                             const childrenResponse = await fetch(`/api/jjinbba_child/parent/${jjinbba_id}`);

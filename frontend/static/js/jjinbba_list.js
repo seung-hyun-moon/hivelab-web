@@ -367,7 +367,7 @@ function generateTemplate(currentIndex, field) {
         { name: '엘베',         checked: true,         value: field["엘베"] },
         { name: '주차',       checked: true,       value: field["주차"] },
         { name: '냉난방',     checked: true,     value: field["냉난방"] },
-        { name: '화장실',     checked: true,     value: field["화장실"] },
+        { name: '화장실',     checked: false,     value: field["화장실"] },
 
         { name: '용도',       checked: false,       value: field["용도"] },
         { name: '사용승인일',   checked: false,   value: field["사용승인일"] },
@@ -691,7 +691,7 @@ $(document).ready(function() {
           "엘베": true,
           "주차": true,
           "냉난방": true,
-          "화장실": true,
+          "화장실": false,
           "방향": false,
           "특징": false,
           "사용승인일": false,
