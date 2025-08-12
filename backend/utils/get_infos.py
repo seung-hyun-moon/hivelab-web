@@ -3,7 +3,13 @@ import asyncio
 import aiohttp
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Any, Optional
+import ipaddress
+import random
+import time
+from typing import Optional, List
 import requests
+from bs4 import BeautifulSoup
+
 
 #########################################
 # 상수 / 공통 상수
@@ -14,7 +20,7 @@ NAVER_HEADERS = {
     "Accept": "*/*",
     "Accept-Encoding": "gzip, deflate, br, zstd",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3MzY1NzgxMjIsImV4cCI6MTczNjU4ODkyMn0.8RIgSiPOUAKBKEbskULl5k3VLyHdXLagzr9OJzhXAs4",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTQ5ODQ0NjMsImV4cCI6MTc1NDk5NTI2M30.d-FXc_XBr8Fs8pmFNbpxkevw1V0NOw_ZZwRdzKBBsck",
     "Connection": "keep-alive",
     "Host": "new.land.naver.com",
     "Referer": "https://new.land.naver.com",
@@ -141,22 +147,116 @@ def format_korea_date(yyyymmdd: str) -> str:
 # 비동기 HTTP 통신 함수 (네이버 API 직접 호출)
 #########################################
 
+
+FREE_PROXY_URL = "https://free-proxy-list.net/ko/"
+
+def _is_public_ip(ip: str) -> bool:
+    try:
+        return ipaddress.ip_address(ip).is_global
+    except ValueError:
+        return False
+
+def get_free_proxies(url: str = FREE_PROXY_URL, timeout: int = 12, limit: int = 5) -> List[str]:
+    """
+    free-proxy-list.net 페이지에서 한국(KR) IP:PORT 문자열 리스트를 추출.
+    상위 limit개만 반환.
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    }
+    r = requests.get(url, headers=headers, timeout=timeout)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    proxies: List[str] = []
+
+    # 표 파싱 (한국 프록시만)
+    tbody = soup.select_one("section#list table tbody")
+    if tbody:
+        for tr in tbody.select("tr"):
+            tds = tr.find_all("td")
+            if len(tds) >= 3:
+                ip = tds[0].get_text(strip=True)
+                port = tds[1].get_text(strip=True)
+                country_code = tds[2].get_text(strip=True)
+                if port.isdigit() and _is_public_ip(ip) and country_code.upper() == "KR":
+                    proxies.append(f"{ip}:{port}")
+            if len(proxies) >= limit:  # limit 개수에 도달하면 중단
+                break
+
+    return proxies
+
+
 def fetch_json(
         url: str,
         params: Optional[dict] = None,
-        headers: Optional[dict] = None
+        headers: Optional[dict] = None,
+        *,
+        timeout: int = 10,
+        use_free_proxy: bool = False,
+        max_retries: int = 6,
+        backoff_sec: float = 0.5,
+        proxy_list: Optional[List[str]] = None,
 ) -> Optional[dict]:
     """
     requests를 사용한 동기 GET 요청 후 JSON 응답을 파싱하여 반환.
+    - 프록시 시도 후 실패 시 직접 요청을 재시도
     """
     if params is None:
         params = {}
+
+    # 1. 프록시 사용을 원하지 않으면 바로 직접 요청
+    if not use_free_proxy:
+        try:
+            resp = requests.get(url, params=params, headers=headers, timeout=timeout)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            print(f"[fetch_json] 직접 요청 실패: {e} (URL={url})")
+            return None
+
+    # 2. 프록시 사용 시도
+    proxies_pool = proxy_list[:] if proxy_list else None
+    if not proxies_pool:
+        try:
+            # 무료 프록시 가져오기 (한국 외 다른 국가도 고려하려면 `limit=10, country_code=None` 등으로 수정)
+            proxies_pool = get_free_proxies(limit=5)
+        except Exception as e:
+            print(f"[fetch_json] 프록시 목록 가져오기 실패: {e}")
+            proxies_pool = []
+
+    # 프록시 목록이 있다면 순차적으로 시도
+    if proxies_pool:
+        tries = 0
+        for proxy in proxies_pool:
+            if tries >= max_retries:
+                break
+            tries += 1
+
+            px = {
+                "http": f"http://{proxy}",
+                "https": f"http://{proxy}",
+            }
+            try:
+                resp = requests.get(url, params=params, headers=headers, timeout=timeout, proxies=px)
+                resp.raise_for_status()
+                print(f"[fetch_json] 프록시 성공: {proxy}")
+                return resp.json()
+            except Exception as e:
+                print(f"[fetch_json] 프록시 실패({proxy}): {e}")
+                time.sleep(backoff_sec)
+
+    print("[fetch_json] 모든 프록시 시도 실패. 직접 요청을 재시도합니다.")
+
+    # 3. 모든 프록시 시도 후 실패 시, 마지막으로 직접 요청 재시도
     try:
-        resp = requests.get(url, params=params, headers=headers, timeout=10)
+        resp = requests.get(url, params=params, headers=headers, timeout=timeout)
         resp.raise_for_status()
+        print("[fetch_json] 직접 요청 재시도 성공.")
         return resp.json()
     except Exception as e:
-        print(f"[fetch_json] 예외 발생: {e} (URL={url})")
+        print(f"[fetch_json] 직접 요청 재시도 실패: {e} (URL={url})")
         return None
 
 def fetch_text(
@@ -187,7 +287,7 @@ async def get_naver_article_info(
     (ex: https://new.land.naver.com/api/articles/2518851595)
     """
     naver_url = f"https://new.land.naver.com/api/articles/{number}"
-    data = fetch_json(naver_url, headers=NAVER_HEADERS)
+    data = fetch_json(naver_url, headers=NAVER_HEADERS, use_free_proxy=True)
     return data
 
 
@@ -657,7 +757,7 @@ async def process_properties(numbers_arr: List[int]) -> Dict[str, Any]:
 #########################################
 if __name__ == "__main__":
     async def main():
-        numbers = [2518870844]  # 예시 매물번호
+        numbers = [2542502544]  # 예시 매물번호
         result = await process_properties(numbers)
         print("정렬된 매물번호 목록:", result["sortedNumbersArr"])
         print("동별 매물 개수:", result["region_info"])
