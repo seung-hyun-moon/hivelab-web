@@ -20,12 +20,20 @@ NAVER_HEADERS = {
     "Accept": "*/*",
     "Accept-Encoding": "gzip, deflate, br, zstd",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTQ5ODQ0NjMsImV4cCI6MTc1NDk5NTI2M30.d-FXc_XBr8Fs8pmFNbpxkevw1V0NOw_ZZwRdzKBBsck",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTQ5OTI5ODgsImV4cCI6MTc1NTAwMzc4OH0.CeP35DbRq3TGTiEpCORiC5-zxUDSy1NMEGQkkgSGnhU",
     "Connection": "keep-alive",
+    "Cookie": "_fwb=203iXUUqSdNsUbJJe6KpPFD.1754902479283; NNB=YZNPGFGQV6MWQ; NAC=eMoPDYBrJQamA; REALESTATE=Tue%20Aug%2012%202025%2019%3A03%3A08%20GMT%2B0900%20(Korean%20Standard%20Time); PROP_TEST_KEY=1754992988770.0597eeeae52d39d7406df173f2dcb77cd8f40d332be9ca143336093b10520817; PROP_TEST_ID=205fde8aa31cd04faba4a1d215c1fe44aaefb53b4b145979646fefc823edd560; NACT=1; SRT30=1754992990; SRT5=1754992990; BUC=QV47C_HFb4VkfhwQcShWa1pabhQBBP8jL3bSw-8w9ZI=",
     "Host": "new.land.naver.com",
-    "Referer": "https://new.land.naver.com",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "Referer": "https://new.land.naver.com/offices?ms=37.5084157,127.0572137,16&a=SMS&b=B2&e=RETAIL&articleNo=2542513824",
+    "sec-ch-ua": '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
 }
+
 
 # 네이버 Reverse Geocoding용
 CLIENT_ID = "aqknd5ytgc"
@@ -221,7 +229,8 @@ def fetch_json(
     if not proxies_pool:
         try:
             # 무료 프록시 가져오기 (한국 외 다른 국가도 고려하려면 `limit=10, country_code=None` 등으로 수정)
-            proxies_pool = get_free_proxies(limit=10)
+            # proxies_pool = get_free_proxies(limit=10)
+            proxy_pool = []
         except Exception as e:
             print(f"[fetch_json] 프록시 목록 가져오기 실패: {e}")
             proxies_pool = []
@@ -239,7 +248,7 @@ def fetch_json(
                 "https": f"http://{proxy}",
             }
             try:
-                resp = requests.get(url, params=params, headers=headers, timeout=timeout, proxies=px)
+                resp = requests.get(url, params=params, headers=NAVER_HEADERS, timeout=timeout, proxies=px)
                 resp.raise_for_status()
                 print(f"[fetch_json] 프록시 성공: {proxy}")
                 return resp.json()
@@ -286,8 +295,8 @@ async def get_naver_article_info(
     네이버 부동산 상세 API를 직접 호출하여 매물 정보 가져오기
     (ex: https://new.land.naver.com/api/articles/2518851595)
     """
-    naver_url = f"https://new.land.naver.com/api/articles/{number}"
-    data = fetch_json(naver_url, headers=NAVER_HEADERS, use_free_proxy=True)
+    naver_url = f"https://new.land.naver.com/api/articles/{number}?complexNo="
+    data = fetch_json(naver_url, headers=NAVER_HEADERS, use_free_proxy=False)
     return data
 
 
@@ -757,7 +766,7 @@ async def process_properties(numbers_arr: List[int]) -> Dict[str, Any]:
 #########################################
 if __name__ == "__main__":
     async def main():
-        numbers = [2542502544]  # 예시 매물번호
+        numbers = [2542748497]  # 예시 매물번호
         result = await process_properties(numbers)
         print("정렬된 매물번호 목록:", result["sortedNumbersArr"])
         print("동별 매물 개수:", result["region_info"])
