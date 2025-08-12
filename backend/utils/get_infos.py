@@ -180,7 +180,7 @@ def get_free_proxies(url: str = FREE_PROXY_URL, timeout: int = 12, limit: int = 
                 ip = tds[0].get_text(strip=True)
                 port = tds[1].get_text(strip=True)
                 country_code = tds[2].get_text(strip=True)
-                if port.isdigit() and _is_public_ip(ip) and country_code.upper() == "KR":
+                if port.isdigit() and _is_public_ip(ip) and country_code.upper():
                     proxies.append(f"{ip}:{port}")
             if len(proxies) >= limit:  # limit 개수에 도달하면 중단
                 break
