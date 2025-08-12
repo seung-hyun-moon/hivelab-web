@@ -156,7 +156,7 @@ def _is_public_ip(ip: str) -> bool:
     except ValueError:
         return False
 
-def get_free_proxies(url: str = FREE_PROXY_URL, timeout: int = 12, limit: int = 5) -> List[str]:
+def get_free_proxies(url: str = FREE_PROXY_URL, timeout: int = 12, limit: int = 10) -> List[str]:
     """
     free-proxy-list.net 페이지에서 한국(KR) IP:PORT 문자열 리스트를 추출.
     상위 limit개만 반환.
@@ -221,7 +221,7 @@ def fetch_json(
     if not proxies_pool:
         try:
             # 무료 프록시 가져오기 (한국 외 다른 국가도 고려하려면 `limit=10, country_code=None` 등으로 수정)
-            proxies_pool = get_free_proxies(limit=5)
+            proxies_pool = get_free_proxies(limit=10)
         except Exception as e:
             print(f"[fetch_json] 프록시 목록 가져오기 실패: {e}")
             proxies_pool = []
