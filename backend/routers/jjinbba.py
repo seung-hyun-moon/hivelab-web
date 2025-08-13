@@ -38,17 +38,18 @@ headers = {
     "Accept": "*/*",
     "Accept-Encoding": "gzip, deflate, br, zstd",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3MzY1NzgxMjIsImV4cCI6MTczNjU4ODkyMn0.8RIgSiPOUAKBKEbskULl5k3VLyHdXLagzr9OJzhXAs4",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTQ5OTI5ODgsImV4cCI6MTc1NTAwMzc4OH0.CeP35DbRq3TGTiEpCORiC5-zxUDSy1NMEGQkkgSGnhU",
     "Connection": "keep-alive",
+    "Cookie": "_fwb=203iXUUqSdNsUbJJe6KpPFD.1754902479283; NNB=YZNPGFGQV6MWQ; NAC=eMoPDYBrJQamA; REALESTATE=Tue%20Aug%2012%202025%2019%3A03%3A08%20GMT%2B0900%20(Korean%20Standard%20Time); PROP_TEST_KEY=1754992988770.0597eeeae52d39d7406df173f2dcb77cd8f40d332be9ca143336093b10520817; PROP_TEST_ID=205fde8aa31cd04faba4a1d215c1fe44aaefb53b4b145979646fefc823edd560; NACT=1; SRT30=1754992990; SRT5=1754992990; BUC=QV47C_HFb4VkfhwQcShWa1pabhQBBP8jL3bSw-8w9ZI=",
     "Host": "new.land.naver.com",
-    "Referer": "https://new.land.naver.com",
-    "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+    "Referer": "https://new.land.naver.com/offices?ms=37.5084157,127.0572137,16&a=SMS&b=B2&e=RETAIL&articleNo=2542513824",
+    "sec-ch-ua": '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
     "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-ch-ua-platform": '"Windows"',
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-origin",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
 }
 
 
@@ -316,7 +317,7 @@ class JjinbbaRouter(BaseCRUD):
                         xml_data = await response.text()  # Read the JSON data asynchronously
                         data = self.extract_address_and_number_correctly(xml_data)
                     else:
-                        print(f"Failed to fetch data from Naver. Status code: {response.status}")
+                        print(f"Failed to fetch data from Naver2. Status code: {response.status}")
             return data
 
         except Exception as e:
