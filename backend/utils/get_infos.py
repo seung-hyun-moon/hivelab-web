@@ -9,7 +9,24 @@ import time
 from typing import Optional, List
 import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+import json
+from typing import Optional
 
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+chrome_options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/139.0.0.0 Safari/537.36"
+)
+
+service = Service()
 
 #########################################
 # 상수 / 공통 상수
@@ -20,18 +37,18 @@ NAVER_HEADERS = {
     "Accept": "*/*",
     "Accept-Encoding": "gzip, deflate, br, zstd",
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTQ5OTI5ODgsImV4cCI6MTc1NTAwMzc4OH0.CeP35DbRq3TGTiEpCORiC5-zxUDSy1NMEGQkkgSGnhU",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTYwMjQ0ODgsImV4cCI6MTc1NjAzNTI4OH0.Bh33CjWpsql5yuiRFM4XI9pW2TtrxMtGvFDVwd2cSCw",
     "Connection": "keep-alive",
-    "Cookie": "_fwb=203iXUUqSdNsUbJJe6KpPFD.1754902479283; NNB=YZNPGFGQV6MWQ; NAC=eMoPDYBrJQamA; REALESTATE=Tue%20Aug%2012%202025%2019%3A03%3A08%20GMT%2B0900%20(Korean%20Standard%20Time); PROP_TEST_KEY=1754992988770.0597eeeae52d39d7406df173f2dcb77cd8f40d332be9ca143336093b10520817; PROP_TEST_ID=205fde8aa31cd04faba4a1d215c1fe44aaefb53b4b145979646fefc823edd560; NACT=1; SRT30=1754992990; SRT5=1754992990; BUC=QV47C_HFb4VkfhwQcShWa1pabhQBBP8jL3bSw-8w9ZI=",
+    "Cookie": "NNB=2DPP2CI566IGI; ASID=a7dceb1600000188d7339cc10000004b; _fwb=218tZhPrc3I1YFCYtuCvb0Y.1711171361687; _fwb=218tZhPrc3I1YFCYtuCvb0Y.1711171361687; SHOW_FIN_BADGE=Y; _ga=GA1.1.141971173.1729313961; _ga_451MFZ9CFM=GS1.1.1729313961.1.0.1729313965.0.0.0; wcs_bt=4f99b5681ce60:1729921689; NFS=2; landHomeFlashUseYn=Y; NAC=YI3IBogqS5Wv; ab.storage.sessionId.7d7bb94a-f465-48e5-bec1-35db97daf128=g%3Ab5955768-e6e1-16b5-73a9-2a41ca9dd2bf%7Ce%3A1749884699057%7Cc%3A1749882899057%7Cl%3A1749882899057; ab.storage.deviceId.7d7bb94a-f465-48e5-bec1-35db97daf128=g%3A62cd677a-19b6-03d6-3a05-a8829df7777c%7Ce%3Aundefined%7Cc%3A1749370167800%7Cl%3A1749882899059; _fbp=fb.1.1754122382543.876571573351060099; nhn.realestate.article.rlet_type_cd=A01; NACT=1; SRT30=1756024148; SRT5=1756024148; page_uid=j6rLWsqo1e8ssixc64Cssssstyh-205791; _naver_usersession_=5bLy90EOt1OaA9HclaWkGg==; nhn.realestate.article.trade_type_cd=""; BUC=nPD-rj1epG5r6Q9UTG3SBp7HGf-q76eZaQnYi-hWg0o=; REALESTATE=Sun%20Aug%2024%202025%2017%3A34%3A48%20GMT%2B0900%20(Korean%20Standard%20Time); PROP_TEST_KEY=1756024488291.c60d4a2b223785c72b6cf0f33c03bbc317d0565f1b8843abb5912407e733c2e4; PROP_TEST_ID=76c167d2921d6adc64deb2f06267fdf29e3bc7f0111367f7868ed5f4be9a98e2",
     "Host": "new.land.naver.com",
-    "Referer": "https://new.land.naver.com/offices?ms=37.5084157,127.0572137,16&a=SMS&b=B2&e=RETAIL&articleNo=2542513824",
-    "sec-ch-ua": '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+    "Referer": "https://new.land.naver.com/offices?ms=0,0,0&a=SMS&b=B2&e=RETAIL&articleNo=2544412778",
+    "sec-ch-ua": '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"Windows"',
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-origin",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
 }
 
 
@@ -287,17 +304,55 @@ def fetch_text(
     return None
 
 
-async def get_naver_article_info(
-        session: aiohttp.ClientSession,
-        number: int
-) -> Optional[dict]:
+# async def get_naver_article_info(
+#         session: aiohttp.ClientSession,
+#         number: int
+# ) -> Optional[dict]:
+#     """
+#     네이버 부동산 상세 API를 직접 호출하여 매물 정보 가져오기
+#     (ex: https://new.land.naver.com/api/articles/2518851595)
+#     """
+#     naver_url = f"https://new.land.naver.com/api/articles/{number}?complexNo="
+#     data = fetch_json(naver_url, headers=NAVER_HEADERS, use_free_proxy=False)
+#     return data
+
+async def get_naver_article_info(session: aiohttp.ClientSession, number: int) -> Optional[dict]:
     """
-    네이버 부동산 상세 API를 직접 호출하여 매물 정보 가져오기
+    셀레니움으로 네이버 부동산 상세 API 호출하기
     (ex: https://new.land.naver.com/api/articles/2518851595)
     """
-    naver_url = f"https://new.land.naver.com/api/articles/{number}?complexNo="
-    data = fetch_json(naver_url, headers=NAVER_HEADERS, use_free_proxy=False)
-    return data
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    try:
+        # 아무 페이지나 열어두면 JS 실행 가능
+        driver.get("https://new.land.naver.com")
+
+        # 요청 URL 생성
+        naver_url = f"https://new.land.naver.com/api/articles/{number}?complexNo="
+
+        # fetch 자바스크립트 코드 (헤더는 curl에서 복사)
+        script = f"""
+        return fetch("{naver_url}", {{
+            method: "GET",
+            headers: {{
+                "accept": "*/*",
+                "accept-language": "ko-KR,ko;q=0.9",
+                "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTYwMzEyNDEsImV4cCI6MTc1NjA0MjA0MX0.nVA_zAxQ3wLFS3rBiBSte1XcQ51DPCs5us20N9ql-lc",
+                "referer": "https://new.land.naver.com/",
+                "sec-ch-ua": "\\"Not;A=Brand\\";v=\\"99\\", \\"Google Chrome\\";v=\\"139\\", \\"Chromium\\";v=\\"139\\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\\"Windows\\"",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+            }},
+            credentials: "include"
+        }}).then(res => res.json());
+        """
+
+        result = driver.execute_script(script)
+        return result
+
+    finally:
+        driver.quit()
 
 
 async def get_naver_reverse_geocode(
@@ -766,7 +821,7 @@ async def process_properties(numbers_arr: List[int]) -> Dict[str, Any]:
 #########################################
 if __name__ == "__main__":
     async def main():
-        numbers = [2542748497]  # 예시 매물번호
+        numbers = [2544412778]  # 예시 매물번호
         result = await process_properties(numbers)
         print("정렬된 매물번호 목록:", result["sortedNumbersArr"])
         print("동별 매물 개수:", result["region_info"])

@@ -4,6 +4,7 @@
  * @returns {Promise<object|null>} 성공 시 JSON, 실패 시 null
  */
 async function fetchJSON(url) {
+    $('#loading-icon').show(); // 요청 시작 시 로딩 표시
     try {
         const response = await fetch(url, { method: 'GET' });
         if (!response.ok) {
@@ -14,6 +15,8 @@ async function fetchJSON(url) {
     } catch (error) {
         console.error(`Fetch exception from: ${url}`, error);
         return null;
+    } finally {
+        $('#loading-icon').hide(); // 성공/실패 상관없이 요청 끝나면 숨김
     }
 }
 

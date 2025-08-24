@@ -572,6 +572,7 @@ $(document).ready(function() {
     $('#jjinbbaTable tbody').on('click', 'button.delete-btn', function () {
         var id = $(this).data('id');
         if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
+            $('#loading-icon').show();
             $.ajax({
                 url: '/api/jjinbba/' + id,
                 type: 'DELETE',
@@ -581,6 +582,9 @@ $(document).ready(function() {
                 },
                 error: function(request, msg, error) {
                     console.error('삭제 실패:', error);
+                },
+                complete: function() {
+                    $('#loading-icon').hide(); // ✅ 성공/실패 상관없이 실행
                 }
             });
         }
@@ -656,9 +660,11 @@ $(document).ready(function() {
                 },
                 error: function(error) {
                     console.error('수정 실패:', error);
+                },
+                complete: function() {
+                    $('#loading-icon').hide(); // ✅ 요청 완료 후
                 }
             });
-            $('#loading-icon').hide();
             return false;
         });
 
@@ -732,9 +738,11 @@ $(document).ready(function() {
                 },
                 error: function(error) {
                     console.error('등록 에러:', error);
+                },
+                complete: function() {
+                    $('#loading-icon').hide(); // ✅ 요청 완료 후
                 }
             });
-            $('#loading-icon').hide();
             return false;
         })();
     });
