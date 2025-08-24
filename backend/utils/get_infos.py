@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 import json
 from typing import Optional
 
@@ -26,8 +27,7 @@ chrome_options.add_argument(
     "Chrome/139.0.0.0 Safari/537.36"
 )
 
-service = Service()
-
+service = Service(ChromeDriverManager().install())
 #########################################
 # 상수 / 공통 상수
 #########################################
