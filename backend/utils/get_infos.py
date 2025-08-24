@@ -27,7 +27,7 @@ chrome_options.add_argument(
     "Chrome/139.0.0.0 Safari/537.36"
 )
 
-service = Service(ChromeDriverManager().install())
+service = Service(r"C:\chromedriver\chromedriver.exe")
 #########################################
 # 상수 / 공통 상수
 #########################################
