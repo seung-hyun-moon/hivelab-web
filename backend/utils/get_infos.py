@@ -579,6 +579,19 @@ def populate_form_fields(
     ride_elv_cnt = breg_item.get('rideUseElvtCnt', 0) or 0
     emg_elv_cnt  = breg_item.get('emgenUseElvtCnt', 0) or 0
 
+    indrMechUtcnt = breg_item.get('indrMechUtcnt', 0) or 0
+    oudrMechUtcnt = breg_item.get('oudrMechUtcnt', 0) or 0
+    indrAutoUtcnt = breg_item.get('indrAutoUtcnt', 0) or 0
+    oudrAutoUtcnt = breg_item.get('oudrAutoUtcnt', 0) or 0
+
+    parking_mech = indrMechUtcnt + oudrMechUtcnt
+    parking_auto = indrAutoUtcnt + oudrAutoUtcnt
+
+    if parking_mech + parking_auto == 0:
+        parking_str = "(법정: 미기재)"
+    else:
+        parking_str = f"(법정: 자주식 {parking_auto}대, 기계식 {parking_mech}대)"
+
     # ─────────────────────────────
     # 2. 네이버 매물(article*) 값
     # ─────────────────────────────
@@ -632,6 +645,7 @@ def populate_form_fields(
     # 3-5. 냉난방·주차
     heating_type = "중앙" if "중앙" in (heating_mtd or "") else "개별"
     parking_cnt  = "1대" if parking_yn == "Y" else "0대"
+    parking_cnt += " " + parking_str
 
     # 3-6. 사용승인일 포맷팅
     use_apr_fmt = format_korea_date(use_apr_day) if use_apr_day and len(use_apr_day) == 8 else ""
