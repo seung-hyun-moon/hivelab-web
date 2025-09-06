@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import Optional, Union
 
 from fastapi import Depends, FastAPI, HTTPException, status, Request, Cookie, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
-from backend.routers import auth, customer, property, contact, image, download, event, jjinbba, jjinbba_child, customer_law, chat
+from backend.routers import auth, customer, property, contact, image, download, event, jjinbba, jjinbba_child, customer_law, chat, user
 from backend.db.database import conn
 
 
@@ -47,12 +47,16 @@ app.include_router(jjinbba_child.JjinbbaChildRouter().router, tags=["jjinbba_chi
 app.include_router(event.EventRouter().router, tags=["event"], prefix="/api/event")
 app.include_router(image.router, tags=["image"], prefix="/api/image")
 app.include_router(chat.ChatRouter().router, tags=["chat"], prefix="/api/predict")
+app.include_router(user.UserRouter().router, tags=["Admin Users"], prefix="/api/users")
+app.include_router(auth_handler.router, tags=["Authentication"], prefix="/oauth")
 
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 templates = Jinja2Templates(directory="frontend/templates")
 
-# Root endpoint - Login page is accessible without authentication
+
+
+
 @app.get("/")
 async def root(request: Request):
     # If already logged in, redirect to customer page
@@ -61,7 +65,15 @@ async def root(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "hide_sidebar": True})
 
 
-# Define routes (simplified - no auth check needed as it's handled by middleware)
+@app.get("/admin/users", response_class=HTMLResponse)
+async def get_user_management_page(request: Request):
+    """
+    사용자 관리 페이지를 렌더링합니다.
+    (추후 관리자만 접근 가능하도록 인증 로직 추가 필요)
+    """
+    return templates.TemplateResponse("users.html", {"request": request})
+
+
 @app.get("/customer")
 async def move_customer(request: Request):
     access_token = request.cookies.get("access_token")
