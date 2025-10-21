@@ -13,6 +13,8 @@ users = [
     'ccoccabi@naver.com',
     'gilllllll@naver.com',
     'kj4784@nate.com',
+    'qhry1539@naver.com',
+    'chokv6256@nate.com',
     ]
 
 kakao_client = OAuthClient(
