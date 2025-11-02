@@ -11,8 +11,30 @@ document.addEventListener('copy', () => {
   }
 
   if (copyRecords.length > MAX_COPIES) {
-    alert('복사 횟수가 제한을 초과하여 관리자에게 알림이 전송됩니다.');
     // 서버 로그 호출 등 추가 조치
+    var id = null;
+    $.ajax({
+        url: '/oauth/hive_user',
+        type: 'GET',
+        success: function(response) {
+            const id = response?.db_user?.id || null;
+            $.ajax({
+                url: `/api/users/${id}`,
+                type: 'PATCH',
+                data: JSON.stringify({ is_active: false }),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('Admin notified successfully');
+                },
+            });
+        },
+        error: function(error) {
+            console.error("Failed to fetch user data:", error);
+            // 사용자 정보 로딩 실패 시 기본 이미지/이름 유지
+        }
+    });
+
+    alert('복사 횟수가 제한을 초과하여 관리자에게 알림이 전송됩니다.');
   } else {
     // 기록 로그 또는 UI 표시 가능
     console.log(`복사 횟수: ${copyRecords.length}`);

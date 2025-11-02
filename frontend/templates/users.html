@@ -30,6 +30,7 @@
                 <option value="">모든 직위</option>
                 <option value="대표">대표</option>
                 <option value="이사">이사</option>
+                <option value="팀장">팀장</option>
                 <option value="차장">차장</option>
                 <option value="과장">과장</option>
                 <option value="사원">사원</option>
@@ -100,6 +101,7 @@
                         <option value="엔지니어">엔지니어</option>
                         <option value="사원">사원</option>
                         <option value="과장">과장</option>
+                        <option value="팀장">팀장</option>
                         <option value="차장">차장</option>
                         <option value="이사">이사</option>
                         <option value="대표">대표</option>
@@ -206,6 +208,7 @@ function getPositionBadge(position) {
     let badgeClass = 'bg-gray-100 text-gray-800';
     if (position === '대표') badgeClass = 'bg-blue-600 text-white';
     else if (position === '이사') badgeClass = 'bg-indigo-100 text-indigo-800';
+    else if (position === '팀장') badgeClass = 'bg-teal-100 text-teal-800';
     else if (position === '차장') badgeClass = 'bg-purple-100 text-purple-800';
     else if (position === '과장') badgeClass = 'bg-pink-100 text-pink-800';
     else if (position === '사원') badgeClass = 'bg-green-100 text-green-800';

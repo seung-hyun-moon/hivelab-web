@@ -95,6 +95,11 @@ $(document).ready(function() {
             } else {
                 $('#id_admin_page').attr('hidden', true);
             }
+            if (permission_level === 'ADMIN' || permission_level === 'MANAGER') {
+                $('#id_menu_calendar').removeAttr('hidden');
+            }  else {
+                $('#id_menu_calendar').attr('hidden', true);
+            }
         },
         error: function(error) {
             console.error("Failed to fetch user data:", error);
