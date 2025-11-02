@@ -15,6 +15,8 @@ class UserModel(Base):
     permission_level = Column(String, nullable=False, default='STAFF', comment="권한 등급")
     profile_picture_url = Column(String, nullable=True, comment="프로필 사진 URL")
 
+    position = Column(String, nullable=False, default="사원", comment="직급/직위")
+
     # 계정 잠김 여부 (True: 활성, False: 잠김)
     is_active = Column(Boolean, default=True, comment="계정 활성 여부")
     is_locked = Column(Boolean, default=False, comment="계정 잠김 여부")

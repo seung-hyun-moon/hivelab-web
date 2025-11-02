@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="mx-auto px-4 py-6 mt-10">
-    <!-- Search and Filter Section with Create Button -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-4">
             <div>
@@ -27,6 +26,15 @@
                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </div>
+            <select id="positionFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">모든 직위</option>
+                <option value="대표">대표</option>
+                <option value="이사">이사</option>
+                <option value="차장">차장</option>
+                <option value="과장">과장</option>
+                <option value="사원">사원</option>
+                <option value="엔지니어">엔지니어</option>
+            </select>
             <select id="permissionFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="">모든 권한</option>
                 <option value="ADMIN">관리자</option>
@@ -41,12 +49,9 @@
         </div>
     </div>
 
-    <!-- Users Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="usersGrid">
-        <!-- Users will be loaded here -->
-    </div>
+        </div>
 
-    <!-- Empty State -->
     <div id="emptyState" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
         <svg class="mx-auto w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -55,14 +60,12 @@
         <p class="text-gray-500">검색 조건에 맞는 사용자를 찾을 수 없습니다.</p>
     </div>
 
-    <!-- Loading State -->
     <div id="loadingState" class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         <p class="text-gray-500 mt-4">사용자 정보를 불러오는 중...</p>
     </div>
 </div>
 
-<!-- User Modal -->
 <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -88,6 +91,19 @@
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">이메일 (카카오 ID) *</label>
                     <input type="email" id="email" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label for="position" class="block text-sm font-medium text-gray-700 mb-1">직위</label>
+                    <select id="position"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="엔지니어">엔지니어</option>
+                        <option value="사원">사원</option>
+                        <option value="과장">과장</option>
+                        <option value="차장">차장</option>
+                        <option value="이사">이사</option>
+                        <option value="대표">대표</option>
+                    </select>
                 </div>
 
                 <div>
@@ -127,7 +143,6 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-sm w-full">
@@ -175,6 +190,7 @@ const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 const searchInput = document.getElementById('searchInput');
 const permissionFilter = document.getElementById('permissionFilter');
 const statusFilter = document.getElementById('statusFilter');
+const positionFilter = document.getElementById('positionFilter');
 
 // Utility functions
 function getPermissionBadge(level) {
@@ -185,6 +201,19 @@ function getPermissionBadge(level) {
     };
     return badges[level] || badges['STAFF'];
 }
+
+function getPositionBadge(position) {
+    let badgeClass = 'bg-gray-100 text-gray-800';
+    if (position === '대표') badgeClass = 'bg-blue-600 text-white';
+    else if (position === '이사') badgeClass = 'bg-indigo-100 text-indigo-800';
+    else if (position === '차장') badgeClass = 'bg-purple-100 text-purple-800';
+    else if (position === '과장') badgeClass = 'bg-pink-100 text-pink-800';
+    else if (position === '사원') badgeClass = 'bg-green-100 text-green-800';
+    else if (position === '엔지니어') badgeClass = 'bg-yellow-100 text-yellow-800';
+
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badgeClass}">${position}</span>`;
+}
+
 
 function getStatusBadge(isActive, isLocked, userId) {
     if (isLocked) {
@@ -232,6 +261,10 @@ function createUserCard(user) {
 
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">직위</span>
+                    ${getPositionBadge(user.position)}
+                </div>
+                <div class="flex justify-between items-center">
                     <span class="text-xs text-gray-500">권한</span>
                     ${getPermissionBadge(user.permission_level)}
                 </div>
@@ -271,12 +304,15 @@ function renderUsers(users) {
 function filterUsers() {
     const searchTerm = searchInput.value.toLowerCase();
     const permissionLevel = permissionFilter.value;
+    const position = positionFilter.value;
     const status = statusFilter.value;
 
     const filtered = allUsers.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm) ||
                             user.email.toLowerCase().includes(searchTerm);
         const matchesPermission = !permissionLevel || user.permission_level === permissionLevel;
+        const matchesPosition = !position || user.position === position;
+
 
         let matchesStatus = true;
         if (status) {
@@ -288,7 +324,7 @@ function filterUsers() {
             }
         }
 
-        return matchesSearch && matchesPermission && matchesStatus;
+        return matchesSearch && matchesPermission && matchesPosition && matchesStatus;
     });
 
     renderUsers(filtered);
@@ -311,7 +347,7 @@ async function loadUsers() {
     }
 }
 
-// Toggle functions
+// Toggle functions (생략하지 않고 그대로 유지)
 async function toggleActive(userId) {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
@@ -379,6 +415,7 @@ function resetForm() {
     document.getElementById('userId').value = '';
     document.getElementById('is_active').checked = true;
     document.getElementById('is_locked').checked = false;
+    document.getElementById('position').value = '사원';
 }
 
 function editUser(userId) {
@@ -388,6 +425,7 @@ function editUser(userId) {
     document.getElementById('userId').value = user.id;
     document.getElementById('name').value = user.name;
     document.getElementById('email').value = user.email;
+    document.getElementById('position').value = user.position || '사원';
     document.getElementById('permission_level').value = user.permission_level;
     document.getElementById('profile_picture_url').value = user.profile_picture_url || '';
     document.getElementById('is_active').checked = user.is_active;
@@ -420,6 +458,7 @@ async function saveUser() {
     const data = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
+        position: document.getElementById('position').value,
         permission_level: document.getElementById('permission_level').value,
         profile_picture_url: document.getElementById('profile_picture_url').value || null,
         is_active: document.getElementById('is_active').checked,
@@ -493,6 +532,7 @@ confirmDeleteBtn.addEventListener('click', confirmDelete);
 searchInput.addEventListener('input', filterUsers);
 permissionFilter.addEventListener('change', filterUsers);
 statusFilter.addEventListener('change', filterUsers);
+positionFilter.addEventListener('change', filterUsers);
 
 // Close modals on outside click
 userModal.addEventListener('click', (e) => {

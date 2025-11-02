@@ -77,6 +77,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 $(document).ready(function() {
+    console.log(document.cookie);
+    $.ajax({
+        url: '/oauth/hive_user',
+        type: 'GET',
+        success: function(response) {
+            const user = response.user;
+            const nickname = user.kakao_account?.profile?.nickname || '이름';
+            const defaultImageUrl = '/static/images/user.png';
+            const thumbnailUrl = user.kakao_account?.profile?.thumbnail_image_url || defaultImageUrl;
+            // 1-1. 사이드바 프로필 업데이트
+            $('#id_sidebar_user_name').text(nickname);
+            $('#id_sidebar_profile_img').attr('src', thumbnailUrl);
+        },
+        error: function(error) {
+            console.error("Failed to fetch user data:", error);
+            // 사용자 정보 로딩 실패 시 기본 이미지/이름 유지
+        }
+    });
+
     // 게시판 내에 카테고리 불러오기
     $.ajax({
         url: '/api/data_category/',

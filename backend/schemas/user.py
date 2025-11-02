@@ -7,6 +7,7 @@ class UserBase(BaseModel):
     name: str
     permission_level: str = 'STAFF'
     profile_picture_url: Optional[str] = None
+    position: Optional[str] = None
     is_active: bool = True
     is_locked: bool = False
 
@@ -20,6 +21,7 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     permission_level: Optional[str] = None
     profile_picture_url: Optional[str] = None
+    position: Optional[str] = None
     is_active: Optional[bool] = None
     is_locked: Optional[bool] = None
 

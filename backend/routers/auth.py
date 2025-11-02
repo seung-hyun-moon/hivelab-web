@@ -41,21 +41,34 @@ class AuthHandler(object):
         self.router.add_api_route("/callback", self.callback, methods=["GET"])
         self.router.add_api_route("/refresh", self.refresh, methods=["GET"])
         self.router.add_api_route("/user", self.get_user, dependencies=[Depends(self.login_required)], methods=["GET"])
+        self.router.add_api_route("/hive_user", self.get_hive_user, dependencies=[Depends(self.login_required)], methods=["GET"])
 
     @staticmethod
     def get_oauth_client():
         return kakao_client
 
     @staticmethod
-    def get_authorization_token(authorization: str = Header(...)) -> str:
-        scheme, _, param = authorization.partition(" ")
-        if not authorization or scheme.lower() != "bearer":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authenticated",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return param
+    def get_authorization_token(
+            authorization: Optional[str] = Header(None),  # Authorization 헤더는 선택 사항으로 변경
+            request: Request = None  # Request 객체를 추가
+    ) -> str:
+
+        # 1. Authorization 헤더 확인 (기존 로직 유지)
+        if authorization:
+            scheme, _, param = authorization.partition(" ")
+            if scheme.lower() == "bearer":
+                return param
+
+        # 2. httponly 쿠키에서 access_token 확인
+        if request and "access_token" in request.cookies:
+            return request.cookies["access_token"]
+
+        # 3. 모든 시도 실패 시 401 UNAUTHORIZED 발생
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated. Missing Bearer token or access_token cookie.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     @staticmethod
     async def login_required(
@@ -70,6 +83,45 @@ class AuthHandler(object):
         redirect_uri = f"{request.base_url}oauth/callback"
         login_url = oauth_client.get_oauth_login_url(state=state, redirect_uri=redirect_uri)
         return RedirectResponse(login_url)
+
+    @staticmethod
+    async def get_current_user(
+            oauth_client: OAuthClient = Depends(get_oauth_client),
+            access_token: str = Depends(get_authorization_token),
+            db: Session = Depends(get_db)
+    ) -> UserModel:
+        """
+        인증된 access_token으로 카카오 유저 정보를 조회하고,
+        데이터베이스에서 해당 유저의 UserModel 객체를 반환합니다.
+        """
+        # 2. 카카오 사용자 정보 조회
+        try:
+            user_info_response = await oauth_client.get_user_info(access_token)
+            email = user_info_response.get('kakao_account', {}).get('email')
+        except Exception:
+            # 카카오 API 호출 실패 시
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not fetch user information from Kakao",
+            )
+
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email not provided by Kakao",
+            )
+
+        # 3. 데이터베이스에서 사용자 조회
+        db_user = db.query(UserModel).filter(UserModel.email == email).first()
+
+        # 사용자가 DB에 없거나 계정이 잠겨(is_active=False)있는 경우
+        if not db_user or not db_user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User not registered or account is inactive",
+            )
+
+        return db_user
 
     async def callback(self, code: str, state: Optional[str] = None, oauth_client=Depends(get_oauth_client),
                        request: Request = None, db: Session = Depends(get_db)):
@@ -111,6 +163,15 @@ class AuthHandler(object):
                        access_token: str = Depends(get_authorization_token)):
         user_info = await oauth_client.get_user_info(access_token=access_token)
         return {"user": user_info}
+
+    async def get_hive_user(self, oauth_client=Depends(get_oauth_client),
+                            access_token: str = Depends(get_authorization_token),
+                            db: Session = Depends(get_db)
+                            ):
+        user_info = await oauth_client.get_user_info(access_token)
+        email = user_info.get('kakao_account', {}).get('email')
+        db_user = db.query(UserModel).filter(UserModel.email == email).first()
+        return {"user": user_info, 'db_user': db_user}
 
     async def is_token_valid(self, access_token: Optional[str] = None):
         if not access_token:
