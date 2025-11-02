@@ -58,6 +58,8 @@ class CustomerModel(Base):
     location = Column(String)
     special_notes = Column(String)
 
+    creator = Column(String)                            # 만든이
+
 
 class CustomerLawModel(Base):
     __tablename__ = "law_customers"

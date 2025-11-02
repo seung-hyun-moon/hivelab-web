@@ -1,6 +1,6 @@
 function formatData(data, type, row) {
     if (type === 'display') {
-        data = data || ''; // data가 null이나 undefined인 경우 빈 문자열로 대체
+        data = data || '';
         return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + data + '</textarea>';
     }
     return data;
@@ -32,10 +32,9 @@ function toggleHeight(element) {
     if (element.style.height !== element.scrollHeight + 'px') {
         element.style.height = element.scrollHeight + 'px';
     } else {
-        element.style.height = ''; // 원래 높이로 복원
+        element.style.height = '';
     }
 }
-
 
 function formatYYMMDD() {
     var date = new Date();
@@ -56,7 +55,31 @@ function formatDate() {
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
+// 전역 변수로 현재 사용자 이름 저장
+var currentUserName = '송재민'; // 기본값
+
+// 사용자 정보 가져오기
+function fetchCurrentUser() {
+    return $.ajax({
+        url: '/oauth/hive_user',
+        type: 'GET',
+        success: function(response) {
+            if (response?.db_user?.name) {
+                currentUserName = response.db_user.name;
+                console.log('Current user:', currentUserName);
+            }
+        },
+        error: function(error) {
+            console.error("Failed to fetch user data:", error);
+            // 실패 시 기본값 '송재민' 사용
+        }
+    });
+}
+
 $(document).ready(function() {
+    // 페이지 로드 시 사용자 정보 가져오기
+    fetchCurrentUser();
+
     $('#customerTable thead tr')
         .clone(true)
         .addClass('filters')
@@ -165,16 +188,16 @@ $(document).ready(function() {
             $(row).attr('data-id', data.id);
         },
         columns: [
-            { 
+            {
                 data: null,
                 render: function (data, type, row) {
                     return '<input type="checkbox" class="row-checkbox" data-id="' + row.id + '">';
                 }
-            },            
+            },
             { data: 'id',
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'id');
-                } 
+                }
             },
             { data: 'importance', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
@@ -203,23 +226,23 @@ $(document).ready(function() {
                             // 기본 색상 설정
                             $(td).children().css('color', '#000000');
                     }
-                    
-                } 
+
+                }
             },
             { data: 'contact_date', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'contact_date');
-                } 
+                }
             },
             { data: 'industry', render: formatData3,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'industry');
-                } 
+                }
             },
             { data: 'contact_info', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'contact_info');
-                } 
+                }
             },
             { data: 'move_in_date', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
@@ -230,22 +253,22 @@ $(document).ready(function() {
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'notes');
                     $(td).children().css('resize', 'vertical');
-                } 
+                }
             },
             { data: 'contact_person', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'contact_person');
-                } 
+                }
             },
             { data: 'head', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'head');
-                } 
+                }
             },
             { data: 'deputy', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'deputy');
-                } 
+                }
             },
             { data: 'edit_date', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
@@ -259,10 +282,12 @@ $(document).ready(function() {
                         var createDateParts = rowData.create_date.split(' ');
                         var timeParts = createDateParts[1].split(':');
                         var formattedCreateDate = '등록일\n' + createDateParts[0] + '\n' + timeParts[0] + ':' + timeParts[1];
+                        var creator = rowData.creator ? rowData.creator : '알수없음';
+                        formattedCreateDate += '\n등록자: ' + creator;
                         $(td).attr('title', formattedCreateDate);
                     }
                     $(td).html(formattedDate);
-                } 
+                }
             },
             { data: 'create_date', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
@@ -276,8 +301,8 @@ $(document).ready(function() {
             },
             { data: 'status' },
             { data: 'id',
-                "render": function ( data, type, row ) { 
-                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + ' data-create_date="' + row.create_date + '"></button><br>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+                "render": function ( data, type, row ) {
+                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + ' data-create_date="' + row.create_date + '" data-creator="' + (row.creator || '') + '"></button><br>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
                 }
             },
             { data: 'company_name' },
@@ -345,6 +370,7 @@ $(document).ready(function() {
             edit_date: formatDate(),
             create_date: formatDate(),
             marketing: "",
+            creator: currentUserName, // OAuth에서 가져온 사용자 이름 사용
 
             company_name: form.find('input[name="company_name"]').val(),
             gender: form.find('input[name="gender"]:checked').val(),
@@ -379,6 +405,7 @@ $(document).ready(function() {
         var customerId = $(this).data('id');
         var status = $(this).data('status');
         var create_date = $(this).data('create_date');
+        var creator = $(this).data('creator');
 
         $.ajax({ url: '/api/customer/' + customerId, success: function(customerData) {
             $('#modifyCustomerModal').find('input[name="industry"]').val(customerData.industry)
@@ -429,6 +456,7 @@ $(document).ready(function() {
                 edit_date: formatDate(),
                 create_date: create_date,
                 marketing: "",
+                // creator는 전송하지 않음 - 백엔드에서 기존 값 유지
 
                 company_name: form.find('input[name="company_name"]').val(),
                 gender: form.find('input[name="gender"]:checked').val(),
@@ -449,7 +477,6 @@ $(document).ready(function() {
                     console.log('Success:', response);
                     $('#modifyCustomerModal').modal('hide');
                     table.ajax.reload();
-                    $('#modifyCustomerModal form').find('input, textarea').not('[name="head"], [name="deputy"]').val('');
                 },
                 error: function(error) {
                     console.error('Error:', error);
@@ -458,7 +485,6 @@ $(document).ready(function() {
 
             return false;
         });
-
     });
 
     $("#closeModifyCustomerModal").click(function(){

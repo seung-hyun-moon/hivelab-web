@@ -28,6 +28,8 @@ class CustomerBase(BaseModel):
     location : Optional[str] = None
     special_notes : Optional[str] = None
 
+    creator: Optional[str] = None  # 만든이
+
 class CustomerCreate(CustomerBase):
     pass
 

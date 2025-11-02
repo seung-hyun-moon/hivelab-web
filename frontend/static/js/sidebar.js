@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 $(document).ready(function() {
-    console.log(document.cookie);
     $.ajax({
         url: '/oauth/hive_user',
         type: 'GET',
