@@ -82,7 +82,9 @@ $(document).ready(function() {
         type: 'GET',
         success: function(response) {
             const user = response.user;
-            const nickname = user.kakao_account?.profile?.nickname || '이름';
+            const position = response?.db_user?.position || '직책';
+            console.log("response:", response);
+            const nickname = user.kakao_account?.profile?.nickname+ ' ' + position + '' || '이름' + ' ' + position + '';
             const defaultImageUrl = '/static/images/user.png';
             const thumbnailUrl = user.kakao_account?.profile?.thumbnail_image_url || defaultImageUrl;
             // 1-1. 사이드바 프로필 업데이트

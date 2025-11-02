@@ -29,6 +29,7 @@ class CustomerBase(BaseModel):
     special_notes : Optional[str] = None
 
     creator: Optional[str] = None  # 만든이
+    is_public: Optional[bool] = False  # 공개 여부
 
 class CustomerCreate(CustomerBase):
     pass

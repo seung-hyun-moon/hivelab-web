@@ -59,6 +59,7 @@ class CustomerModel(Base):
     special_notes = Column(String)
 
     creator = Column(String)                            # 만든이
+    is_public = Column(Boolean, default=False)  # 공개 여부
 
 
 class CustomerLawModel(Base):

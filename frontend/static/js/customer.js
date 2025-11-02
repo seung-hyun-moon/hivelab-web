@@ -283,7 +283,8 @@ $(document).ready(function() {
                         var timeParts = createDateParts[1].split(':');
                         var formattedCreateDate = '등록일\n' + createDateParts[0] + '\n' + timeParts[0] + ':' + timeParts[1];
                         var creator = rowData.creator ? rowData.creator : '알수없음';
-                        formattedCreateDate += '\n등록자: ' + creator;
+                        var is_public = rowData.is_public ? ' (공개)' : ' (비공개)';
+                        formattedCreateDate += '\n등록자: ' + creator + is_public;
                         $(td).attr('title', formattedCreateDate);
                     }
                     $(td).html(formattedDate);
@@ -374,6 +375,7 @@ $(document).ready(function() {
 
             company_name: form.find('input[name="company_name"]').val(),
             gender: form.find('input[name="gender"]:checked').val(),
+            is_public: form.find('input[name="is_public"]').is(':checked'),
             price: form.find('input[name="price"]').val(),
             area: form.find('input[name="area"]').val(),
             location: form.find('input[name="location"]').val(),
@@ -420,6 +422,7 @@ $(document).ready(function() {
             $('#modifyCustomerModal').find('input[name="deputy"]').val(customerData.deputy.split('\n'))
             $('#modifyCustomerModal').find('input[name="company_name"]').val(customerData.company_name)
             $('#modifyCustomerModal').find('input[name="gender"][value="' + customerData.gender + '"]').prop('checked', true);
+            $('#modifyCustomerModal').find('input[name="is_public"]').prop('checked', customerData.is_public || false);
             $('#modifyCustomerModal').find('input[name="price"]').val(customerData.price)
             $('#modifyCustomerModal').find('input[name="area"]').val(customerData.area)
             $('#modifyCustomerModal').find('input[name="location"]').val(customerData.location)
@@ -460,6 +463,7 @@ $(document).ready(function() {
 
                 company_name: form.find('input[name="company_name"]').val(),
                 gender: form.find('input[name="gender"]:checked').val(),
+                is_public: form.find('input[name="is_public"]').is(':checked'),
                 price: form.find('input[name="price"]').val(),
                 area: form.find('input[name="area"]').val(),
                 location: form.find('input[name="location"]').val(),
@@ -743,7 +747,7 @@ $(document).ready(function() {
 
 
     // 특정 헤더(예: 첫 번째 컬럼)에 HTML 콘텐츠를 포함한 툴팁 추가
-    $('#customerTable thead th').eq(2).attr('title', '<span style="color: #f12c17;">A : 매일</span><br><span style="color: #ffc000;">B : 주2회</span><br><span style="color: #548235;">C : 주1회</span><br><span style="color: #2f75b5;">D : 대기1</span><br><span style="color: #f476e2;">F : 대기2</span><br><span style="color: #757171;">X : 처분 후</span>').attr('data-html', 'true');
+//    $('#customerTable thead th').eq(2).attr('title', '<span style="color: #f12c17;">A : 매일</span><br><span style="color: #ffc000;">B : 주2회</span><br><span style="color: #548235;">C : 주1회</span><br><span style="color: #2f75b5;">D : 대기1</span><br><span style="color: #f476e2;">F : 대기2</span><br><span style="color: #757171;">X : 처분 후</span>').attr('data-html', 'true');
 
     // Bootstrap 툴팁 초기화 및 HTML 옵션 활성화
     $('[data-toggle="tooltip"]').tooltip({
