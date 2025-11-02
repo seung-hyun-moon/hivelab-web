@@ -105,7 +105,7 @@ $(document).ready(function() {
         fixedHeader: true,
         columnDefs: [
             {
-                targets: [2, 5, 6, 12, 13, 14, 16, 17, 18, 19, 20, 21],
+                targets: [2, 5, 6, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22],
                 visible: false,
             },
             {
@@ -339,6 +339,11 @@ $(document).ready(function() {
             { data: 'area' },
             { data: 'location' },
             { data: 'special_notes' },
+            { data: 'creator',
+                createdCell: function (td, cellData, rowData, row, col) {
+                    $(td).attr('data-column', 'creator');
+                }
+            },
         ]
     });
 
@@ -486,7 +491,7 @@ $(document).ready(function() {
                 edit_date: formatDate(),
                 create_date: create_date,
                 marketing: "",
-                // creator는 전송하지 않음 - 백엔드에서 기존 값 유지
+                creator: currentUserName,
 
                 company_name: form.find('input[name="company_name"]').val(),
                 gender: form.find('input[name="gender"]:checked').val(),
