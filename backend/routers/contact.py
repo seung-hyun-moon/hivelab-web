@@ -11,6 +11,8 @@ from backend.schemas.contact import Contact, ContactCreate, ContactUpdate
 from backend.db.models import ContactModel
 from backend.db.database import get_db
 from backend.routers.basecurd import BaseCRUD
+from backend.db.models import UserModel
+from backend.routers.auth import AuthHandler
 
 
 class ContactRouter(BaseCRUD):
@@ -26,7 +28,10 @@ class ContactRouter(BaseCRUD):
         return super().update_item(item_id=item_id, item=item, db=db)
 
     # Server Side Processing
-    def get_items(self, request: Request, db: Session = Depends(get_db)) -> JSONResponse:
+    def get_items(self, request: Request, db: Session = Depends(get_db), current_user: UserModel = Depends(AuthHandler.get_current_user)) -> JSONResponse:
+        if current_user.is_active is False:
+            raise HTTPException(status_code=403, detail="Inactive user")
+
         draw = int(request.query_params.get('draw', 1))
         start = int(request.query_params.get('start', 0))
         length = int(request.query_params.get('length', 10))
