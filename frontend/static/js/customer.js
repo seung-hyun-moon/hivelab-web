@@ -73,10 +73,10 @@ function fetchCurrentUser() {
                 if (canSeePublic) {
                     // hidden 처리된 요소 보이기
                     $('#publicCheckboxContainer').removeAttr('hidden');
-                    $('#publicCheckboxContainer').removeAttr('hidden');
+                    $('#publicCheckboxContainer2').removeAttr('hidden');
                 } else {
                     // hidden 처리된 요소 숨기기
-                    $('#publicCheckboxContainer2').attr('hidden', true);
+                    $('#publicCheckboxContainer').attr('hidden', true);
                     $('#publicCheckboxContainer2').attr('hidden', true);
                 }
             }
