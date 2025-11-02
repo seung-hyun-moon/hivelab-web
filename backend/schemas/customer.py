@@ -43,6 +43,6 @@ class CustomerStatusUpdate(BaseModel):
 
 class Customer(CustomerBase):
     id: int
-
+    can_edit: bool = False  # 수정 권한 여부
     class Config:
         from_attributes = True

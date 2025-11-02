@@ -11,9 +11,9 @@
 <!--                <col width="3%" /> &lt;!&ndash; 중요도 &ndash;&gt;-->
                 <col width="8%" /> <!-- 컨택일 -->
                 <col width="10%" /> <!-- 업종 -->
-                <col width="8%" /> <!-- 연락처 -->
+<!--                <col width="8%" /> &lt;!&ndash; 연락처 &ndash;&gt;-->
 <!--                <col width="10%" /> &lt;!&ndash; 입주시기 &ndash;&gt;-->
-                <col width="34%" /> <!-- 비고 -->
+                <col width="42%" /> <!-- 비고 -->
                 <col width="5%" /> <!-- 컨택 -->
                 <col width="5%" /> <!-- 정 -->
                 <col width="5%" /> <!-- 부 -->
@@ -21,6 +21,7 @@
                 <col width="4%" /> <!-- 만든날짜 -->
                 <col width="0" /> <!-- 마케팅 -->
                 <col width="0" /> <!-- 상태 -->
+                <col width="0" />
                 <col width="0" />
                 <col width="0" /> <!-- 삭제 -->
             </colgroup>
@@ -32,7 +33,7 @@
                     <th class="">구분</th>
                     <th class="">중요</th>
                     <th class="">컨택일</th>
-                    <th class="">업종 | 회사명</th>
+                    <th class="">업종</th>
                     <th class="">연락처</th>
                     <th class="">입주시기</th>
                     <th class="">컨디션 및 진행상황</th>
@@ -107,7 +108,7 @@
                                             <label class="form-check-label" for="female">여자</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-2" id="publicCheckboxContainer" hidden>
                                         <div class="form-check form-check-inline">
                                             <div class="form-check form-switch">
                                                 <label class="form-check-label" for="is_public">공개</label>
@@ -229,10 +230,14 @@
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="송재민"> 송재민</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="길민제"> 길민제</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이경주"> 이경주</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="노현정"> 노현정</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이선복"> 이선복</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="김시나"> 김시나</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이소은"> 이소은</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="오상민"> 오상민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="류태리"> 류태리</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이효빈"> 이효빈</a></li>
+
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="노현정"> 노현정</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이선복"> 이선복</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="김시나"> 김시나</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이소은"> 이소은</a></li>-->
                                         </ul>
                                     </div>
                                 </div>
@@ -248,10 +253,13 @@
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="송재민"> 송재민</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="길민제"> 길민제</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이경주"> 이경주</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="노현정"> 노현정</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이선복"> 이선복</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="김시나"> 김시나</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이소은"> 이소은</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="오상민"> 오상민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="류태리"> 류태리</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이효빈"> 이효빈</a></li>
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="노현정"> 노현정</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이선복"> 이선복</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="김시나"> 김시나</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이소은"> 이소은</a></li>-->
                                         </ul>
                                     </div>
                                 </div>
@@ -325,7 +333,7 @@
                                             <label class="form-check-label" for="female">여자</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-2" id="publicSwitchContainer2" hidden>
                                         <div class="form-check form-check-inline">
                                             <div class="form-check form-switch">
                                                 <label class="form-check-label" for="is_public">공개</label>
@@ -447,10 +455,13 @@
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="송재민"> 송재민</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="길민제"> 길민제</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이경주"> 이경주</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="노현정"> 노현정</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이선복"> 이선복</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="김시나"> 김시나</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이소은"> 이소은</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="오상민"> 오상민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="류태리"> 류태리</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이효빈"> 이효빈</a></li>
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="노현정"> 노현정</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이선복"> 이선복</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="김시나"> 김시나</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="head" value="이소은"> 이소은</a></li>-->
                                         </ul>
                                     </div>
                                 </div>
@@ -466,10 +477,13 @@
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="송재민"> 송재민</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="길민제"> 길민제</a></li>
                                             <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이경주"> 이경주</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="노현정"> 노현정</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이선복"> 이선복</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="김시나"> 김시나</a></li>
-                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이소은"> 이소은</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="오상민"> 오상민</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="류태리"> 류태리</a></li>
+                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이효빈"> 이효빈</a></li>
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="노현정"> 노현정</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이선복"> 이선복</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="김시나"> 김시나</a></li>-->
+<!--                                            <li><a class="dropdown-item" href="#"><input type="checkbox" name="deputy" value="이소은"> 이소은</a></li>-->
                                         </ul>
                                     </div>
                                 </div>

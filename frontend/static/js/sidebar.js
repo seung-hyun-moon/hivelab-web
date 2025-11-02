@@ -83,13 +83,18 @@ $(document).ready(function() {
         success: function(response) {
             const user = response.user;
             const position = response?.db_user?.position || '직책';
-            console.log("response:", response);
+            const permission_level = response?.db_user?.permission_level || 'STAFF';
             const nickname = user.kakao_account?.profile?.nickname+ ' ' + position + '' || '이름' + ' ' + position + '';
             const defaultImageUrl = '/static/images/user.png';
             const thumbnailUrl = user.kakao_account?.profile?.thumbnail_image_url || defaultImageUrl;
             // 1-1. 사이드바 프로필 업데이트
             $('#id_sidebar_user_name').text(nickname);
             $('#id_sidebar_profile_img').attr('src', thumbnailUrl);
+            if (permission_level === 'ADMIN') {
+                $('#id_admin_page').removeAttr('hidden');
+            } else {
+                $('#id_admin_page').attr('hidden', true);
+            }
         },
         error: function(error) {
             console.error("Failed to fetch user data:", error);

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from fastapi import status
 
 from backend.schemas.customer import Customer, CustomerCreate, CustomerUpdate, CustomerStatusUpdate
@@ -23,34 +23,68 @@ class CustomerRouter(BaseCRUD):
         """관리자 권한 확인"""
         return user.permission_level in ("MANAGER", "ADMIN")
 
-    def get_items(self,
-                  db: Session = Depends(get_db),
-                  current_user: UserModel = Depends(AuthHandler.get_current_user)):
-        """
-        권한별 고객 목록 조회
-        - STAFF: 본인이 만든 것(creator) + 공개된 것(is_public=True)만 조회
-        - MANAGER/ADMIN: 모든 데이터 조회
-        """
-        if self.is_manager_or_admin(current_user):
-            return db.query(CustomerModel).all()
-
-        # STAFF: 공개이거나 본인 생성만
-        return db.query(CustomerModel).filter(
-            or_(
-                CustomerModel.is_public == True,
-                CustomerModel.creator == current_user.email
-            )
+    @staticmethod
+    def _emails_by_permission(db: Session, levels: tuple[str, ...]) -> list[str]:
+        rows = db.query(UserModel.email).filter(
+            UserModel.permission_level.in_(levels),
+            UserModel.is_active == True
         ).all()
+        return [email for (email,) in rows]
 
-    def get_item(self,
-                 item_id: int,
-                 db: Session = Depends(get_db),
-                 current_user: UserModel = Depends(AuthHandler.get_current_user)):
+    @staticmethod
+    def _can_edit(current_user: UserModel, customer: CustomerModel) -> bool:
         """
-        권한별 개별 고객 조회
-        - STAFF: 본인이 만든 것 + 공개된 것만 조회
-        - MANAGER/ADMIN: 모든 데이터 조회
+        주어진 고객 항목에 대해 현재 사용자가 수정 권한이 있는지 확인합니다.
+        - MANAGER/ADMIN: 항상 True
+        - STAFF: 본인이 만든 항목인 경우에만 True
         """
+        if current_user.permission_level in ("MANAGER", "ADMIN"):
+            return True
+        # STAFF인 경우, 본인이 생성한 항목만 수정 가능
+        return customer.creator == current_user.name
+
+    def get_items(
+            self,
+            db: Session = Depends(get_db),
+            current_user: UserModel = Depends(AuthHandler.get_current_user),
+    ):
+        if self.is_manager_or_admin(current_user):
+            items = db.query(CustomerModel).all()
+        else:
+            # STAFF 읽기 규칙에 따라 항목 쿼리
+            admin_emails = self._emails_by_permission(db, ("MANAGER", "ADMIN"))
+            staff_emails = self._emails_by_permission(db, ("STAFF",))
+
+            items = db.query(CustomerModel).filter(
+                or_(
+                    CustomerModel.creator == current_user.name,
+                    CustomerModel.creator.in_(staff_emails),
+                    and_(
+                        CustomerModel.is_public == True,
+                        CustomerModel.creator.in_(admin_emails),
+                    )
+                )
+            ).all()
+
+            # 각 항목에 can_edit 정보를 추가하여 응답 스키마로 변환
+        response_items = []
+        for item in items:
+            can_edit = self._can_edit(current_user, item)
+
+            # Customer 스키마로 변환 (can_edit 추가 필요)
+            # Customer 스키마에 can_edit 필드가 추가되었다고 가정하고 코드를 작성합니다.
+            customer_data = item.__dict__
+            customer_data['can_edit'] = can_edit
+            response_items.append(Customer(**customer_data))
+
+        return response_items
+
+    def get_item(
+            self,
+            item_id: int,
+            db: Session = Depends(get_db),
+            current_user: UserModel = Depends(AuthHandler.get_current_user),
+    ):
         item = db.query(CustomerModel).filter(CustomerModel.id == item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -58,8 +92,16 @@ class CustomerRouter(BaseCRUD):
         if self.is_manager_or_admin(current_user):
             return item
 
-        # STAFF: 공개이거나 본인 생성만 접근
-        if item.is_public or item.creator == current_user.email:
+        # STAFF 읽기 허용 조건과 동일 판정
+        if item.creator == current_user.name:
+            return item
+
+        staff_emails = self._emails_by_permission(db, ("STAFF",))
+        if item.creator in staff_emails:
+            return item
+
+        admin_emails = self._emails_by_permission(db, ("MANAGER", "ADMIN"))
+        if item.is_public and item.creator in admin_emails:
             return item
 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="권한이 없습니다.")
@@ -86,7 +128,7 @@ class CustomerRouter(BaseCRUD):
 
         if not self.is_manager_or_admin(current_user):
             # STAFF: 본인 소유만 수정
-            if db_item.creator != current_user.email:
+            if db_item.creator != current_user.name:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="본인이 생성한 항목만 수정할 수 있습니다."
@@ -113,7 +155,7 @@ class CustomerRouter(BaseCRUD):
             raise HTTPException(status_code=404, detail="Item not found")
 
         if not self.is_manager_or_admin(current_user):
-            if db_item.creator != current_user.email:
+            if db_item.creator != current_user.name:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="본인이 생성한 항목만 수정할 수 있습니다."
@@ -139,7 +181,7 @@ class CustomerRouter(BaseCRUD):
             return {"message": "Item deleted"}  # idempotent
 
         if not self.is_manager_or_admin(current_user):
-            if db_item.creator != current_user.email:
+            if db_item.creator != current_user.name:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="본인이 생성한 항목만 삭제할 수 있습니다."

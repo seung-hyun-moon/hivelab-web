@@ -21,7 +21,8 @@ function createDropdownSection() {
   ul.className = 'toastui-calendar-dropdown-menu';
   ul.id = 'id_dropdown_ul'
   ul.style.display = 'none';
-  const people = ['재민', '민제', '경주', '현정', '선복', '시나'];
+//  const people = ['재민', '민제', '경주', '현정', '선복', '시나'];
+  const people = ['재민', '민제', '경주', '상민', '태리', '효빈', '태림'];
 
   people.forEach(person => {
     const li = document.createElement('li');

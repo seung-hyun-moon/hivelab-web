@@ -57,6 +57,7 @@ function formatDate() {
 
 // 전역 변수로 현재 사용자 이름 저장
 var currentUserName = '송재민'; // 기본값
+var permissionLevel = 'STAFF'; // 기본값
 
 // 사용자 정보 가져오기
 function fetchCurrentUser() {
@@ -66,7 +67,18 @@ function fetchCurrentUser() {
         success: function(response) {
             if (response?.db_user?.name) {
                 currentUserName = response.db_user.name;
-                console.log('Current user:', currentUserName);
+                const permission_level = response?.db_user?.permission_level;
+                const canSeePublic = ["MANAGER", "ADMIN"].includes(permission_level);
+                console.log("User Permission Level:", permission_level, canSeePublic);
+                if (canSeePublic) {
+                    // hidden 처리된 요소 보이기
+                    $('#publicCheckboxContainer').removeAttr('hidden');
+                    $('#publicCheckboxContainer').removeAttr('hidden');
+                } else {
+                    // hidden 처리된 요소 숨기기
+                    $('#publicCheckboxContainer2').attr('hidden', true);
+                    $('#publicCheckboxContainer2').attr('hidden', true);
+                }
             }
         },
         error: function(error) {
@@ -93,7 +105,7 @@ $(document).ready(function() {
         fixedHeader: true,
         columnDefs: [
             {
-                targets: [2, 6, 12, 13, 14, 16, 17, 18, 19, 20, 21],
+                targets: [2, 5, 6, 12, 13, 14, 16, 17, 18, 19, 20, 21],
                 visible: false,
             },
             {
@@ -234,7 +246,7 @@ $(document).ready(function() {
                     $(td).attr('data-column', 'contact_date');
                 }
             },
-            { data: 'industry', render: formatData3,
+            { data: 'industry', render: formatData,
                 createdCell: function (td, cellData, rowData, row, col) {
                     $(td).attr('data-column', 'industry');
                 }
@@ -301,9 +313,24 @@ $(document).ready(function() {
                 }
             },
             { data: 'status' },
-            { data: 'id',
+            {
+                data: 'id',
                 "render": function ( data, type, row ) {
-                    return '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"'+'data-status=' + row.status + ' data-create_date="' + row.create_date + '" data-creator="' + (row.creator || '') + '"></button><br>'+'<button class="delete-btn btn btn-outline-danger" data-id="' + data + '"></button>'
+                    // row.can_edit이 true일 때만 버튼을 렌더링하고, 아니면 빈 문자열을 반환합니다.
+                    if (row.can_edit === true) {
+                        return (
+                            '<button class="edit-btn btn btn-outline-warning" data-id="' + data + '"' +
+                            ' data-status="' + row.status + '" data-create_date="' + row.create_date + '"' +
+                            ' data-creator="' + (row.creator || '') + '">' +
+                                '<i class="bi bi-pencil-square"></i>' + // Bootstrap icon 예시
+                            '</button><br>' +
+                            '<button class="delete-btn btn btn-outline-danger" data-id="' + data + '">' +
+                                '<i class="bi bi-trash"></i>' + // Bootstrap icon 예시
+                            '</button>'
+                        );
+                    } else {
+                        return ''; // 수정 권한이 없으면 아무것도 렌더링하지 않음
+                    }
                 }
             },
             { data: 'company_name' },
@@ -501,7 +528,7 @@ $(document).ready(function() {
 
     // 통계 모달을 보여주는 버튼 클릭 이벤트
     $("#showStatisticsModal").click(function() {
-        var names = ["송재민", "길민제", "이경주", "노현정", "이선복", "김시나"];
+        var names = ["송재민", "길민제", "이경주", '오상민', '류태리', '이효빈', "노현정", "이선복", "김시나"];
         var counts = {
             contact_person: {},
             head: {},
@@ -608,7 +635,7 @@ $(document).ready(function() {
         });
 
         // 원하는 헤더 순서
-        var headerOrder = ['블로그', '네모', '대표콜', '현수막', '송재민', '길민제', '이경주', '노현정', '이선복', '김시나'];
+        var headerOrder = ['블로그', '네모', '대표콜', '현수막', '송재민', '길민제', '이경주', '오상민', '류태리', '이효빈'];
 
         // counts 객체의 키를 원하는 순서대로 정렬
         var sortedNames = headerOrder.concat(Object.keys(counts).filter(name => !headerOrder.includes(name)));
