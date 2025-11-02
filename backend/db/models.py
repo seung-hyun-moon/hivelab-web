@@ -4,13 +4,23 @@ from .database import Base
 from datetime import datetime
 
 
-class User(Base):
+class UserModel(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
+    email = Column(String, unique=True, index=True, nullable=False, comment="카카오톡 이메일")
+    name = Column(String, nullable=False, comment="사용자 이름")
+
+    # 권한: 'ADMIN', 'MANAGER', 'STAFF' 등
+    permission_level = Column(String, nullable=False, default='STAFF', comment="권한 등급")
+    profile_picture_url = Column(String, nullable=True, comment="프로필 사진 URL")
+
+    # 계정 잠김 여부 (True: 활성, False: 잠김)
+    is_active = Column(Boolean, default=True, comment="계정 활성 여부")
+    is_locked = Column(Boolean, default=False, comment="계정 잠김 여부")
+
+    def __repr__(self):
+        return f"<User(name='{self.name}', email='{self.email}', permission_level='{self.permission_level}')>"
 
     # Relationships
     # customers = relationship("Customer", back_populates="user")
