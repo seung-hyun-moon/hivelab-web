@@ -24,12 +24,12 @@ class CustomerRouter(BaseCRUD):
         return user.permission_level in ("MANAGER", "ADMIN")
 
     @staticmethod
-    def _emails_by_permission(db: Session, levels: tuple[str, ...]) -> list[str]:
-        rows = db.query(UserModel.email).filter(
+    def _names_by_permission(db: Session, levels: tuple[str, ...]) -> list[str]:
+        rows = db.query(UserModel.name).filter(
             UserModel.permission_level.in_(levels),
             UserModel.is_active == True
         ).all()
-        return [email for (email,) in rows]
+        return [name for (name,) in rows]
 
     @staticmethod
     def _can_edit(current_user: UserModel, customer: CustomerModel) -> bool:
@@ -52,16 +52,16 @@ class CustomerRouter(BaseCRUD):
             items = db.query(CustomerModel).all()
         else:
             # STAFF 읽기 규칙에 따라 항목 쿼리
-            admin_emails = self._emails_by_permission(db, ("MANAGER", "ADMIN"))
-            staff_emails = self._emails_by_permission(db, ("STAFF",))
+            admin_names = self._names_by_permission(db, ("MANAGER", "ADMIN"))
+            staff_names = self._names_by_permission(db, ("STAFF",))
 
             items = db.query(CustomerModel).filter(
                 or_(
                     CustomerModel.creator == current_user.name,
-                    CustomerModel.creator.in_(staff_emails),
+                    CustomerModel.creator.in_(staff_names),
                     and_(
                         CustomerModel.is_public == True,
-                        CustomerModel.creator.in_(admin_emails),
+                        CustomerModel.creator.in_(admin_names),
                     )
                 )
             ).all()
@@ -96,12 +96,12 @@ class CustomerRouter(BaseCRUD):
         if item.creator == current_user.name:
             return item
 
-        staff_emails = self._emails_by_permission(db, ("STAFF",))
-        if item.creator in staff_emails:
+        staff_names = self._names_by_permission(db, ("STAFF",))
+        if item.creator in staff_names:
             return item
 
-        admin_emails = self._emails_by_permission(db, ("MANAGER", "ADMIN"))
-        if item.is_public and item.creator in admin_emails:
+        admin_names = self._names_by_permission(db, ("MANAGER", "ADMIN"))
+        if item.is_public and item.creator in admin_names:
             return item
 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="권한이 없습니다.")
