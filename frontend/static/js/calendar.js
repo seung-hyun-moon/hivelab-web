@@ -22,7 +22,7 @@ function createDropdownSection() {
   ul.id = 'id_dropdown_ul'
   ul.style.display = 'none';
 //  const people = ['재민', '민제', '경주', '현정', '선복', '시나'];
-  const people = ['재민', '민제', '경주', '상민', '태리', '효빈', '태림'];
+  const people = ['송재민', '길민제', '이경주', '오상민', '류태리', '이효빈', '김태림'];
 
   people.forEach(person => {
     const li = document.createElement('li');

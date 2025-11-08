@@ -253,3 +253,5 @@ class EventModel(Base):
     borderColor = Column(String, nullable=True)
     customStyle = Column(JSON, nullable=True)
     raw = Column(JSON, nullable=True)
+    creator = Column(String, nullable=True)
+    is_public = Column(Boolean, default=False)

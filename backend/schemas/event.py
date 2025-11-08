@@ -30,6 +30,8 @@ class EventBase(BaseModel):
     borderColor: Optional[str] = Field(None, description="Left border color of the event.")
     customStyle: Optional[dict] = Field(None, description="Custom style of the event. The key of CSS property should be camelCase (e.g. {'fontSize': '12px'})")
     raw: Optional[Any] = Field(None, description="Raw data of the event. it's an arbitrary property for anything.")
+    creator: Optional[str] = None  # 만든이
+    is_public: Optional[bool] = False  # 공개 여부
 
 
 class EventCreate(EventBase):
