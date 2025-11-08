@@ -13,6 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 
 from typing import List, Dict
 
@@ -52,6 +53,20 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
 }
 
+# 크롬 옵션 설정
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+chrome_options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/139.0.0.0 Safari/537.36"
+)
+service = Service(r"C:\chromedriver\chromedriver.exe")
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
 
 class JjinbbaRouter(BaseCRUD):
     def __init__(self):
@@ -71,6 +86,45 @@ class JjinbbaRouter(BaseCRUD):
         )
         self.router.add_api_route('/analyze_region', self.analyze_region, response_model=dict, methods=['POST'])
         self.router.add_api_route('/single/{item_id}', self.get_single_jjinbba, response_model=dict, methods=['GET'])
+        self.router.add_api_route('/transport/{number}', self.get_transport_info, response_model=None, methods=['GET'])
+
+    async def get_transport_info(self, number: str):
+        try:
+            driver = webdriver.Chrome(options=chrome_options)
+        except Exception as e_auto:
+            raise HTTPException(500, f"Chromedriver를 시작할 수 없습니다: {e_auto}")
+
+        try:
+            # 네이버 부동산의 아무 페이지나 열어 세션 컨텍스트 확보
+            driver.get("https://fin.land.naver.com/")
+
+            # 동적으로 fetch 스크립트 생성
+            # 주의: 이 토큰은 만료될 수 있습니다.
+            # 실제 운영 시에는 토큰을 동적으로 획득하거나 관리하는 로직이 필요할 수 있습니다.
+            script = f"""
+            return fetch("https://fin.land.naver.com/front-api/v1/article/transport?itemType=article&itemId={number}", {{
+                method: "GET",
+                headers: {{
+                    "accept": "*/*",
+                    "accept-language": "ko-KR,ko;q=0.9",
+                    "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJFQUxFU1RBVEUiLCJpYXQiOjE3NTYwMzEyNDEsImV4cCI6MTc1NjA0MjA0MX0.nVA_zAxQ3wLFS3rBiBSte1XcQ51DPCs5us20N9ql-lc",
+                    "referer": "https://fin.land.naver.com/articles/{number}",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": "\\"Windows\\"",
+                }},
+                credentials: "include"
+            }}).then(res => res.json());
+            """
+
+            result = driver.execute_script(script)
+            print(result)
+            return result
+
+        except Exception as e:
+            print(f"Selenium 스크립트 실행 중 오류: {e}")
+            raise HTTPException(500, f"교통정보 조회 실패: {str(e)}")
+        finally:
+            driver.quit()
 
     async def get_single_jjinbba(self, item_id: int):
         crawl = await get_infos.process_properties([item_id])
@@ -89,28 +143,36 @@ class JjinbbaRouter(BaseCRUD):
         )
         return items
 
-    async def analyze_region(self, data: dict):
-        updated_numbers = data.get("updatedNumbers", [])
-        async with aiohttp.ClientSession() as session:
-            # Fetch properties info for each number
-            tasks = [get_infos.fetch_property_info(session, num) for num in updated_numbers]
-            results = await asyncio.gather(*tasks)
+    async def analyze_region(self, data: dict, db: Session = Depends(get_db)):
+        """
+        특정 parent_id의 자식(JjinbbaChildModel)들을 기반으로 지역(동) 정보를 분석
+        """
+        parent_id = data.get("parent_id")
+        if not parent_id:
+            raise HTTPException(400, "parent_id가 필요합니다.")
 
-        # Count properties by dong
+        # 해당 parent의 남아 있는 child 조회
+        children = db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent_id).all()
+
+        # 동별 개수 계산
         dong_counts = {}
-        for item in results:
-            addr = item.get("address", "")
+        for child in children:
+            addr = child.address or ""
             if not addr:
                 continue
 
-            addr_cleaned = re.sub(r'^.*?구\s*', '', addr)  # '...구 ' removed
+            # 구 뒤부터 추출
+            addr_cleaned = re.sub(r'^.*?구\s*', '', addr)
             match = re.search(r'([가-힣]+동(?:\d가)?)', addr_cleaned)
             if match:
                 dong = match.group(1)
                 dong_counts[dong] = dong_counts.get(dong, 0) + 1
 
-        # Format the region_info string
-        region_info = ", ".join([f"{dong} {count}개" for dong, count in dong_counts.items()])
+        # region_info 문자열 생성
+        if dong_counts:
+            region_info = ", ".join([f"{dong} {count}개" for dong, count in dong_counts.items()])
+        else:
+            region_info = "지역 정보 없음"
 
         return {"region_info": region_info}
 

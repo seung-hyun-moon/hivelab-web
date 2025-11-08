@@ -356,6 +356,7 @@ async def get_naver_article_info(session: aiohttp.ClientSession, number: int) ->
 
 
 async def get_naver_reverse_geocode(
+        session: aiohttp.ClientSession, # 세션을 파라미터로 받음
         lat: float,
         lng: float
 ) -> str:
@@ -367,14 +368,18 @@ async def get_naver_reverse_geocode(
         "X-NCP-APIGW-API-KEY": client_secret,
     }
 
-    # API 요청
-    response = requests.get(url, headers=headers)
-
-    # 응답 결과 확인
-    if response.status_code == 200:
-        return extract_address_and_number_correctly(response.text)
-    else:
-        print("에러 코드:", response.status_code)
+    # requests.get() 대신 session.get() 사용
+    try:
+        async with session.get(url, headers=headers) as response:
+            if response.status == 200:
+                xml_data = await response.text()
+                return extract_address_and_number_correctly(xml_data)
+            else:
+                print("에러 코드:", response.status)
+                return "주소 조회 실패"
+    except Exception as e:
+        print(f"지오코딩 예외: {e}")
+        return "주소 조회 실패"
 
 
 def extract_address_and_number_correctly(xml_data):
@@ -428,7 +433,7 @@ async def get_address(session: aiohttp.ClientSession,
     lng = safe_get(building_data, ['articleDetail', 'longitude'])
     lat = safe_get(building_data, ['articleDetail', 'latitude'])
     if lng and lat:
-        addr = await get_naver_reverse_geocode(float(lat), float(lng))
+        addr = await get_naver_reverse_geocode(session, float(lat), float(lng))
         if addr and not addr.startswith(("주소를 찾을 수", "XML 파싱")):
             return addr.strip()
 
@@ -458,7 +463,7 @@ async def fetch_building_register(
     )
 
     # 딜레이
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.3)
 
     return fetch_json(url)
 
@@ -717,20 +722,35 @@ async def get_building_register(session: aiohttp.ClientSession, pnu: str) -> Opt
     """BldRgstHubService getBrTitleInfo 래퍼 – JS getBuildingReg()와 동일"""
     return await fetch_building_register(session, pnu)
 
-async def fetch_property_info(session: aiohttp.ClientSession, number: int) -> Dict[str, Any]:
+
+async def fetch_property_info(session: aiohttp.ClientSession, number: int):
+    # 1. 네이버 정보는 먼저 가져와야 함
     b_data = await get_building_data(session, number)
     if not b_data:
         return {"number": number, "address": "", "fields": {}}
 
-    # 🔸 PNU → 건축물대장
     pnu = safe_get(b_data, ['articleDetail', 'pnu'])
-    b_reg = await get_building_register(session, pnu) if pnu and len(pnu)==19 else None
-
-    address_val = await get_address(session, b_data, b_reg)
-
     floor = safe_get(b_data, ['articleAddition', 'floorInfo'], "").split("/")[0]
-    use_info = await get_use_info(session, b_data, floor)
 
+    # 2. 나머지 작업들을 병렬로 실행
+    tasks = {
+        'b_reg': get_building_register(session, pnu) if pnu and len(pnu) == 19 else asyncio.sleep(0, result=None),
+        'address': get_address(session, b_data, None),  # b_reg를 미리 None으로 주고,
+        'use_info': get_use_info(session, b_data, floor)
+    }
+
+    # asyncio.gather를 사용하여 병렬 실행
+    results = await asyncio.gather(*tasks.values())
+
+    # 결과 매핑
+    task_results = dict(zip(tasks.keys(), results))
+    b_reg = task_results['b_reg']
+    address_val = task_results['address']
+    use_info = task_results['use_info']
+
+    # 3. (중요) get_address가 b_reg를 필요로 했으므로, b_reg가 있다면 주소 재조회
+    if b_reg:
+        address_val = await get_address(session, b_data, b_reg)
     form_fields = populate_form_fields(b_data, b_reg, address_val)
     form_fields["용도"] = use_info
     img_urls = build_image_urls(b_data)

@@ -11,6 +11,7 @@
         </div>
         <div>
             <button id="id_each_img_download" class="btn btn-sm btn-warning me-2">해당 매물 이미지 다운</button>
+            <button id="id_show_transport" class="btn btn-sm btn-info me-2">교통정보</button>
             <button id="id_naver_info" class="btn btn-sm btn-danger hidden">네이버 가져오기</button>
             <button id="id_naver_info_new" class="btn btn-sm btn-danger">네이버 새탭 열기</button>
         </div>
@@ -127,6 +128,55 @@
 <style>
     .rotate-180 {
         transform: rotate(180deg);
+    }
+    .transport-modal {
+        display: none; /* Hidden by default */
+        position: fixed;
+        z-index: 1050; /* On top */
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+    .transport-modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+        border-radius: 8px;
+        position: relative;
+    }
+    .transport-modal-close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+    }
+    .transport-modal-close:hover,
+    .transport-modal-close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .subway-badge {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 0.9em;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.375rem;
+        color: #fff;
+        margin-right: 5px;
     }
 </style>
 

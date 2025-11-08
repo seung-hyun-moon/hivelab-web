@@ -769,10 +769,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                             // 삭제 후 지역 정보 분석 및 업데이트
                             const regionResponse = await fetch(`/api/jjinbba/analyze_region`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ updatedNumbers: updatedNumbers })
-                                });
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ parent_id: jjinbba_id })
+                            });
                             const regionData = await regionResponse.json();
 
                             // 부모 정보 업데이트
@@ -992,6 +992,33 @@ document.addEventListener('DOMContentLoaded', async function() {
             downloadAllPropertyImages();
         });
 
+        document.getElementById('id_show_transport')?.addEventListener('click', async function() {
+            if (!number || number === 'None') {
+                alert('매물 번호가 없습니다.');
+                return;
+            }
+
+            $('#loading-icon').show();
+            try {
+                const response = await fetch(`/api/jjinbba/transport/${number}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch transport data: ${response.statusText}`);
+                }
+                const data = await response.json();
+
+                if (data && data.isSuccess) {
+                    displayTransportModal(data.result);
+                } else {
+                    alert('교통정보를 가져오는데 실패했습니다. (isSuccess: false)');
+                }
+            } catch (error) {
+                console.error('Error fetching transport data:', error);
+                alert('교통정보 조회 중 오류가 발생했습니다.');
+            } finally {
+                $('#loading-icon').hide();
+            }
+        });
+
     } catch (error) {
         console.error('Error loading property data:', error);
         alert('매물 데이터를 불러오는 중 오류가 발생했습니다.');
@@ -1006,3 +1033,132 @@ document.getElementById('id_move_number')?.addEventListener('click', function() 
         window.location.href = newUrl;
     }
 });
+
+/**
+ * 교통정보 텍스트 요약 생성
+ */
+function generateTransportSummary(data) {
+    let subwaySummary = "인근 지하철: ";
+    if (data.subwayList && data.subwayList.length > 0) {
+        const subwayParts = data.subwayList.map(station => {
+            const lineParts = station.typeList.map(line => `${line.name} (${line.walkingDuration}분)`);
+            return `${station.stationName}역 (${lineParts.join(', ')})`;
+        });
+        subwaySummary += subwayParts.join(', ');
+    } else {
+        subwaySummary += "정보 없음";
+    }
+
+    let busSummary = "인근 버스: ";
+    if (data.busList && data.busList.length > 0) {
+        const busParts = data.busList.map(busType => {
+            return `[${busType.typeName}] ${busType.list.join(', ')}`;
+        });
+        busSummary += busParts.join(' | ');
+    } else {
+        busSummary += "정보 없음";
+    }
+
+    return `${subwaySummary}\n${busSummary}`;
+}
+
+/**
+ * 교통정보 모달 표시
+ */
+function displayTransportModal(data) {
+    // Remove existing modal if any
+    document.getElementById('transportModal')?.remove();
+
+    let modalHTML = `
+        <style>
+            .transport-pill {
+                display: inline-block;
+                padding: 0.3em 0.7em;
+                font-size: 0.85em;
+                font-weight: 600;
+                line-height: 1;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: baseline;
+                border-radius: 10rem; /* 알약(pill) 모양 */
+                color: #fff;
+                margin: 2px;
+            }
+            /*
+              Bootstrap이 로드되지 않은 환경에서도
+              flex 레이아웃이 작동하도록 보장합니다.
+            */
+            .pill-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 5px;
+            }
+        </style>
+
+        <div id="transportModal" class="transport-modal" style="display: block;">
+            <div class="transport-modal-content">
+                <span id="transportModalClose" class="transport-modal-close">&times;</span>
+                <h5 class="mb-3">🚍 인근 교통 정보</h5>
+    `;
+
+    // 1. 지하철 정보 (알약 UI 적용)
+    if (data.subwayList && data.subwayList.length > 0) {
+        modalHTML += '<h6><i class="bi bi-train-front"></i> 지하철</h6><ul class="list-unstyled mb-3">';
+        data.subwayList.forEach(station => {
+            const lineInfo = station.typeList.map(line =>
+                // 공통 transport-pill 클래스 사용
+                `<span class="transport-pill" style="background-color:${line.color};">${line.name}</span>
+                 <strong>${line.walkingDuration}분</strong> (${line.walkingDistance}m)`
+            ).join(', ');
+            modalHTML += `<li class="mb-2"><strong>${station.stationName}역</strong> &mdash; ${lineInfo}</li>`;
+        });
+        modalHTML += '</ul>';
+    } else {
+         modalHTML += '<h6><i class="bi bi-train-front"></i> 지하철</h6><p>정보 없음</p>';
+    }
+
+    // 2. 버스 정보 (개별 버스 번호에 알약 UI 적용)
+    if (data.busList && data.busList.length > 0) {
+        modalHTML += '<h6><i class="bi bi-bus-front"></i> 버스</h6><div class="mb-3">';
+        data.busList.forEach(busType => {
+            modalHTML += `<div class="mb-2">
+                            <strong style="font-size: 0.95em;">${busType.typeName}</strong>
+
+                            <div class="pill-container">`;
+
+            // 각 버스 번호를 순회하며 알약(pill) 생성
+            busType.list.forEach(busNumber => {
+                modalHTML += `<span class="transport-pill" style="background-color:${busType.typeColor};">${busNumber}</span>`;
+            });
+
+            modalHTML += `</div></div>`; // .pill-container & .mb-2 닫기
+        });
+        modalHTML += '</div>'; // 메인 버스 div 닫기
+    } else {
+        modalHTML += '<h6><i class="bi bi-bus-front"></i> 버스</h6><p>정보 없음</p>';
+    }
+
+    // 3. 텍스트 요약 (복사/붙여넣기용)
+    const summaryText = generateTransportSummary(data);
+    modalHTML += `
+                <hr>
+                <h6><i class="bi bi-clipboard"></i> 텍스트 요약 (복사/붙여넣기용)</h6>
+                <textarea readonly class="form-control" rows="4" style="font-size: 0.9em;">${summaryText}</textarea>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // 모달 닫기 이벤트 (기존과 동일)
+    document.getElementById('transportModalClose').onclick = function() {
+        document.getElementById('transportModal')?.remove();
+    };
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('transportModal');
+        if (event.target == modal) {
+            modal.remove();
+        }
+    }, { once: true });
+}
