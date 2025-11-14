@@ -252,20 +252,21 @@ class JjinbbaRouter(BaseCRUD):
         if not parent:
             raise HTTPException(404, "존재하지 않는 레코드")
 
-        # 1. 부모 필드 업데이트 (parent.numbers가 여기서 업데이트됨)
-        for k, v in item.model_dump(exclude_unset=True).items():
+        # 1. 부모 필드 업데이트
+        update_data = item.model_dump(exclude_unset=True)
+        for k, v in update_data.items():
             setattr(parent, k, v)
 
         # 기존 자식의 number 수집
         existing_children = db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent.id).all()
-        existing_numbers = {str(child.number) for child in existing_children}  # 문자열로 통일
+        existing_numbers = {str(child.number) for child in existing_children}
 
-        # 전체 numbers (업데이트 요청에 포함된 최신 numbers 목록)
         current_parent_numbers = [str(num) for num in parent.numbers] if parent.numbers else []
         numbers_in_request = set(current_parent_numbers)
 
         # 2. 삭제된 number 처리
         numbers_to_delete = existing_numbers - numbers_in_request
+        is_data_changed = bool(numbers_to_delete)
 
         if numbers_to_delete:
             db.query(JjinbbaChildModel).filter(
@@ -275,17 +276,14 @@ class JjinbbaRouter(BaseCRUD):
 
         # 3. 새로운 number 처리 및 크롤링
         new_numbers_to_crawl = [num for num in current_parent_numbers if num not in existing_numbers]
-
-        is_data_changed = bool(new_numbers_to_crawl or numbers_to_delete)
-
         if new_numbers_to_crawl:
+            is_data_changed = True
             try:
-                # 새 매물만 크롤링하여 DB에 추가
                 new_crawl = await get_infos.process_properties([int(n) for n in new_numbers_to_crawl])
             except Exception as exc:
                 raise HTTPException(500, f"크롤링 실패: {exc}")
 
-            # 새 자식 레코드 INSERT
+            # 새 자식 레코드 INSERT (필드 생략)
             for c in new_crawl["children"]:
                 db.add(JjinbbaChildModel(parent_id=parent.id, **{
                     "number": c["number"], "address": c["address"], "building_name": c["building_name"],
@@ -303,15 +301,28 @@ class JjinbbaRouter(BaseCRUD):
                 }))
             db.flush()
 
-        # 4. 데이터 변경이 있거나 부모의 다른 필드가 변경된 경우, parent 메타 갱신
-        if is_data_changed or item.model_dump(exclude_unset=True, exclude={'numbers'}):
-            # 변경사항이 있으면, 모든 자식 레코드를 다시 불러와 정렬 및 region_info 갱신
+        # 4. 데이터 변경이 있거나 부모의 다른 필드가 변경된 경우, parent 메타 갱신 및 numbers 정렬
+        if is_data_changed or update_data.keys() - {'numbers'}:
             all_children = db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent.id).all()
-            parent.numbers = [c.number for c in all_children]
 
-            # region_info 갱신
-            dong_counts = {}
+            # 4-1. 주소별 그룹화
+            grouped: Dict[str, List[JjinbbaChildModel]] = {}
             for child in all_children:
+                addr = child.address or ""
+                grouped.setdefault(addr, []).append(child)
+
+            # 4-2. 그룹 내에서 층 순으로 정렬 후 통합 (parse_floor 적용)
+            sorted_children: List[JjinbbaChildModel] = []
+            for addr, items in grouped.items():
+                items.sort(key=lambda x: get_infos.parse_floor(x.floor))
+                sorted_children.extend(items)
+
+            # 4-3. 정렬된 자식 레코드 기반으로 parent.numbers 갱신
+            parent.numbers = [c.number for c in sorted_children]
+
+            # 4-4. region_info 갱신 (기존 로직 유지)
+            dong_counts: Dict[str, int] = {}
+            for child in sorted_children:
                 addr = child.address or ""
                 if not addr:
                     continue
@@ -326,8 +337,7 @@ class JjinbbaRouter(BaseCRUD):
             else:
                 parent.region_info = "지역 정보 없음"
 
-        db.commit()  # 최종 커밋 (삭제, 추가, parent 필드, region_info, numbers)
-
+        db.commit()
         db.refresh(parent)
         return parent
 
