@@ -60,8 +60,7 @@ class OAuthClient:
         return f"{self._authentication_uri}/authorize?{query_param}"
 
     async def get_tokens(self, code: str, state: str) -> Dict:
-        print(f"{self._authentication_uri}/token")
-        print(self._client_id, self._client_secret_id, code, state)
+        # print문 제거
         tokens = await self._request_post_to(
             url=f"{self._authentication_uri}/token",
             payload={
@@ -72,11 +71,12 @@ class OAuthClient:
                 "state": state,
             },
         )
-        print(tokens)
+        # print(tokens) # 제거
         if tokens is None:
             raise InvalidAuthorizationCode
 
-        if tokens.get("access_token") is None or tokens.get("refresh_token") is None:
+        # access_token만 확인 (refresh_token은 선택적으로 올 수 있음 - 이미 발급된 경우)
+        if tokens.get("access_token") is None:
             raise InvalidAuthorizationCode
 
         return tokens
@@ -86,13 +86,18 @@ class OAuthClient:
             url=f"{self._authentication_uri}/token",
             payload={
                 "client_id": self._client_id,
-                "client_secret": self._client_secret_id,
+                "client_secret": self._client_secret_id,  # 시크릿은 필요 없을 수 있으나 카카오 정책 확인 필요
                 "grant_type": "refresh_token",
                 "refresh_token": refresh_token,
             },
         )
         if tokens is None:
             raise InvalidToken
+
+        # 새 access_token이 없는 경우
+        if tokens.get("access_token") is None:
+            raise InvalidToken
+
         return tokens
 
     async def get_user_info(self, access_token: str) -> Dict:

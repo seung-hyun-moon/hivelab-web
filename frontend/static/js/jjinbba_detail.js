@@ -1,6 +1,8 @@
 let currentCheckboxes = {};
 let propertyList = [];
 let first_number = 1;
+let childUpdateTimer = null;
+let localChildCache = {};
 
 /**
  * 공통 Fetch → JSON 호출 함수
@@ -213,6 +215,7 @@ function generateTemplate(currentIndex, field, checkboxes) {
 }
 
 // 모든 자식 데이터로부터 템플릿을 생성하고 현재 표시 중인 템플릿 업데이트
+// 모든 자식 데이터로부터 템플릿을 생성하고 현재 표시 중인 템플릿 업데이트
 async function generateAndUpdateTemplates() {
     try {
         // 모든 자식 데이터 가져오기
@@ -220,7 +223,7 @@ async function generateAndUpdateTemplates() {
         if (!childrenResponse.ok) {
             throw new Error(`Failed to fetch children data: ${childrenResponse.statusText}`);
         }
-        const children = await childrenResponse.json();
+        const children = await childrenResponse.json(); // DB에서 온 리스트 (순서 보장 X)
 
         if (!children || children.length === 0) {
             console.warn("No child data found for templates");
@@ -235,12 +238,17 @@ async function generateAndUpdateTemplates() {
         const parentData = await parentResponse.json();
         const checkboxes = parentData.checkboxes || {};
 
-        // 현재 보고 있는 매물 데이터 찾기
         const currentChild = children.find(child => child.number == number);
         if (!currentChild) {
             console.warn(`Current child with number=${number} not found`);
             return;
         }
+
+        const currentIndexInPropertyList = propertyList.findIndex(p => Number(p) === Number(number));
+        const currentIndex = (currentIndexInPropertyList === -1)
+            ? 1 // 혹시라도 못찾으면 1 (기본값)
+            : currentIndexInPropertyList + 1; // 1-based index로 변환
+        // -----------------------------------------------------------------
 
         // 자식 데이터를 템플릿에 맞는 형식으로 매핑
         const formFields = {
@@ -275,10 +283,7 @@ async function generateAndUpdateTemplates() {
             '특이사항': currentChild.note || ''
         };
 
-        // 현재 매물의 인덱스 찾기
-        const currentIndex = children.findIndex(child => child.number == number) + 1;
-
-        // 템플릿 생성
+        // 템플릿 생성 (수정된 1-based currentIndex 전달)
         const template = generateTemplate(currentIndex, formFields, checkboxes);
 
         // 템플릿 표시
@@ -537,92 +542,130 @@ async function downloadAllPropertyImages() {
     }
 }
 
-// 필드 값 변경 시 처리 함수
+async function getCurrentChildDataPatched() {
+    const data = await getCurrentChildData();
+    if (!data) return null;
+
+    localChildCache[number] = JSON.parse(JSON.stringify(data)); // Deep copy
+    return localChildCache[number];
+}
+
+
+function updateTemplateLocalOnly() {
+    const localData = localChildCache[number];
+    if (!localData) return;
+
+    const formFields = {
+        '주소': localData.address || '',
+        '건물명': localData.building_name || '',
+        '층': localData.floor || '',
+        '보증금': localData.deposit || '',
+        '임대료': localData.rent || '',
+        '관리비': localData.management_fee || '',
+        '임+관': localData.rent_and_mgmt || '',
+        'NOC': localData.noc || '',
+        '이율(%)': localData.rate || '',
+        'RF(개월)': localData.rf || '',
+        '임대면적': localData.lease_area || '',
+        '전용면적': localData.exclusive_area || '',
+        '엘베': localData.elevator || '',
+        '주차': localData.parking || '',
+        '냉난방': localData.heating || '',
+        '화장실': localData.restroom || '',
+        '용도': localData.use || '',
+        '사용승인일': localData.usage_approval_date || '',
+        '규모': localData.scale || '',
+        '방향': localData.direction || '',
+        '대지면적': localData.land_area || '',
+        '건축면적': localData.building_area || '',
+        '연면적': localData.total_area || '',
+        '주구조': localData.main_structure || '',
+        '건폐율': localData.building_coverage || '',
+        '용적률': localData.floor_area_ratio || '',
+        '개별공시지가': localData.land_price || '',
+        '특징': localData.feature || '',
+        '특이사항': localData.note || ''
+    };
+
+    const currentIndex = propertyList.findIndex(x => x == number) + 1;
+
+    const template = generateTemplate(currentIndex, formFields, currentCheckboxes);
+
+    const templateElement = document.getElementById('id_jjinbba_template');
+    if (templateElement) templateElement.innerHTML = template;
+}
+
+
 async function handleFieldChange(field, value) {
-    try {
-        // 현재 자식 데이터 가져오기
-        const childData = await getCurrentChildData();
-        if (!childData) {
-            console.error("No child data found for update");
-            return;
+    // -------------------------
+    // 1️⃣ 로컬 캐시 업데이트
+    // -------------------------
+    const childData = await getCurrentChildDataPatched();
+    if (!childData) return;
+
+    const fieldMapping = {
+        '주소': 'address',
+        '건물명': 'building_name',
+        '층': 'floor',
+        '보증금': 'deposit',
+        '임대료': 'rent',
+        '관리비': 'management_fee',
+        '임+관': 'rent_and_mgmt',
+        'NOC': 'noc',
+        '이율(%)': 'rate',
+        'RF(개월)': 'rf',
+        '임대면적': 'lease_area',
+        '전용면적': 'exclusive_area',
+        '엘베': 'elevator',
+        '주차': 'parking',
+        '냉난방': 'heating',
+        '화장실': 'restroom',
+        '용도': 'use',
+        '사용승인일': 'usage_approval_date',
+        '규모': 'scale',
+        '방향': 'direction',
+        '대지면적': 'land_area',
+        '건축면적': 'building_area',
+        '연면적': 'total_area',
+        '주구조': 'main_structure',
+        '건폐율': 'building_coverage',
+        '용적률': 'floor_area_ratio',
+        '개별공시지가': 'land_price',
+        '특징': 'feature',
+        '특이사항': 'note'
+    };
+
+    const modelField = fieldMapping[field];
+    if (!modelField) return;
+
+    // childLocal 업데이트
+    childData[modelField] = value;
+
+    updateTemplateLocalOnly();
+
+
+    if (['보증금', '임대료', '관리비', '이율(%)', 'RF(개월)', '전용면적'].includes(field)) {
+        calculateExcelFormula();
+
+        const nocVal = document.querySelector('input[name="name_edit_NOC"]')?.value || "";
+        childData['noc'] = nocVal;
+
+        if (field === '임대료' || field === '관리비') {
+            const rent = parseInt(document.querySelector('input[name="name_edit_임대료"]').value.replace(/\D/g, "")) || 0;
+            const mgmt = parseInt(document.querySelector('input[name="name_edit_관리비"]').value.replace(/\D/g, "")) || 0;
+            childData['rent_and_mgmt'] = `${(rent + mgmt).toLocaleString()}만`;
         }
-
-        // 필드명 매핑 (폼 필드 → 모델 필드)
-        const fieldMapping = {
-            '주소': 'address',
-            '건물명': 'building_name',
-            '층': 'floor',
-            '보증금': 'deposit',
-            '임대료': 'rent',
-            '관리비': 'management_fee',
-            '임+관': 'rent_and_mgmt',
-            'NOC': 'noc',
-            '이율(%)': 'rate',
-            'RF(개월)': 'rf',
-            '임대면적': 'lease_area',
-            '전용면적': 'exclusive_area',
-            '엘베': 'elevator',
-            '주차': 'parking',
-            '냉난방': 'heating',
-            '화장실': 'restroom',
-            '용도': 'use',
-            '사용승인일': 'usage_approval_date',
-            '규모': 'scale',
-            '방향': 'direction',
-            '대지면적': 'land_area',
-            '건축면적': 'building_area',
-            '연면적': 'total_area',
-            '주구조': 'main_structure',
-            '건폐율': 'building_coverage',
-            '용적률': 'floor_area_ratio',
-            '개별공시지가': 'land_price',
-            '특징': 'feature',
-            '특이사항': 'note'
-        };
-
-        const modelField = fieldMapping[field];
-        if (!modelField) {
-            console.warn(`No model field mapping for form field: ${field}`);
-            return;
-        }
-
-        // 업데이트할 데이터 준비
-        const updateData = {
-            [modelField]: value
-        };
-
-        // NOC, 임+관 등 자동 계산 필드 추가
-        if (field === '보증금' || field === '임대료' || field === '관리비' ||
-            field === '이율(%)' || field === 'RF(개월)' || field === '전용면적') {
-            // NOC 계산
-            calculateExcelFormula();
-            const nocInput = document.querySelector('input[name="name_edit_NOC"]');
-            if (nocInput) {
-                updateData['noc'] = nocInput.value;
-            }
-
-            // 임+관 계산
-            if (field === '임대료' || field === '관리비') {
-                const rentInput = document.querySelector('input[name="name_edit_임대료"]');
-                const mgmtInput = document.querySelector('input[name="name_edit_관리비"]');
-
-                if (rentInput && mgmtInput) {
-                    const rentValue = parseInt(rentInput.value.replace(/[^0-9]/g, '')) || 0;
-                    const mgmtValue = parseInt(mgmtInput.value.replace(/[^0-9]/g, '')) || 0;
-                    updateData['rent_and_mgmt'] = `${(rentValue + mgmtValue).toLocaleString()}만`;
-                }
-            }
-        }
-
-        // 자식 데이터 업데이트
-        await updateChildData(childData.id, updateData);
-
-        // 템플릿 업데이트
-        generateAndUpdateTemplates();
-
-    } catch (error) {
-        console.error("Error handling field change:", error);
     }
+
+    clearTimeout(childUpdateTimer);
+
+    childUpdateTimer = setTimeout(async () => {
+        await updateChildData(childData.id, {
+            [modelField]: value,
+            noc: childData.noc,
+            rent_and_mgmt: childData.rent_and_mgmt
+        });
+    }, 300);
 }
 
 // 섹션 토글 함수

@@ -197,6 +197,7 @@ class JjinbbaRouter(BaseCRUD):
 
         # parent 메타 갱신
         parent.region_info = crawl["region_info"]
+        parent.numbers = crawl["sortedNumbersArr"]
         db.commit()
 
         # children INSERT
@@ -251,68 +252,81 @@ class JjinbbaRouter(BaseCRUD):
         if not parent:
             raise HTTPException(404, "존재하지 않는 레코드")
 
-        # 부모 필드 업데이트
+        # 1. 부모 필드 업데이트 (parent.numbers가 여기서 업데이트됨)
         for k, v in item.model_dump(exclude_unset=True).items():
             setattr(parent, k, v)
 
-        db.commit()
-
         # 기존 자식의 number 수집
         existing_children = db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent.id).all()
-        existing_numbers = {child.number for child in existing_children}
+        existing_numbers = {str(child.number) for child in existing_children}  # 문자열로 통일
 
-        # 전체 numbers 중 새로운 number만 필터링
-        new_numbers = [num for num in parent.numbers if num not in existing_numbers]
+        # 전체 numbers (업데이트 요청에 포함된 최신 numbers 목록)
+        current_parent_numbers = [str(num) for num in parent.numbers] if parent.numbers else []
+        numbers_in_request = set(current_parent_numbers)
 
-        if new_numbers:
+        # 2. 삭제된 number 처리
+        numbers_to_delete = existing_numbers - numbers_in_request
+
+        if numbers_to_delete:
+            db.query(JjinbbaChildModel).filter(
+                JjinbbaChildModel.parent_id == parent.id,
+                JjinbbaChildModel.number.in_([int(n) for n in numbers_to_delete])
+            ).delete(synchronize_session=False)
+
+        # 3. 새로운 number 처리 및 크롤링
+        new_numbers_to_crawl = [num for num in current_parent_numbers if num not in existing_numbers]
+
+        is_data_changed = bool(new_numbers_to_crawl or numbers_to_delete)
+
+        if new_numbers_to_crawl:
             try:
-                crawl = await get_infos.process_properties(new_numbers)
+                # 새 매물만 크롤링하여 DB에 추가
+                new_crawl = await get_infos.process_properties([int(n) for n in new_numbers_to_crawl])
             except Exception as exc:
                 raise HTTPException(500, f"크롤링 실패: {exc}")
 
-            # region_info 갱신 (전체로)
-            parent.region_info = crawl["region_info"]
-
-            # 새 children 추가
-            for c in crawl["children"]:
+            # 새 자식 레코드 INSERT
+            for c in new_crawl["children"]:
                 db.add(JjinbbaChildModel(parent_id=parent.id, **{
-                    "number": c["number"],
-                    "address": c["address"],
-                    "building_name": c["building_name"],
-                    "floor": c["floor"],
-                    "deposit": c["deposit"],
-                    "rent": c["rent"],
-                    "management_fee": c["management_fee"],
-                    "rent_and_mgmt": c["rent_and_mgmt"],
-                    "rate": c["rate"],
-                    "noc": c["noc"],
-                    "rf": c["rf"],
-                    "exclusive_area": c["exclusive_area"],
-                    "elevator": c["elevator"],
-                    "parking": c["parking"],
-                    "heating": c["heating"],
-                    "restroom": c["restroom"],
-                    "lease_area": c["lease_area"],
-                    "use": c["use"],
-                    "usage_approval_date": c["usage_approval_date"],
-                    "scale": c["scale"],
-                    "direction": c["direction"],
-                    "land_area": c["land_area"],
-                    "building_area": c["building_area"],
-                    "total_area": c["total_area"],
-                    "main_structure": c["main_structure"],
-                    "building_coverage": c["building_coverage"],
-                    "floor_area_ratio": c["floor_area_ratio"],
-                    "land_price": c["land_price"],
-                    "feature": c["feature"],
-                    "note": c["note"],
-                    "img_urls": c["img_urls"],
-                    "rocation_url": c["rocation_url"],
-                    "latitude": c["latitude"],
-                    "longitude": c["longitude"],
+                    "number": c["number"], "address": c["address"], "building_name": c["building_name"],
+                    "floor": c["floor"], "deposit": c["deposit"], "rent": c["rent"],
+                    "management_fee": c["management_fee"], "rent_and_mgmt": c["rent_and_mgmt"], "rate": c["rate"],
+                    "noc": c["noc"], "rf": c["rf"], "exclusive_area": c["exclusive_area"], "elevator": c["elevator"],
+                    "parking": c["parking"], "heating": c["heating"], "restroom": c["restroom"],
+                    "lease_area": c["lease_area"], "use": c["use"], "usage_approval_date": c["usage_approval_date"],
+                    "scale": c["scale"], "direction": c["direction"], "land_area": c["land_area"],
+                    "building_area": c["building_area"], "total_area": c["total_area"],
+                    "main_structure": c["main_structure"], "building_coverage": c["building_coverage"],
+                    "floor_area_ratio": c["floor_area_ratio"], "land_price": c["land_price"], "feature": c["feature"],
+                    "note": c["note"], "img_urls": c["img_urls"], "rocation_url": c["rocation_url"],
+                    "latitude": c["latitude"], "longitude": c["longitude"],
                 }))
+            db.flush()
 
-            db.commit()
+        # 4. 데이터 변경이 있거나 부모의 다른 필드가 변경된 경우, parent 메타 갱신
+        if is_data_changed or item.model_dump(exclude_unset=True, exclude={'numbers'}):
+            # 변경사항이 있으면, 모든 자식 레코드를 다시 불러와 정렬 및 region_info 갱신
+            all_children = db.query(JjinbbaChildModel).filter(JjinbbaChildModel.parent_id == parent.id).all()
+            parent.numbers = [c.number for c in all_children]
+
+            # region_info 갱신
+            dong_counts = {}
+            for child in all_children:
+                addr = child.address or ""
+                if not addr:
+                    continue
+                addr_cleaned = re.sub(r'^.*?구\s*', '', addr)
+                match = re.search(r'([가-힣]+동(?:\d가)?)', addr_cleaned)
+                if match:
+                    dong = match.group(1)
+                    dong_counts[dong] = dong_counts.get(dong, 0) + 1
+
+            if dong_counts:
+                parent.region_info = ", ".join([f"{dong} {count}개" for dong, count in dong_counts.items()])
+            else:
+                parent.region_info = "지역 정보 없음"
+
+        db.commit()  # 최종 커밋 (삭제, 추가, parent 필드, region_info, numbers)
 
         db.refresh(parent)
         return parent

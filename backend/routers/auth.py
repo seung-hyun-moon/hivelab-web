@@ -1,6 +1,6 @@
 import secrets
 from typing import Optional
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi import Depends, Header, Request, HTTPException, status, APIRouter
 from sqlalchemy.orm import Session
 
@@ -30,6 +30,14 @@ kakao_client = OAuthClient(
     verify_uri="https://kapi.kakao.com/v1/user/access_token_info",
 )
 
+async def get_refresh_token(request: Request) -> str:
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated. Missing refresh_token cookie.",
+        )
+    return refresh_token
 
 class AuthHandler(object):
     def __init__(self):
@@ -38,6 +46,12 @@ class AuthHandler(object):
 
     def register_routes(self):
         self.router.add_api_route("/login", self.login_kakao, methods=["GET"])
+        self.router.add_api_route(
+            "/refresh",
+            self.refresh,
+            dependencies=[Depends(get_refresh_token)],  # login_required 대신 refresh_token을 직접 받도록
+            methods=["GET"]
+        )
         self.router.add_api_route("/callback", self.callback, methods=["GET"])
         self.router.add_api_route("/refresh", self.refresh, methods=["GET"])
         self.router.add_api_route("/user", self.get_user, dependencies=[Depends(self.login_required)], methods=["GET"])
@@ -127,6 +141,9 @@ class AuthHandler(object):
                        request: Request = None, db: Session = Depends(get_db)):
         token_response = await oauth_client.get_tokens(code, state)
         access_token = token_response.get('access_token')
+        refresh_token = token_response.get('refresh_token')
+        access_token_expires_in = token_response.get('expires_in')
+        refresh_token_expires_in = token_response.get('refresh_token_expires_in')
 
         if not DEBURG_MODE:
             user_info_response = await oauth_client.get_user_info(access_token)
@@ -139,10 +156,8 @@ class AuthHandler(object):
                     status_code=401
                 )
 
-            # --- 데이터베이스 사용자 조회 ---
             db_user = db.query(UserModel).filter(UserModel.email == email).first()
 
-            # 사용자가 DB에 없거나 계정이 잠겨(is_active=False)있는 경우
             if not db_user or not db_user.is_active:
                 return templates.TemplateResponse(
                     "401.html",
@@ -151,13 +166,69 @@ class AuthHandler(object):
                 )
 
         response = RedirectResponse(url='/customer')
-        response.set_cookie(key="access_token", value=access_token, httponly=True)
+
+        if access_token:
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                max_age=access_token_expires_in,  # 카카오가 준 만료시간 설정
+                samesite="lax"
+            )
+
+        if refresh_token:
+            response.set_cookie(
+                key="refresh_token",
+                value=refresh_token,
+                httponly=True,
+                max_age=refresh_token_expires_in,  # 카카오가 준 만료시간 설정
+                samesite="lax"
+            )
+
         return response
 
-    async def refresh(self, oauth_client=Depends(get_oauth_client),
-                      refresh_token: str = Depends(get_authorization_token)):
-        token_response = await oauth_client.refresh_access_token(refresh_token=refresh_token)
-        return {"response": token_response}
+    async def refresh(self,
+                      oauth_client=Depends(get_oauth_client),
+                      refresh_token: str = Depends(get_refresh_token)  # 새로 만든 의존성 사용
+                      ):
+        try:
+            token_response = await oauth_client.refresh_access_token(refresh_token=refresh_token)
+        except Exception:
+            # 리프래시 토큰이 유효하지 않으면 401 반환
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token."
+            )
+
+        new_access_token = token_response.get('access_token')
+        new_access_token_expires_in = token_response.get('expires_in')
+
+        # 중요: 카카오 정책에 따라 리프래시 토큰이 갱신될 수 있습니다 (Refresh Token Rotation)
+        new_refresh_token = token_response.get('refresh_token')
+        new_refresh_token_expires_in = token_response.get('refresh_token_expires_in')
+
+        # JSONResponse를 사용하여 본문과 쿠키를 동시에 설정
+        response = JSONResponse(content={"message": "Token refreshed successfully"})
+
+        if new_access_token:
+            response.set_cookie(
+                key="access_token",
+                value=new_access_token,
+                httponly=True,
+                max_age=new_access_token_expires_in,
+                samesite="lax"
+            )
+
+        if new_refresh_token:
+            response.set_cookie(
+                key="refresh_token",
+                value=new_refresh_token,
+                httponly=True,
+                max_age=new_refresh_token_expires_in,
+                samesite="lax"
+            )
+
+        return response
 
     async def get_user(self, oauth_client=Depends(get_oauth_client),
                        access_token: str = Depends(get_authorization_token)):

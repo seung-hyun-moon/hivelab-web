@@ -90,7 +90,7 @@ function fetchCurrentUser() {
 
 $(document).ready(function() {
     // 페이지 로드 시 사용자 정보 가져오기
-    fetchCurrentUser();
+    fetchCurrentUser().done(function() {
 
     $('#customerTable thead tr')
         .clone(true)
@@ -916,9 +916,59 @@ $(document).ready(function() {
 
     ['special_notes', 'special_notes2', 'notes', 'notes2'].forEach(adjustTextareaHeight);
 
+    }).fail(function(jqXHR) {
+        // fetchCurrentUser가 실패했을 때
+        if (jqXHR.status !== 401) {
+            console.error("Critical error fetching user data. Status:", jqXHR.status);
+            alert("사용자 정보를 가져오는 데 실패했습니다. 페이지를 새로고침해주세요.");
+        }
+    });
 
-//    setInterval(function() {
-//        // 페이지나 필터 상태 유지하며 테이블 데이터만 새로고침
-//        table.ajax.reload(null, false);
-//    }, 30000); // 30000ms = 30초
+    // 현재 리프래시 중인지 확인하는 플래그
+    var isRefreshing = false;
+    // 리프래시가 실패했는지 확인하는 플래그
+    var refreshFailed = false;
+
+    $(document).ajaxError(function(event, jqXHR, settings, thrownError) {
+        // 리프래시 실패 시 또는 리프래시 요청 자체의 401인 경우 무한 루프 방지
+        if (refreshFailed || settings.url === "/oauth/refresh") {
+            return;
+        }
+
+        // 401 (Unauthorized) 에러가 발생한 경우
+        if (jqXHR.status === 401) {
+
+            // 이미 다른 요청이 리프래시를 시도 중이면 대기 (중복 호출 방지)
+            if (isRefreshing) {
+                // 이 예제에서는 단순화를 위해 대기 로직 대신 중복 실행을 막습니다.
+                // 복잡한 앱에서는 Promise 기반 큐잉이 필요할 수 있습니다.
+                return;
+            }
+
+            isRefreshing = true;
+
+            $.ajax({
+                url: '/oauth/refresh',
+                type: 'GET',
+                async: false, // 중요: 페이지 새로고침 전에 이 요청이 완료되어야 함
+                success: function(response) {
+                    console.log("Token refreshed successfully.");
+                    // 리프래시 성공 시, 페이지를 새로고침하여
+                    // 새 토큰으로 모든 데이터를 다시 로드합니다.
+                    location.reload();
+                },
+                error: function(error) {
+                    console.error("Failed to refresh token:", error);
+                    // 리프래시 실패 시 (예: 리프래시 토큰 만료)
+                    // 로그인 페이지로 강제 이동
+                    refreshFailed = true;
+                    alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+                    window.location.href = "/oauth/login"; // 로그인 페이지 URL
+                },
+                complete: function() {
+                    isRefreshing = false;
+                }
+            });
+        }
+    });
 });
