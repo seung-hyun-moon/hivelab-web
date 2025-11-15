@@ -491,7 +491,7 @@ $(document).ready(function() {
                 edit_date: formatDate(),
                 create_date: create_date,
                 marketing: "",
-                creator: currentUserName,
+                creator: creator,
 
                 company_name: form.find('input[name="company_name"]').val(),
                 gender: form.find('input[name="gender"]:checked').val(),
