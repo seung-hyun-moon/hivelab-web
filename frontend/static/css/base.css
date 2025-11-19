@@ -441,3 +441,32 @@ input[type="checkbox"]:checked + .person-label {
   opacity: 1;
   visibility: visible;
 }
+
+.navbar {
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.calendar-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* 기존 sidebar 레이아웃 영향 최소화 */
+.calendar-filters .sidebar-item {
+  margin: 0;
+}
+
+.nav-checkbox {
+  /*인라인 블록*/
+  display: inline-block;
+}

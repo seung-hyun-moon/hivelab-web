@@ -214,7 +214,7 @@ class CustomerRouter(BaseCRUD):
 
             # STAFF 권한 체크
             if not self.is_manager_or_admin(current_user):
-                if customer.creator != current_user.email:
+                if customer.creator != current_user.name:
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail=f"Customer {customer_id}에 대한 권한이 없습니다."

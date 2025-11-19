@@ -47,6 +47,7 @@ function getHolidays(year, month) {
                 backgroundColor: "#000",
                 dragBackgroundColor: "#000",
                 borderColor: "#000",
+                is_public: true,
               };
 
               const calendar = MOCK_CALENDARS.find(

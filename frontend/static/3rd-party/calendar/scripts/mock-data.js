@@ -132,6 +132,7 @@ function generateRandomEvent(calendar, renderStart, renderEnd) {
   var state = chance.bool({ likelihood: 50 }) ? 'Busy' : 'Free';
   var goingDuration = chance.bool({likelihood: 20}) ? chance.integer({ min: 30, max: 120 }) : 0;
   var comingDuration = chance.bool({likelihood: 20}) ? chance.integer({ min: 30, max: 120 }) : 0;
+  var is_public = chance.bool({ likelihood: 80 });
   var raw = {
     memo: chance.sentence(),
     creator: {
@@ -156,6 +157,7 @@ function generateRandomEvent(calendar, renderStart, renderEnd) {
     goingDuration: goingDuration,
     comingDuration: comingDuration,
     raw: raw,
+    is_public: is_public,
   }
 
   generateTime(event, renderStart, renderEnd);
