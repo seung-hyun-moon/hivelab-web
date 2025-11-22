@@ -1,11 +1,60 @@
 /* eslint-disable no-var,prefer-destructuring,prefer-template,no-undef,object-shorthand,no-console */
 // for testing IE11 compatibility, this file doesn't use ES6 syntax.
 
+// 전역 변수로 현재 사용자 이름 저장
+var currentUserName = '송재민'; // 기본값
+var permissionLevel = 'STAFF'; // 기본값
+
+// 사용자 정보 가져오기
+function fetchCurrentUser() {
+    return $.ajax({
+        url: '/oauth/hive_user',
+        type: 'GET',
+        success: function(response) {
+            if (response?.db_user?.name) {
+                currentUserName = response.db_user.name;
+                const permission_level = response?.db_user?.permission_level;
+                const canSeePublic = ["MANAGER", "ADMIN"].includes(permission_level);
+                console.log("User Permission Level:", currentUserName, permission_level, canSeePublic);
+                if (canSeePublic) {
+                    // hidden 처리된 요소 보이기
+                    $('#publicCheckboxContainer').removeAttr('hidden');
+                    $('#publicCheckboxContainer2').removeAttr('hidden');
+                } else {
+                    // hidden 처리된 요소 숨기기
+                    $('#publicCheckboxContainer').attr('hidden', true);
+                    $('#publicCheckboxContainer2').attr('hidden', true);
+                }
+            }
+        },
+        error: function(error) {
+            console.error("Failed to fetch user data:", error);
+            // 실패 시 기본값 '송재민' 사용
+        }
+    });
+}
+
+function createPublicSection() {
+  const section = document.createElement('div');
+  section.id = 'publicCheckboxContainer';
+  section.style.display = 'inline-block';
+  section.style.verticalAlign = 'middle';
+  section.className = 'form-check form-check-inline';
+  section.innerHTML = `
+    <div class="form-check form-switch" style="display:flex; align-items:center; font-size:14px; height:32px; width:120px; gap:2px;">
+        <input class="form-check-input" type="checkbox" role="switch" id="is_public" name="is_public" style="margin-right:6px;">
+        <label class="form-check-label" for="is_public" style="margin-bottom:0;">공개</label>
+    </div>
+  `;
+
+  return section;
+}
+
 function createDropdownSection() {
   console.log("createDropdownSection 실행");
   const section = document.createElement('div');
   section.className = 'toastui-calendar-popup-section toastui-calendar-dropdown-section toastui-calendar-state-section';
-
+  section.style.display = 'inline-block';
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'toastui-calendar-popup-section-item toastui-calendar-popup-button';
@@ -97,7 +146,9 @@ function transformEvent(event) {
         dragBackgroundColor: '#000',
         borderColor: '#000',
         customStyle: {},
-        raw: null
+        raw: null,
+        creator: '송재민',
+        is_public: true,
     };
 
     // Merge default values with the provided event
@@ -464,7 +515,34 @@ function updateJSON(largeObj, smallObj) {
                                             const formContainer = targetNode.querySelector('.toastui-calendar-form-container');
                                             const dropdownSection = createDropdownSection();
                                             formContainer.insertBefore(dropdownSection, formContainer.firstChild);
+                                            // Insert the public section
+                                            const cp = createPublicSection();
+                                            dropdownSection.after(cp);
+                                            // is_public 체크박스 설정
+                                            const isPublicCheckbox = document.getElementById('is_public');
+                                            if (isPublicCheckbox) {
+                                            // eventInfo.event.id를 조회하여 값에 따라 체크박스 상태 설정
+                                                fetch(`/api/event/${eventInfo.event.id}`, {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    }
+                                                })
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    console.log("Fetched event data for is_public:", data);
+                                                    eventInfo.event.is_public = data.is_public;
+                                                    isPublicCheckbox.checked = eventInfo.event.is_public;
+                                                    eventInfo.event.creator = data.creator;
+                                                    console.log("is_public:", eventInfo.event.is_public);
+                                                    console.log("is_public checkbox:", isPublicCheckbox.checked);
+                                                })
+                                                .catch(error => console.error('Error:', error));
+                                            }
 
+                                            // Set attendees checkboxes
+                                            console.log("is_public:", eventInfo.event.is_public);
+                                            console.log("is_public checkbox:", isPublicCheckbox.checked);
                                             console.log("!!!!", eventInfo.event.attendees);
                                             const attendees = eventInfo.event.attendees;
                                             attendees.forEach(attendee => {
@@ -475,7 +553,7 @@ function updateJSON(largeObj, smallObj) {
                                             });
 
                                             // Hide the sixth div element
-                                            const busy_dd = document.querySelector('.toastui-calendar-form-container > div:nth-child(6)');
+                                            const busy_dd = document.querySelector('.toastui-calendar-form-container > div:nth-child(7)');
                                             if (busy_dd) busy_dd.style.display = 'none';
 
                                             // Disconnect the observer after handling the mutation
@@ -515,9 +593,12 @@ function updateJSON(largeObj, smallObj) {
 
                   const dropdownSection = createDropdownSection();
                   formContainer.insertBefore(dropdownSection, formContainer.firstChild);
+                  // Insert the public section
+                  const cp = createPublicSection();
+                  dropdownSection.after(cp);
 
                 // 한 번 감지하면 더 이상 관찰하지 않도록 종료합니다.
-                const busy_dd = document.querySelector('.toastui-calendar-form-container > div:nth-child(6)');
+                const busy_dd = document.querySelector('.toastui-calendar-form-container > div:nth-child(7)');
                 busy_dd.style.display='none';
 
                 observer.disconnect();
@@ -543,7 +624,14 @@ function updateJSON(largeObj, smallObj) {
         const attendeesElement = document.querySelector('#id_attendees');
         const eventAttendees = attendeesElement ? attendeesElement.textContent.split(',').map(name => name.trim()) : [];
         event.attendees = eventAttendees;
+        event.creator = currentUserName;
         const transformedEvent = transformEvent(event);
+        const isPublicCheckbox = document.getElementById('is_public');
+        if (isPublicCheckbox) {
+            transformedEvent.is_public = isPublicCheckbox.checked;
+        }
+
+        console.log("Creating event with is_public:", transformedEvent.is_public);
 
         fetch('/api/event/', {
             method: 'POST',
@@ -585,6 +673,11 @@ function updateJSON(largeObj, smallObj) {
             changes.attendees = selectedPeople;
         }
 
+        const isPublicCheckbox = document.getElementById('is_public');
+        if (isPublicCheckbox) {
+            event.is_public = isPublicCheckbox.checked;
+            changes.is_public = isPublicCheckbox.checked;
+        }
 
         fetch('/api/event/'+event.id, {
             method: 'PATCH',
@@ -705,6 +798,7 @@ function updateJSON(largeObj, smallObj) {
     });
 
   // Init
+  fetchCurrentUser();
   bindInstanceEvents();
   bindAppEvents();
   initCheckbox();

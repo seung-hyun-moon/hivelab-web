@@ -43,6 +43,7 @@ class EventUpdate(EventBase):
 
 
 class Event(EventBase):
+    can_edit: bool = False  # 수정 권한 여부
     class Config:
         from_attributes = True
 

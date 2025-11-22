@@ -79,12 +79,7 @@ $(document).ready(function() {
         } else {
             $('#id_admin_page').attr('hidden', true);
         }
-
-        if (permission_level === 'ADMIN' || permission_level === 'MANAGER') {
-            $('#id_menu_calendar').removeAttr('hidden');
-        } else {
-            $('#id_menu_calendar').attr('hidden', true);
-        }
+        $('#id_menu_calendar').removeAttr('hidden');
     }
 
     // 2. 카테고리 렌더링 함수
