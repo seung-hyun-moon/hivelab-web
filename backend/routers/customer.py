@@ -17,6 +17,62 @@ class CustomerRouter(BaseCRUD):
                          model=CustomerModel)
         self.router.add_api_route('/bulk_update_status', self.bulk_update_status, response_model=None,
                                   methods=['PATCH'])
+        self.router.add_api_route(
+            '/prioritized',
+            self.get_items_prioritized,
+            methods=['GET'],
+        )
+
+    def get_items_prioritized(
+            self,
+            db: Session = Depends(get_db),
+            current_user: UserModel = Depends(AuthHandler.get_current_user),
+    ):
+        """
+        권한 무시:
+        - 모든 고객을 불러온 후
+        - PO(head) 또는 PA(deputy)에 현재 유저 이름이 들어있는 고객을 edit_date DESC로 상단 배치
+        - 나머지는 id DESC로 이어붙임
+        """
+
+        my_name = current_user.name
+
+        # 1) 권한과 무관하게 모든 고객 가져오기
+        items = db.query(CustomerModel).all()
+
+        # 2) 내 이름이 PO/PA에 포함되는지 검사
+        def is_my_po_pa(item: CustomerModel) -> bool:
+            head = item.head or ""
+            deputy = item.deputy or ""
+
+            # 쉼표 또는 줄바꿈으로 split 후 정확 매칭
+            def normalize_list(s):
+                return [token.strip() for token in s.replace(",", "\n").split("\n") if token.strip()]
+
+            head_list = normalize_list(head)
+            deputy_list = normalize_list(deputy)
+
+            return my_name in head_list or my_name in deputy_list
+
+        # 3) 우선순위 그룹 / 그 외 그룹 나누기
+        priority_items = [i for i in items if is_my_po_pa(i)]
+        other_items = [i for i in items if i not in priority_items]
+
+        # 4) 정렬
+        priority_items.sort(key=lambda i: (i.edit_date or ""), reverse=True)
+        other_items.sort(key=lambda i: i.id, reverse=True)
+
+        ordered_items = priority_items + other_items
+
+        # 5) can_edit 포함해서 반환
+        response_items = []
+        for item in ordered_items:
+            can_edit = self._can_edit(current_user, item)
+            data = item.__dict__.copy()
+            data["can_edit"] = can_edit
+            response_items.append(Customer(**data))
+
+        return response_items
 
     @staticmethod
     def is_manager_or_admin(user: UserModel) -> bool:

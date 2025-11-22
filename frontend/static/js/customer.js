@@ -381,14 +381,19 @@ $(document).ready(function() {
 
     $('#addCustomerModal form').on('submit', function() {
         var form = $(this);
+        var $submitBtn = form.find('button[type="submit"]'); // 제출 버튼
         var contact_date = form.find('input[name="contact_date"]').val();
 
-        // contact_date가 YY.MM.DD 형식인지 확인
+        // 날짜 형식 검사
         var datePattern = /^\d{2}\.\d{2}\.\d{2}$/;
         if (!datePattern.test(contact_date)) {
             alert("컨택일은 YY.MM.DD 형식이어야 합니다.");
-            return false; // AJAX 요청 중단
+            return false;
         }
+
+        // [추가] 로딩 아이콘 표시 및 버튼 비활성화
+        $('#loading-icon').show();            // 로딩 아이콘 보이기
+        $submitBtn.prop('disabled', true);    // 버튼 비활성화 (중복 클릭 방지)
 
         var data = {
             importance: form.find('input[name="importance"]').val(),
@@ -403,7 +408,7 @@ $(document).ready(function() {
             edit_date: formatDate(),
             create_date: formatDate(),
             marketing: "",
-            creator: currentUserName, // OAuth에서 가져온 사용자 이름 사용
+            creator: currentUserName,
 
             company_name: form.find('input[name="company_name"]').val(),
             gender: form.find('input[name="gender"]:checked').val(),
@@ -425,10 +430,17 @@ $(document).ready(function() {
                 console.log('Success:', response);
                 $('#addCustomerModal').modal('hide');
                 table.ajax.reload();
+                // 폼 초기화
                 $('#addCustomerModal form').find('input, textarea').not('[name="head"], [name="deputy"]').val('');
             },
             error: function(error) {
                 console.error('Error:', error);
+                alert("등록 중 오류가 발생했습니다.");
+            },
+            complete: function() {
+                // [추가] 요청이 끝나면(성공하든 실패하든) 로딩 아이콘 숨기고 버튼 복구
+                $('#loading-icon').hide();     // 로딩 아이콘 숨기기
+                $submitBtn.prop('disabled', false); // 버튼 다시 활성화
             }
         });
 
@@ -470,14 +482,20 @@ $(document).ready(function() {
 
         $('#modifyCustomerModal form').off('submit').on('submit', function() {
             var form = $(this);
+            var $submitBtn = form.find('button[type="submit"]'); // 제출 버튼
             var contact_date = form.find('input[name="contact_date"]').val();
 
-            // contact_date가 YY.MM.DD 형식인지 확인
+            // 날짜 형식 검사
             var datePattern = /^\d{2}\.\d{2}\.\d{2}$/;
             if (!datePattern.test(contact_date)) {
                 alert("컨택일은 YY.MM.DD 형식이어야 합니다.");
-                return false; // AJAX 요청 중단
+                return false;
             }
+
+            // [추가] 로딩 아이콘 표시 및 버튼 비활성화
+            $('#loading-icon').show();            // 로딩 아이콘 보이기
+            $submitBtn.prop('disabled', true);    // 버튼 비활성화
+
             var data = {
                 importance: form.find('input[name="importance"]').val(),
                 contact_date: contact_date,
@@ -516,6 +534,12 @@ $(document).ready(function() {
                 },
                 error: function(error) {
                     console.error('Error:', error);
+                    alert("수정 중 오류가 발생했습니다.");
+                },
+                complete: function() {
+                    // [추가] 요청 완료 시 로딩 아이콘 숨기고 버튼 복구
+                    $('#loading-icon').hide();      // 로딩 아이콘 숨기기
+                    $submitBtn.prop('disabled', false); // 버튼 다시 활성화
                 }
             });
 

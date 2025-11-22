@@ -1,15 +1,18 @@
 function fetchCustomers(query = '') {
   return new Promise((resolve, reject) => {
     $.ajax({
-      url: '/api/customer/',
+      // ✅ 새로 만든 우선순위 라우터 사용
+      url: '/api/customer/prioritized',
       method: 'GET',
       success: function(response) {
-        const customers = response.sort((a, b) => b.id - a.id); // Sort by ID in descending order
+        // ✅ 백엔드에서 이미 정렬했으므로 프런트에서 다시 sort 하지 않음
+        const customers = response;
+
         const filteredCustomers = customers.filter(customer =>
-          customer.id.toString().startsWith(query) || customer.industry.includes(query)
+          customer.id.toString().startsWith(query) ||
+          (customer.industry || '').includes(query)
         );
 
-        // Populate the dropdown with filtered customers
         const dropdown = $('select[name="customer"]');
         dropdown.empty();
         dropdown.append('<option value="">고객을 선택하세요</option>');
@@ -20,11 +23,11 @@ function fetchCustomers(query = '') {
           );
         });
 
-        resolve(); // Resolve the promise once the dropdown is populated
+        resolve();
       },
       error: function() {
         console.log("Error fetching customer data.");
-        reject(); // Reject the promise if there is an error
+        reject();
       }
     });
   });
@@ -42,6 +45,7 @@ function formatDate() {
 }
 
 $(document).ready(function() {
+    // 페이지 로드 시 로딩바 표시
     $('#loading-icon').show();
 
     var table = $('#jjinbbaTable').DataTable({
@@ -62,6 +66,7 @@ $(document).ready(function() {
             }
         ],
         initComplete: function() {
+            // 테이블 초기화 완료 시 로딩바 숨김
             $('#loading-icon').hide();
             console.log('로딩 완료');
         },
@@ -150,7 +155,7 @@ $(document).ready(function() {
                     var customerValue = $this.text().trim();
 
                     if (!customerValue || isNaN(customerValue)) {
-                        console.log('Invalid customer value:', customerValue); // You can log it or handle this case however you'd like
+                        // console.log('Invalid customer value:', customerValue);
                         return; // Exit early if the value is invalid
                     }
 
@@ -195,6 +200,9 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
             $('#loading-icon').show();
+            // 삭제 중 중복 클릭 방지를 위해 테이블 내의 모든 버튼 비활성화 (선택사항)
+            // $('.delete-btn').prop('disabled', true);
+
             $.ajax({
                 url: '/api/jjinbba/' + id,
                 type: 'DELETE',
@@ -204,9 +212,11 @@ $(document).ready(function() {
                 },
                 error: function(request, msg, error) {
                     console.error('삭제 실패:', error);
+                    alert("삭제에 실패했습니다.");
                 },
                 complete: function() {
                     $('#loading-icon').hide(); // ✅ 성공/실패 상관없이 실행
+                    // $('.delete-btn').prop('disabled', false); // 버튼 복구
                 }
             });
         }
@@ -217,6 +227,10 @@ $(document).ready(function() {
         var id = $(this).data('id');
         // '수정' 모달에서는 더 이상 created_at, checkboxes 등을 미리 로드할 필요가 없습니다.
         // 백엔드가 PUT 요청 시 numbers 배열만 받아서 새로 처리하기 때문입니다.
+
+        // 데이터 로딩 중임을 표시하기 위해 로딩 아이콘 표시 가능
+        // $('#loading-icon').show();
+
         $.ajax({
             url: '/api/jjinbba/' + id,
             type: 'GET',
@@ -227,26 +241,33 @@ $(document).ready(function() {
                     $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
                     $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
                     $('#modifyJjinbbaModal').find('select[name="customer"]').val(itemData.customer);
+
+                    // 데이터 로드 후 모달 표시
+                    $('#modifyJjinbbaModal').modal('show');
+                    // $('#loading-icon').hide();
                 });
             },
             error: function(err) {
                 console.error('항목 데이터 불러오기 실패:', err);
+                // $('#loading-icon').hide();
             }
         });
-        $('#modifyJjinbbaModal').modal('show');
 
         // ★ [수정됨] 수정 폼 제출 (async 및 processProperties 호출 제거)
         $('#modifyJjinbbaModal form').off('submit').on('submit', function() {
-            $('#loading-icon').show();
             var form = $(this);
+            var $submitBtn = form.find('button[type="submit"]'); // [수정] 제출 버튼 선택
+
+            // [수정] 로딩 아이콘 표시 및 버튼 비활성화
+            $('#loading-icon').show();
+            $submitBtn.prop('disabled', true).text('수정중...'); // 텍스트 변경은 선택사항
 
             var numbersStr = form.find('textarea[name="numbers"]').val();
             var numbersArr = numbersStr.split(/\s+/).map(function(num) {
                 return parseInt(num, 10);
             }).filter(function(n) { return !isNaN(n); });
 
-            // 백엔드로 보낼 데이터 (region_info, templates 등 제거)
-            // 백엔드의 update_item이 numbersArr를 기반으로 모든 것을 새로고침합니다.
+            // 백엔드로 보낼 데이터
             var data = {
                 numbers: numbersArr,
                 description: form.find('input[name="description"]').val(),
@@ -254,7 +275,6 @@ $(document).ready(function() {
                 customer: form.find('select[name="customer"]').val(),
                 is_completed: true,
                 updated_at: formatDate(),
-                // created_at, checkboxes 등은 백엔드가 알아서 처리하므로 보낼 필요 없음
             };
 
             $.ajax({
@@ -264,19 +284,21 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 success: function(response) {
                     console.log('수정 성공:', response);
-                    $('#modifyJjinbbaModal').modal('hide');
+                    $('#modifyJjinbbaModal').modal('hide'); // 성공 시에만 모달 닫기
                     table.ajax.reload();
                 },
                 error: function(error) {
                     console.error('수정 실패:', error);
+                    alert("수정에 실패했습니다.");
                 },
                 complete: function() {
-                    $('#loading-icon').hide(); // ✅ 요청 완료 후
+                    // [수정] 요청 완료 시 로딩 아이콘 숨기고 버튼 복구
+                    $('#loading-icon').hide();
+                    $submitBtn.prop('disabled', false).text('수정'); // 텍스트 원복
                 }
             });
             return false;
         });
-
     });
 
 
@@ -287,18 +309,17 @@ $(document).ready(function() {
 
     // ★ [수정됨] 신규 등록 폼 제출 (async 및 processProperties 호출 제거)
     $('#addJjinbbaModal form').on('submit', function() {
-        $('#loading-icon').show();
         var form = $(this);
+        var $submitBtn = form.find('button[type="submit"]'); // [수정] 제출 버튼 선택
+
+        // [수정] 로딩 아이콘 표시 및 버튼 비활성화
+        $('#loading-icon').show();
+        $submitBtn.prop('disabled', true).text('등록중...'); // 텍스트 변경은 선택사항
+
         var numbersStr = form.find('textarea[name="numbers"]').val();
         var numbersArr = numbersStr.split(" ").map(function(num) { return parseInt(num, 10); })
                                     .filter(function(n) { return !isNaN(n); });
 
-        //
-        // 🚨 참고: checkboxes는 이제 백엔드 create_item에서 처리해야 합니다.
-        // (현재 jjinbba.py는 create_item에서 checkboxes를 설정하지 않고 있음)
-        // 이 로직을 백엔드로 옮기거나, 여기서 기본값을 전송해야 합니다.
-        // 여기서는 '전송' 방식을 유지하되, 로직은 단순화합니다.
-        //
         var checkboxes = {
           "주소": true, "건물명": true, "층": true, "보증금": true, "임대료": true,
           "관리비": true, "임+관": false, "이율(%)": false, "RF(개월)": false, "NOC": false,
@@ -307,8 +328,7 @@ $(document).ready(function() {
           "연면적": false, "규모": false, "주구조": false, "건폐율": false, "용적률": false
         };
 
-        // 백엔드로 보낼 데이터 (region_info, templates 등 제거)
-        // 백엔드의 create_item이 numbersArr를 기반으로 모든 것을 생성합니다.
+        // 백엔드로 보낼 데이터
         var data = {
             numbers: numbersArr,
             description: form.find('input[name="description"]').val(),
@@ -317,7 +337,7 @@ $(document).ready(function() {
             is_completed: true,
             created_at: formatDate(),
             updated_at: formatDate(),
-            checkboxes: checkboxes // 기본 체크박스 값
+            checkboxes: checkboxes
         };
 
         $.ajax({
@@ -327,14 +347,19 @@ $(document).ready(function() {
             contentType: 'application/json',
             success: function(response) {
                 console.log('등록 성공:', response);
-                $('#addJjinbbaModal').modal('hide');
+                $('#addJjinbbaModal').modal('hide'); // 성공 시에만 모달 닫기
                 table.ajax.reload();
+                // 폼 초기화 (성공했을 때만)
+                form[0].reset();
             },
             error: function(error) {
                 console.error('등록 에러:', error);
+                alert("등록에 실패했습니다.");
             },
             complete: function() {
-                $('#loading-icon').hide(); // ✅ 요청 완료 후
+                // [수정] 요청 완료 시 로딩 아이콘 숨기고 버튼 복구
+                $('#loading-icon').hide();
+                $submitBtn.prop('disabled', false).text('등록'); // 텍스트 원복
             }
         });
         return false;

@@ -16,41 +16,58 @@ function formatDate() {
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
+let editor = null;
+let editor2 = null;
+
 $(document).ready(function() {
 
     const { Editor } = toastui;
     const { colorSyntax } = Editor.plugin;
-    var editor = new Editor({
-        el: document.querySelector('#editor'),
-        toolbarItems: [
-            ['heading', 'bold', 'italic', 'strike'],
-            ['hr', 'quote'],
-            ['ul', 'ol', 'task', 'indent', 'outdent'],
-            ['table', 'image', 'link'],
-            ['code', 'codeblock'],
-            ['scrollSync'],
-        ],
-        height: '500px',
-        initialEditType: 'wysiwyg',
-        previewStyle: 'vertical',
-        plugins: [colorSyntax],
-        language: 'ko-kr',
+
+    $('#addDataModal').on('shown.bs.modal', function () {
+      if (!editor) {
+        const { Editor } = toastui;
+        const { colorSyntax } = Editor.plugin;
+        editor = new Editor({
+          el: document.querySelector('#editor'),
+          toolbarItems: [
+                ['heading', 'bold', 'italic', 'strike'],
+                ['hr', 'quote'],
+                ['ul', 'ol', 'task', 'indent', 'outdent'],
+                ['table', 'image', 'link'],
+                ['code', 'codeblock'],
+                ['scrollSync'],
+            ],
+          height: '500px',
+          initialEditType: 'wysiwyg',
+          previewStyle: 'vertical',
+          plugins: [colorSyntax],
+          language: 'ko-kr',
+        });
+      }
     });
-    var editor2 = new Editor({
-        el: document.querySelector('#editor2'),
-        toolbarItems: [
-            ['heading', 'bold', 'italic', 'strike'],
-            ['hr', 'quote'],
-            ['ul', 'ol', 'task', 'indent', 'outdent'],
-            ['table', 'image', 'link'],
-            ['code', 'codeblock'],
-            ['scrollSync'],
-        ],
-        height: '500px',
-        initialEditType: 'wysiwyg',
-        previewStyle: 'vertical',
-        plugins: [colorSyntax],
-        language: 'ko-kr',
+
+    $('#modifyDataModal').on('shown.bs.modal', function () {
+      if (!editor2) {
+        const { Editor } = toastui;
+        const { colorSyntax } = Editor.plugin;
+        editor2 = new Editor({
+          el: document.querySelector('#editor2'),
+          toolbarItems: [
+                ['heading', 'bold', 'italic', 'strike'],
+                ['hr', 'quote'],
+                ['ul', 'ol', 'task', 'indent', 'outdent'],
+                ['table', 'image', 'link'],
+                ['code', 'codeblock'],
+                ['scrollSync'],
+            ],
+          height: '500px',
+          initialEditType: 'wysiwyg',
+          previewStyle: 'vertical',
+          plugins: [colorSyntax],
+          language: 'ko-kr',
+        });
+      }
     });
 
     var columnDefs = [];
@@ -81,8 +98,8 @@ $(document).ready(function() {
             {
                 text: '추가',
                 action: function ( e, dt, node, config ) {
-                    editor.setMarkdown('');
                     $('#addDataModal').modal('show');
+                    editor.setMarkdown('');
                 }
             }
         ],
