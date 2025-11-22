@@ -57,6 +57,9 @@ $(document).ready(function() {
     var table = $('#contactTable').DataTable({
         dom : 'Blfrtip',
         lengthChange : true,
+        fixedHeader: true,
+        responsive: true,
+        autoWidth: false,
         order : [[ 4, "desc" ]],
         orderCellsTop: true,
         fixedHeader: true,
@@ -78,8 +81,10 @@ $(document).ready(function() {
 //            'copy', 'excel'
         ],
         initComplete: function() {
-            $('#loading-icon').hide();
             console.log('loading-icon');
+            $('#customerTable').animate({ opacity: 1 }, 500);
+            $('#customerTable thead .filters').show();
+            $('#loading-icon').hide();
         },
         language: {
             emptyTable: "데이터가 없습니다.",
@@ -270,6 +275,10 @@ $(document).ready(function() {
 
     $("#closeModifyContactModal").click(function(){
         $("#modifyContactModal").modal("hide");
+    });
+
+    $(window).on('resize', function() {
+        table.columns.adjust();
     });
 
 

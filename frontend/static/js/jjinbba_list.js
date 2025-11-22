@@ -55,6 +55,8 @@ $(document).ready(function() {
         order: [[ 6, "desc" ]],
         orderCellsTop: true,
         fixedHeader: true,
+        responsive: true,
+        autoWidth: false,
         pageLength: 25,
         buttons: [
             {
@@ -67,8 +69,10 @@ $(document).ready(function() {
         ],
         initComplete: function() {
             // 테이블 초기화 완료 시 로딩바 숨김
-            $('#loading-icon').hide();
             console.log('로딩 완료');
+            $('#customerTable').animate({ opacity: 1 }, 500);
+            $('#customerTable thead .filters').show();
+            $('#loading-icon').hide();
         },
         columnDefs: [
             {
@@ -370,5 +374,9 @@ $(document).ready(function() {
     });
     $("#closeModifyJjinbbaModal").click(function(){
         $("#modifyJjinbbaModal").modal("hide");
+    });
+
+    $(window).on('resize', function() {
+        table.columns.adjust();
     });
 });

@@ -93,6 +93,9 @@ $(document).ready(function() {
         dom : 'Blfrtp',
         lengthChange : true,
         order : [[ 0, "asc" ]],
+        fixedHeader: true,
+        responsive: true,
+        autoWidth: false,
         "pageLength": 25,
         buttons: [
             {
@@ -103,7 +106,9 @@ $(document).ready(function() {
                 }
             }
         ],
-        "initComplete": function(settings, json) {
+        initComplete : function(settings, json) {
+            $('#customerTable').animate({ opacity: 1 }, 500);
+            $('#customerTable thead .filters').show();
             $('#loading-icon').hide();
         },
         language: {
@@ -557,6 +562,10 @@ $(document).ready(function() {
         
             return false;
         });
+    });
+
+    $(window).on('resize', function() {
+        table.columns.adjust();
     });
 
 });

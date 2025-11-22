@@ -52,6 +52,7 @@ function formatDate() {
 }
 
 $(document).ready(function() {
+    $('#loading-icon').show();
     $('#customerLawTable thead tr')
         .clone(true)
         .addClass('filters')
@@ -63,6 +64,8 @@ $(document).ready(function() {
         order : [[ 9, "desc" ], ],
         orderCellsTop: true,
         fixedHeader: true,
+        responsive: true,
+        autoWidth: false,
         columnDefs: [
             {
                 targets: [12],
@@ -120,6 +123,9 @@ $(document).ready(function() {
                                 .setSelectionRange(cursorPosition, cursorPosition);
                         });
                 });
+            $('#customerTable').animate({ opacity: 1 }, 500);
+            $('#customerTable thead .filters').show();
+            $('#loading-icon').hide();
         },
         buttons: [
             {
@@ -621,4 +627,8 @@ $(document).ready(function() {
     }
 
     ['special_notes', 'special_notes2', 'notes', 'notes2'].forEach(adjustTextareaHeight);
+
+    $(window).on('resize', function() {
+        table.columns.adjust();
+    });
 });

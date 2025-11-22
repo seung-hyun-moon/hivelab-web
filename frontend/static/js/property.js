@@ -3,6 +3,9 @@ $(document).ready(function() {
         dom : 'Blfrtip',
         lengthChange : true,
         order : [[ 0, "desc" ]],
+        fixedHeader: true,
+        responsive: true,
+        autoWidth: false,
         buttons: [
             {
                 text: '추가',
@@ -170,6 +173,10 @@ $(document).ready(function() {
         });
     
         return false;
+    });
+
+    $(window).on('resize', function() {
+        table.columns.adjust();
     });
 
 

@@ -89,6 +89,7 @@ function fetchCurrentUser() {
 }
 
 $(document).ready(function() {
+    $('#loading-icon').show();
     // 페이지 로드 시 사용자 정보 가져오기
     fetchCurrentUser().done(function() {
 
@@ -103,6 +104,8 @@ $(document).ready(function() {
         order : [[ 11, "desc" ], [ 2, "asc" ],  [3, "asc"]],
         orderCellsTop: true,
         fixedHeader: true,
+        responsive: true,
+        autoWidth: false,
         columnDefs: [
             {
                 targets: [2, 5, 6, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22],
@@ -115,7 +118,6 @@ $(document).ready(function() {
         ],
         initComplete: function () {
             var api = this.api();
-            $('#customerTable thead .filters').show();
             // For each column
             api
                 .columns()
@@ -160,6 +162,9 @@ $(document).ready(function() {
                                 .setSelectionRange(cursorPosition, cursorPosition);
                         });
                 });
+            $('#customerTable').animate({ opacity: 1 }, 500);
+            $('#customerTable thead .filters').show();
+            $('#loading-icon').hide();
         },
         buttons: [
             {
@@ -994,5 +999,8 @@ $(document).ready(function() {
                 }
             });
         }
+    });
+    $(window).on('resize', function() {
+        table.columns.adjust();
     });
 });
