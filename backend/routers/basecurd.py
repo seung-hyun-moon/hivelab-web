@@ -54,10 +54,10 @@ class BaseCRUD(Generic[TGet, TCreate, TUpdate]):
     def register_routes(self):
         self.router.add_api_route("/", self.get_items, response_model=List[self.get_schema], methods=["GET"])
         self.router.add_api_route("/", self.create_item, response_model=self.get_schema, methods=["POST"])
-        self.router.add_api_route("/{item_id}", self.get_item, response_model=self.get_schema, methods=["GET"])
-        self.router.add_api_route("/{item_id}", self.update_item, response_model=self.get_schema, methods=["PUT"])
-        self.router.add_api_route("/{item_id}", self.delete_item, methods=["DELETE"])
-        self.router.add_api_route("/{item_id}", self.patch_item, response_model=self.get_schema, methods=["PATCH"])
+        self.router.add_api_route("/{item_id:int}", self.get_item, response_model=self.get_schema, methods=["GET"])
+        self.router.add_api_route("/{item_id:int}", self.update_item, response_model=self.get_schema, methods=["PUT"])
+        self.router.add_api_route("/{item_id:int}", self.delete_item, methods=["DELETE"])
+        self.router.add_api_route("/{item_id:int}", self.patch_item, response_model=self.get_schema, methods=["PATCH"])
 
     def get_items(self, db: Session = Depends(get_db)):
         return db.query(self.model).all()

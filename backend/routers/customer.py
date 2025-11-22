@@ -13,62 +13,56 @@ from backend.routers.auth import AuthHandler
 class CustomerRouter(BaseCRUD):
     def __init__(self):
         self.router = APIRouter()
-        super().__init__(get_schema=Customer, post_schema=CustomerCreate, put_schema=CustomerUpdate,
-                         model=CustomerModel)
-        self.router.add_api_route('/bulk_update_status', self.bulk_update_status, response_model=None,
-                                  methods=['PATCH'])
-        self.router.add_api_route(
-            '/prioritized',
-            self.get_items_prioritized,
-            methods=['GET'],
-        )
+        super().__init__(get_schema=Customer, post_schema=CustomerCreate, put_schema=CustomerUpdate, model=CustomerModel)
+        self.router.add_api_route('/prioritized', self.get_items_prioritized, methods=['GET'])
+        self.router.add_api_route('/bulk_update_status', self.bulk_update_status, response_model=None, methods=['PATCH'])
 
     def get_items_prioritized(
-            self,
-            db: Session = Depends(get_db),
-            current_user: UserModel = Depends(AuthHandler.get_current_user),
+        self,
+        db: Session = Depends(get_db),
+        current_user: UserModel = Depends(AuthHandler.get_current_user),
     ):
         """
-        권한 무시:
         - 모든 고객을 불러온 후
-        - PO(head) 또는 PA(deputy)에 현재 유저 이름이 들어있는 고객을 edit_date DESC로 상단 배치
-        - 나머지는 id DESC로 이어붙임
+        - head 또는 deputy에 현재 유저 이름이 들어있는 고객만
+        - edit_date DESC로 정렬해서 반환
         """
 
-        my_name = current_user.name
+        my_name = (current_user.name or "").strip()
+        if not my_name:
+            return []  # 이름이 없으면 그냥 빈 리스트 반환
 
-        # 1) 권한과 무관하게 모든 고객 가져오기
-        items = db.query(CustomerModel).all()
+        # 1) 모든 고객 가져오기
+        items: list[CustomerModel] = db.query(CustomerModel).all()
 
-        # 2) 내 이름이 PO/PA에 포함되는지 검사
+        # 2) head/deputy 문자열을 토큰 리스트로 변환
+        def normalize_people_field(value: str | None) -> list[str]:
+            if not value:
+                return []
+            # 콤마, 세미콜론, 슬래시 등을 줄바꿈으로 통일
+            for sep in [",", ";", "/", "|"]:
+                value = value.replace(sep, "\n")
+            return [t.strip() for t in value.splitlines() if t.strip()]
+
         def is_my_po_pa(item: CustomerModel) -> bool:
-            head = item.head or ""
-            deputy = item.deputy or ""
+            head_tokens = normalize_people_field(item.head)
+            deputy_tokens = normalize_people_field(item.deputy)
+            tokens = head_tokens + deputy_tokens
+            # 정확히 이름이 일치하는 경우만
+            return my_name in tokens
 
-            # 쉼표 또는 줄바꿈으로 split 후 정확 매칭
-            def normalize_list(s):
-                return [token.strip() for token in s.replace(",", "\n").split("\n") if token.strip()]
+        # 3) 내 이름이 들어간 항목만 필터링
+        my_items = [i for i in items if is_my_po_pa(i)]
 
-            head_list = normalize_list(head)
-            deputy_list = normalize_list(deputy)
-
-            return my_name in head_list or my_name in deputy_list
-
-        # 3) 우선순위 그룹 / 그 외 그룹 나누기
-        priority_items = [i for i in items if is_my_po_pa(i)]
-        other_items = [i for i in items if i not in priority_items]
-
-        # 4) 정렬
-        priority_items.sort(key=lambda i: (i.edit_date or ""), reverse=True)
-        other_items.sort(key=lambda i: i.id, reverse=True)
-
-        ordered_items = priority_items + other_items
+        # 4) edit_date DESC 정렬
+        my_items.sort(key=lambda i: i.edit_date or "", reverse=True)
 
         # 5) can_edit 포함해서 반환
-        response_items = []
-        for item in ordered_items:
+        response_items: list[Customer] = []
+        for item in my_items:
             can_edit = self._can_edit(current_user, item)
-            data = item.__dict__.copy()
+            # SQLAlchemy 내부 필드 제외하고 컬럼만 dict로
+            data = {col.name: getattr(item, col.name) for col in item.__table__.columns}
             data["can_edit"] = can_edit
             response_items.append(Customer(**data))
 

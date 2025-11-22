@@ -70,6 +70,7 @@ $(document).ready(function() {
         const nickname = (user.kakao_account?.profile?.nickname || '이름') + ' ' + position;
         const defaultImageUrl = '/static/images/user.png';
         const thumbnailUrl = user.kakao_account?.profile?.thumbnail_image_url || defaultImageUrl;
+        console.log("permission_level:", permission_level);
 
         $('#id_sidebar_user_name').text(nickname);
         $('#id_sidebar_profile_img').attr('src', thumbnailUrl);
@@ -77,7 +78,7 @@ $(document).ready(function() {
         if (permission_level === 'ADMIN') {
             $('#id_admin_page').removeAttr('hidden');
         } else {
-            $('#id_admin_page').attr('hidden', true);
+            $('#id_admin_page').attr('hidden', 'hidden');
         }
         $('#id_menu_calendar').removeAttr('hidden');
     }

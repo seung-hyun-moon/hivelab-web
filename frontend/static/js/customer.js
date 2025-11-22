@@ -67,9 +67,9 @@ function fetchCurrentUser() {
         success: function(response) {
             if (response?.db_user?.name) {
                 currentUserName = response.db_user.name;
-                const permission_level = response?.db_user?.permission_level;
-                const canSeePublic = ["MANAGER", "ADMIN"].includes(permission_level);
-                console.log("User Permission Level:", permission_level, canSeePublic);
+                permissionLevel = response?.db_user?.permission_level;
+                const canSeePublic = ["MANAGER", "ADMIN"].includes(permissionLevel);
+                console.log("User Permission Level:", permissionLevel, canSeePublic);
                 if (canSeePublic) {
                     // hidden 처리된 요소 보이기
                     $('#publicCheckboxContainer').removeAttr('hidden');
