@@ -264,31 +264,45 @@ $(document).ready(function() {
     // ★ 수정 버튼 클릭 이벤트
     $('#jjinbbaTable tbody').on('click', 'button.edit-btn', function () {
         var id = $(this).data('id');
-        // '수정' 모달에서는 더 이상 created_at, checkboxes 등을 미리 로드할 필요가 없습니다.
-        // 백엔드가 PUT 요청 시 numbers 배열만 받아서 새로 처리하기 때문입니다.
-
-        // 데이터 로딩 중임을 표시하기 위해 로딩 아이콘 표시 가능
-        // $('#loading-icon').show();
-
         $.ajax({
             url: '/api/jjinbba/' + id,
             type: 'GET',
             success: function(itemData) {
-                fetchCustomers().then(() => {
-                    // 기존 매물번호를 기존 textarea에 설정
-                    $('#modifyJjinbbaModal').find('textarea[name="numbers"]').val(itemData.numbers.join(" "));
-                    $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
-                    $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
-                    $('#modifyJjinbbaModal').find('select[name="customer"]').val(itemData.customer);
 
-                    // 데이터 로드 후 모달 표시
-                    $('#modifyJjinbbaModal').modal('show');
-                    // $('#loading-icon').hide();
+                // 고객 정보 조회
+                $.ajax({
+                    url: '/api/customer/' + itemData.customer,
+                    type: 'GET',
+                    success: function(customerData) {
+                        // PO와 PA를 배열로 만들기 (띄어쓰기, 쉼표 등 구분)
+                        var poList = (customerData.head || '').split(/[\s,]+/).map(s => s.trim());
+                        var paList = (customerData.deputy || '').split(/[\s,]+/).map(s => s.trim());
+                        var allowedUsers = [...poList, ...paList, customerData.creator]; // creator 추가
+
+                        // 현재 사용자 체크
+                        if (!allowedUsers.includes(currentUserName)) {
+                            alert('권한이 없습니다.');
+                            return; // 여기서 종료
+                        }
+
+                        // 권한이 있으면 기존 모달 로직 실행
+                        fetchCustomers().then(() => {
+                            $('#modifyJjinbbaModal').find('textarea[name="numbers"]').val(itemData.numbers.join(" "));
+                            $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
+                            $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
+                            $('#modifyJjinbbaModal').find('select[name="customer"]').val(itemData.customer);
+
+                            $('#modifyJjinbbaModal').modal('show');
+                        });
+
+                    },
+                    error: function() {
+                        alert('고객 정보를 불러오는데 실패했습니다.');
+                    }
                 });
             },
-            error: function(err) {
-                console.error('항목 데이터 불러오기 실패:', err);
-                // $('#loading-icon').hide();
+            error: function() {
+                alert('항목 데이터를 불러오는데 실패했습니다.');
             }
         });
 
