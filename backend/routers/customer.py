@@ -17,6 +17,19 @@ class CustomerRouter(BaseCRUD):
         self.router.add_api_route('/prioritized', self.get_items_prioritized, methods=['GET'])
         self.router.add_api_route('/bulk_update_status', self.bulk_update_status, response_model=None, methods=['PATCH'])
 
+    def _normalize_people_field(self, value: str | None) -> list[str]:
+        if not value:
+            return []
+        for sep in [",", ";", "/", "|"]:
+            value = value.replace(sep, "\n")
+        return [t.strip() for t in value.splitlines() if t.strip()]
+
+    def _is_my_po_pa(self, user_name: str, customer: CustomerModel) -> bool:
+        head_tokens = self._normalize_people_field(customer.head)
+        deputy_tokens = self._normalize_people_field(customer.deputy)
+        tokens = head_tokens + deputy_tokens
+        return user_name in tokens
+
     def get_items_prioritized(
         self,
         db: Session = Depends(get_db),
@@ -81,17 +94,23 @@ class CustomerRouter(BaseCRUD):
         ).all()
         return [name for (name,) in rows]
 
-    @staticmethod
-    def _can_edit(current_user: UserModel, customer: CustomerModel) -> bool:
-        """
-        주어진 고객 항목에 대해 현재 사용자가 수정 권한이 있는지 확인합니다.
-        - MANAGER/ADMIN: 항상 True
-        - STAFF: 본인이 만든 항목인 경우에만 True
-        """
+    def _can_edit(self, current_user: UserModel, customer: CustomerModel) -> bool:
+        # 관리자라면 항상 가능
         if current_user.permission_level in ("MANAGER", "ADMIN"):
             return True
-        # STAFF인 경우, 본인이 생성한 항목만 수정 가능
-        return customer.creator == current_user.name
+
+        user_name = (current_user.name or "").strip()
+        if not user_name:
+            return False
+
+        # STAFF: creator 이거나 head/deputy 에 이름이 포함된 경우 가능
+        if customer.creator == user_name:
+            return True
+
+        if self._is_my_po_pa(user_name, customer):
+            return True
+
+        return False
 
     def get_items(
             self,
@@ -162,27 +181,19 @@ class CustomerRouter(BaseCRUD):
                     current_user: UserModel = Depends(AuthHandler.get_current_user)):
         return super().create_item(item=item, db=db)
 
-    def update_item(self,
-                    item_id: int,
-                    item: CustomerUpdate,
+    def update_item(self, item_id: int, item: CustomerUpdate,
                     db: Session = Depends(get_db),
                     current_user: UserModel = Depends(AuthHandler.get_current_user)):
-        """
-        권한별 고객 수정
-        - STAFF: 본인이 만든 것만 수정 가능
-        - MANAGER/ADMIN: 모든 데이터 수정 가능
-        """
+
         db_item = db.query(CustomerModel).filter(CustomerModel.id == item_id).first()
         if not db_item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        if not self.is_manager_or_admin(current_user):
-            # STAFF: 본인 소유만 수정
-            if db_item.creator != current_user.name:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="본인이 생성한 항목만 수정할 수 있습니다."
-                )
+        if not self._can_edit(current_user, db_item):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="수정 권한이 없습니다."
+            )
 
         for k, v in item.model_dump().items():
             setattr(db_item, k, v)
@@ -190,26 +201,19 @@ class CustomerRouter(BaseCRUD):
         db.refresh(db_item)
         return db_item
 
-    def patch_item(self,
-                   item_id: int,
-                   item: CustomerUpdate,
+    def patch_item(self, item_id: int, item: CustomerUpdate,
                    db: Session = Depends(get_db),
                    current_user: UserModel = Depends(AuthHandler.get_current_user)):
-        """
-        권한별 고객 부분 수정
-        - STAFF: 본인이 만든 것만 수정 가능
-        - MANAGER/ADMIN: 모든 데이터 수정 가능
-        """
+
         db_item = db.query(CustomerModel).filter(CustomerModel.id == item_id).first()
         if not db_item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        if not self.is_manager_or_admin(current_user):
-            if db_item.creator != current_user.name:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="본인이 생성한 항목만 수정할 수 있습니다."
-                )
+        if not self._can_edit(current_user, db_item):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="수정 권한이 없습니다."
+            )
 
         for k, v in item.model_dump(exclude_unset=True).items():
             setattr(db_item, k, v)
@@ -217,25 +221,19 @@ class CustomerRouter(BaseCRUD):
         db.refresh(db_item)
         return db_item
 
-    def delete_item(self,
-                    item_id: int,
+    def delete_item(self, item_id: int,
                     db: Session = Depends(get_db),
                     current_user: UserModel = Depends(AuthHandler.get_current_user)):
-        """
-        권한별 고객 삭제
-        - STAFF: 본인이 만든 것만 삭제 가능
-        - MANAGER/ADMIN: 모든 데이터 삭제 가능
-        """
+
         db_item = db.query(CustomerModel).filter(CustomerModel.id == item_id).first()
         if not db_item:
             return {"message": "Item deleted"}  # idempotent
 
-        if not self.is_manager_or_admin(current_user):
-            if db_item.creator != current_user.name:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="본인이 생성한 항목만 삭제할 수 있습니다."
-                )
+        if not self._can_edit(current_user, db_item):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="삭제 권한이 없습니다."
+            )
 
         db.delete(db_item)
         db.commit()

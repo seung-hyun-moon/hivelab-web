@@ -16,6 +16,15 @@ class EventRouter(BaseCRUD):
         self.router = APIRouter()
         super().__init__(get_schema=Event, post_schema=EventCreate, put_schema=EventUpdate, model=EventModel)
 
+    def register_routes(self):
+        # UUID 또는 문자열 ID 사용
+        self.router.add_api_route("/", self.get_items, response_model=list[Event], methods=["GET"])
+        self.router.add_api_route("/", self.create_item, response_model=Event, methods=["POST"])
+        self.router.add_api_route("/{item_id}", self.get_item, response_model=Event, methods=["GET"])
+        self.router.add_api_route("/{item_id}", self.update_item, response_model=Event, methods=["PUT"])
+        self.router.add_api_route("/{item_id}", self.delete_item, methods=["DELETE"])
+        self.router.add_api_route("/{item_id}", self.patch_item, response_model=Event, methods=["PATCH"])
+
     # =========================
     # 권한/헬퍼
     # =========================
@@ -192,7 +201,7 @@ class EventRouter(BaseCRUD):
         - STAFF: 본인이 만든 것만 수정 가능
         - MANAGER/ADMIN: 모든 일정 수정 가능
         """
-        db_item = db.query(self.model).filter(self.model.id == item_id).first()
+        db_item = db.query(self.model).get(item_id)
         if db_item is None:
             raise HTTPException(status_code=404, detail="Item not found")
 
@@ -204,7 +213,8 @@ class EventRouter(BaseCRUD):
                 )
 
         for key, value in item.model_dump(exclude_unset=True).items():
-            setattr(db_item, key, value)
+            if value is not None:
+                setattr(db_item, key, value)
         db.commit()
         db.refresh(db_item)
         return db_item

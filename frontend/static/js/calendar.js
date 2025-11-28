@@ -15,7 +15,7 @@ function fetchCurrentUser() {
                 currentUserName = response.db_user.name;
                 permissionLevel = response?.db_user?.permission_level;
                 const canSeePublic = ["MANAGER", "ADMIN"].includes(permissionLevel);
-                console.log("User Permission Level:", currentUserName, permission_level, canSeePublic);
+                console.log("User Permission Level:", currentUserName, permissionLevel, canSeePublic);
                 if (canSeePublic) {
                     // hidden 처리된 요소 보이기
                     $('#publicCheckboxContainer').removeAttr('hidden');
@@ -147,7 +147,6 @@ function transformEvent(event) {
         borderColor: '#000',
         customStyle: {},
         raw: null,
-        creator: '송재민',
         is_public: true,
     };
 
@@ -502,10 +501,20 @@ function updateJSON(largeObj, smallObj) {
                 mutations.forEach((mutation) => {
                     const editButton = document.querySelector('.toastui-calendar-edit-button');
                     const deleteButton = document.querySelector('.toastui-calendar-delete-button');
+                    var creator = '송재민';
 
-                    if (editButton) {
+                    fetch(`/api/event/${eventInfo.event.id}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        creator = data.creator;
+                        if (editButton) {
                         // 🔹 STAFF 권한이면 본인 일정만 수정/삭제 가능하도록 버튼 숨기기
-                        if (permissionLevel === 'STAFF' && eventInfo.event.creator !== currentUserName) {
+                        if (permissionLevel === 'STAFF' && creator !== currentUserName) {
                             if (editButton) {
                                 editButton.style.display = 'none';
                             }
@@ -533,7 +542,42 @@ function updateJSON(largeObj, smallObj) {
                                             const cp = createPublicSection();
                                             dropdownSection.after(cp);
 
-                                            // ... 이하 기존 코드 그대로 ...
+                                            // is_public 체크박스 설정
+                                            const isPublicCheckbox = document.getElementById('is_public');
+                                            if (isPublicCheckbox) {
+                                            // eventInfo.event.id를 조회하여 값에 따라 체크박스 상태 설정
+                                                fetch(`/api/event/${eventInfo.event.id}`, {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    }
+                                                })
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    console.log("Fetched event data for is_public:", data);
+                                                    eventInfo.event.is_public = data.is_public;
+                                                    isPublicCheckbox.checked = eventInfo.event.is_public;
+                                                    console.log("is_public:", eventInfo.event.is_public);
+                                                    console.log("is_public checkbox:", isPublicCheckbox.checked);
+                                                })
+                                                .catch(error => console.error('Error:', error));
+                                            }
+
+                                            // Set attendees checkboxes
+                                            console.log("is_public:", eventInfo.event.is_public);
+                                            console.log("is_public checkbox:", isPublicCheckbox.checked);
+                                            console.log("!!!!", eventInfo.event.attendees);
+                                            const attendees = eventInfo.event.attendees;
+                                            attendees.forEach(attendee => {
+                                                const checkbox = document.querySelector(`input[value="${attendee}"]`);
+                                                if (checkbox) {
+                                                    checkbox.checked = true;
+                                                }
+                                            });
+
+                                            // Hide the sixth div element
+                                            const busy_dd = document.querySelector('.toastui-calendar-form-container > div:nth-child(7)');
+                                            if (busy_dd) busy_dd.style.display = 'none';
 
                                             observer.disconnect();
                                         }
@@ -546,6 +590,10 @@ function updateJSON(largeObj, smallObj) {
 
                         observer.disconnect();
                     }
+                    })
+                    .catch(error => console.error('Error:', error));
+
+
                 });
             });
 
@@ -621,50 +669,69 @@ function updateJSON(largeObj, smallObj) {
         cal.createEvents([event]);
         cal.clearGridSelections();
       },
-      beforeUpdateEvent: function (eventInfo) {
+      beforeUpdateEvent: async function (eventInfo) {
         var event, changes;
 
         console.log('beforeUpdateEvent', eventInfo);
 
         event = eventInfo.event;
         changes = eventInfo.changes;
-        const calendar = MOCK_CALENDARS.find(cal => cal.id === changes.calendarId);
-        if (calendar) {
-          changes.borderColor = calendar.borderColor;
-          changes.backgroundColor = calendar.bgColor;
-          changes.dragBackgroundColor = calendar.dragBackgroundColor;
+
+        try {
+            // 서버에서 이벤트 정보 가져오기
+            const response = await fetch('/api/event/' + event.id);
+            if (!response.ok) throw new Error('Failed to fetch event');
+            const serverEvent = await response.json();
+
+            // 권한 체크
+            if (permissionLevel === 'STAFF' && serverEvent.creator !== currentUserName) {
+                alert("권한이 없어 일정을 수정할 수 없습니다.");
+                return false; // 수정 취소
+            }
+
+            // 캘린더 색상 정보 적용
+            const calendar = MOCK_CALENDARS.find(cal => cal.id === changes.calendarId);
+            if (calendar) {
+                changes.borderColor = calendar.borderColor;
+                changes.backgroundColor = calendar.bgColor;
+                changes.dragBackgroundColor = calendar.dragBackgroundColor;
+            }
+
+            // 참석자 체크박스 처리
+            const ul = document.getElementById('id_dropdown_ul');
+            if (ul) {
+                const selectedPeople = Array.from(ul.querySelectorAll('input:checked'))
+                    .map(input => input.value);
+
+                const contentDiv = document.getElementById('id_attendees');
+                contentDiv.textContent = selectedPeople.length > 0
+                    ? `${selectedPeople.join(', ')}`
+                    : '';
+                changes.attendees = selectedPeople;
+            }
+
+            // 공개 여부 처리
+            const isPublicCheckbox = document.getElementById('is_public');
+            if (isPublicCheckbox) {
+                event.is_public = isPublicCheckbox.checked;
+                changes.is_public = isPublicCheckbox.checked;
+            }
+
+            // 서버에 변경 사항 PATCH
+            const patchResponse = await fetch('/api/event/' + event.id, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(transformEvent(updateJSON(event, changes)))
+            });
+            const data = await patchResponse.json();
+            console.log(data);
+
+            cal.updateEvent(event.id, event.calendarId, changes);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('이벤트 정보를 가져오거나 수정하는 중 오류가 발생했습니다.');
+            return false;
         }
-
-        const ul = document.getElementById('id_dropdown_ul');
-        if (ul) {
-            const selectedPeople = Array.from(ul.querySelectorAll('input:checked'))
-              .map(input => input.value);
-
-            const contentDiv = document.getElementById('id_attendees');
-            contentDiv.textContent = selectedPeople.length > 0
-              ? `${selectedPeople.join(', ')}`
-              : '';
-            changes.attendees = selectedPeople;
-        }
-
-        const isPublicCheckbox = document.getElementById('is_public');
-        if (isPublicCheckbox) {
-            event.is_public = isPublicCheckbox.checked;
-            changes.is_public = isPublicCheckbox.checked;
-        }
-
-        fetch('/api/event/'+event.id, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(transformEvent(updateJSON(event, changes)))
-        })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(error => console.error('Error:', error));
-
-        cal.updateEvent(event.id, event.calendarId, changes);
       },
       beforeDeleteEvent: function (eventInfo) {
         console.log('beforeDeleteEvent', eventInfo);
@@ -772,9 +839,10 @@ function updateJSON(largeObj, smallObj) {
     });
 
   // Init
-  fetchCurrentUser();
+  fetchCurrentUser().done(function() {
   bindInstanceEvents();
   bindAppEvents();
   initCheckbox();
   update();
+  });
 })(tui.Calendar);

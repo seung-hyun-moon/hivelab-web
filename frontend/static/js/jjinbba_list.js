@@ -44,9 +44,44 @@ function formatDate() {
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
+// 전역 변수로 현재 사용자 이름 저장
+var currentUserName = '송재민'; // 기본값
+var permissionLevel = 'STAFF'; // 기본값
+
+// 사용자 정보 가져오기
+function fetchCurrentUser() {
+    return $.ajax({
+        url: '/oauth/hive_user',
+        type: 'GET',
+        success: function(response) {
+            if (response?.db_user?.name) {
+                currentUserName = response.db_user.name;
+                permissionLevel = response?.db_user?.permission_level;
+                const canSeePublic = ["MANAGER", "ADMIN"].includes(permissionLevel);
+                console.log("User Permission Level:", permissionLevel, canSeePublic);
+                if (canSeePublic) {
+                    // hidden 처리된 요소 보이기
+                    $('#publicCheckboxContainer').removeAttr('hidden');
+                    $('#publicCheckboxContainer2').removeAttr('hidden');
+                } else {
+                    // hidden 처리된 요소 숨기기
+                    $('#publicCheckboxContainer').attr('hidden', true);
+                    $('#publicCheckboxContainer2').attr('hidden', true);
+                }
+            }
+        },
+        error: function(error) {
+            console.error("Failed to fetch user data:", error);
+            // 실패 시 기본값 '송재민' 사용
+        }
+    });
+}
+
 $(document).ready(function() {
     // 페이지 로드 시 로딩바 표시
     $('#loading-icon').show();
+
+    fetchCurrentUser().done(function() {
 
     var table = $('#jjinbbaTable').DataTable({
         dom: 'Blfrtip',
@@ -378,5 +413,7 @@ $(document).ready(function() {
 
     $(window).on('resize', function() {
         table.columns.adjust();
+    });
+
     });
 });
