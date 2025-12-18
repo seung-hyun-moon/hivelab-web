@@ -77,9 +77,34 @@ function fetchCurrentUser() {
     });
 }
 
+function loadNonEngineerUsers() {
+    fetch('/api/users/nonengineer_users')
+        .then(res => res.json())
+        .then(users => {
+            const selects = document.querySelectorAll('select[name="person"]');
+
+            selects.forEach(select => {
+                // 기존 옵션 초기화 (첫 옵션 제외)
+                select.querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
+
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.name;
+                    option.textContent = user.name;
+                    select.appendChild(option);
+                });
+            });
+        })
+        .catch(err => {
+            console.error('담당자 목록 로딩 실패', err);
+        });
+}
+
 $(document).ready(function() {
     // 페이지 로드 시 로딩바 표시
     $('#loading-icon').show();
+
+    loadNonEngineerUsers();
 
     fetchCurrentUser().done(function() {
 

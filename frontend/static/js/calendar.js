@@ -50,6 +50,17 @@ function createPublicSection() {
   return section;
 }
 
+function fetchNonEngineerUsers() {
+    return $.ajax({
+        url: '/api/users/activie_users',
+        type: 'GET',
+        dataType: 'json',
+        error: function (err) {
+            console.error('Failed to fetch nonengineer users', err);
+        }
+    });
+}
+
 function createDropdownSection() {
   console.log("createDropdownSection 실행");
   const section = document.createElement('div');
@@ -71,16 +82,26 @@ function createDropdownSection() {
   ul.id = 'id_dropdown_ul'
   ul.style.display = 'none';
 //  const people = ['재민', '민제', '경주', '현정', '선복', '시나'];
-  const people = ['송재민', '길민제', '이경주', '오상민', '류태리', '이효빈', '김태림'];
+  fetchNonEngineerUsers().done(function (response) {
+      var people = [];
 
-  people.forEach(person => {
-    const li = document.createElement('li');
-    li.className = 'toastui-calendar-popup-section-item toastui-calendar-dropdown-menu-item';
-    li.innerHTML = `
-      <input type="checkbox" id="${person}" name="person" value="${person}" style="display:none;">
-      <label for="${person}" style="width:70px;height:32px;cursor: pointer;" class="person-label toastui-calendar-content">${person}</label>
-    `;
-    ul.appendChild(li);
+      if (Array.isArray(response)) {
+        people = response;
+    }
+
+      people.forEach(function (personobject) {
+          var person = personobject.name;
+          var li = document.createElement('li');
+          li.className = 'toastui-calendar-popup-section-item toastui-calendar-dropdown-menu-item';
+          li.innerHTML =
+            '<input type="checkbox" id="' + person + '" name="person" value="' + person + '" style="display:none;">' +
+            '<label for="' + person + '" ' +
+              'style="width:70px;height:32px;cursor:pointer;" ' +
+              'class="person-label toastui-calendar-content">' +
+              person +
+            '</label>';
+          ul.appendChild(li);
+      });
   });
 
   section.appendChild(button);

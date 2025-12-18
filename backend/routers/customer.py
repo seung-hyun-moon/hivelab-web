@@ -70,6 +70,9 @@ class CustomerRouter(BaseCRUD):
         # 4) edit_date DESC 정렬
         my_items.sort(key=lambda i: i.edit_date or "", reverse=True)
 
+        # 5) 상태가 1, 3 (완료, 폐기) 인건 제외
+        my_items = [item for item in my_items if item.status not in (1, 3)]
+
         # 5) can_edit 포함해서 반환
         response_items: list[Customer] = []
         for item in my_items:

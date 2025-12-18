@@ -88,8 +88,54 @@ function fetchCurrentUser() {
     });
 }
 
+function loadNonEngineerUsers() {
+    fetch('/api/users/nonengineer_users')
+        .then(res => res.json())
+        .then(users => {
+            // 드롭다운 id와 체크박스 name 매핑
+            const dropdowns = [
+                { id: 'headDropdown', name: 'head' },
+                { id: 'headDropdown2', name: 'head' },
+                { id: 'deputyDropdown', name: 'deputy' },
+                { id: 'deputyDropdown2', name: 'deputy' }
+            ];
+
+            dropdowns.forEach(drop => {
+                const dropdown = document.getElementById(drop.id);
+                if (!dropdown) return;
+
+                // 기존 항목 삭제
+                dropdown.innerHTML = '';
+
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.classList.add('dropdown-item');
+                    a.href = '#';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = drop.name;  // 드롭다운별 name 지정
+                    checkbox.value = user.name;
+
+                    a.appendChild(checkbox);
+                    a.appendChild(document.createTextNode(' ' + user.name));
+
+                    li.appendChild(a);
+                    dropdown.appendChild(li);
+                });
+            });
+        })
+        .catch(err => {
+            console.error('담당자 목록 로딩 실패', err);
+        });
+}
+
+
 $(document).ready(function() {
     $('#loading-icon').show();
+
+    loadNonEngineerUsers();
     // 페이지 로드 시 사용자 정보 가져오기
     fetchCurrentUser().done(function() {
 
@@ -562,153 +608,141 @@ $(document).ready(function() {
 
     // 통계 모달을 보여주는 버튼 클릭 이벤트
     $("#showStatisticsModal").click(function() {
-        var names = ["송재민", "길민제", "이경주", '오상민', '류태리', '이효빈', "노현정", "이선복", "김시나"];
-        var counts = {
-            contact_person: {},
-            head: {},
-            deputy: {}
-        };
-        names.forEach(name => {
-            counts.contact_person[name] = 0;
-            counts.head[name] = 0;
-            counts.deputy[name] = 0;
-        });
+        fetch('/api/users/nonengineer_users')
+            .then(res => res.json())
+            .then(users => {
+                // API에서 가져온 이름 배열
+                var names = users.map(user => user.name);
 
-        // DataTables API를 사용하여 필터링된 테이블의 데이터를 가져옵니다.
-        var data = $('#customerTable').DataTable().rows({ search: 'applied' }).data();
+                // counts 초기화
+                var counts = {
+                    contact_person: {},
+                    head: {},
+                    deputy: {}
+                };
+                names.forEach(name => {
+                    counts.contact_person[name] = 0;
+                    counts.head[name] = 0;
+                    counts.deputy[name] = 0;
+                });
 
-        data.each(function (item) {
-            // 각 역할별로 이름을 처리
-            ['contact_person', 'head', 'deputy'].forEach(function(role) {
-                if (item[role]) {
-                    var roleNames = item[role].split(/\n|,/); // 쉼표와 개행으로 분리
-                    roleNames.forEach(function(roleName) {
-                        roleName = roleName.trim(); // 공백 제거
-                        if (names.includes(roleName)) {
-                            counts[role][roleName]++;
+                // DataTables API를 사용하여 필터링된 테이블의 데이터를 가져옵니다.
+                var data = $('#customerTable').DataTable().rows({ search: 'applied' }).data();
+
+                data.each(function(item) {
+                    ['contact_person', 'head', 'deputy'].forEach(function(role) {
+                        if (item[role]) {
+                            var roleNames = item[role].split(/\n|,/);
+                            roleNames.forEach(function(roleName) {
+                                roleName = roleName.trim();
+                                if (names.includes(roleName)) {
+                                    counts[role][roleName]++;
+                                }
+                            });
                         }
                     });
-                }
-            });
-        });
-
-        // HTML 테이블 구성 코드는 이전과 동일
-        var tableHtml = '<table>';
-        tableHtml += '<thead><tr><th>담당 통계</th>';
-        names.forEach(name => {
-            tableHtml += '<th>' + name + '</th>';
-        });
-        tableHtml += '</tr></thead>';
-
-        var fieldNames = ['컨택', '정', '부'];
-        var fields = ['contact_person', 'head', 'deputy'];
-
-        fields.forEach((field, index) => {
-            tableHtml += '<tr><td>' + fieldNames[index] + '</td>';
-            names.forEach(name => {
-                var count = counts[field][name];
-                var color = '';
-                if (count === Math.max(...Object.values(counts[field]))) {
-                    color = ' style="color: red;"';
-                }
-                tableHtml += '<td' + color + '>' + count + '</td>';
-            });
-            tableHtml += '</tr>';
-        });
-
-        tableHtml += '<tr><td>계</td>';
-        names.forEach(name => {
-            var total = counts.contact_person[name] + counts.head[name] + counts.deputy[name];
-            tableHtml += '<td>' + total + '</td>';
-        });
-        tableHtml += '</tr>';
-        tableHtml += '</table>';
-
-        $('#statisticsModal .modal-body').html(tableHtml);
-
-        // 마케팅 통계
-        // DataTables API를 사용하여 테이블의 모든 데이터를 가져옵니다.
-        var data = $('#customerTable').DataTable().rows().data();
-
-
-        var fields = ['contact_person'];
-        var statuses = ['진행', '완료', '보류', '폐기', '대기', '전체'];
-        var counts = {};
-
-
-        data.each(function (item) {
-            fields.forEach(function(field) {
-                var fieldNames = item[field].split(/\n|,/); // 쉼표와 개행으로 분리
-                fieldNames.forEach(function(fieldName) {
-                    fieldName = fieldName.replace(/\s/g, ''); // 모든 공백 제거
-                    if (fieldName !== '') {
-                        if (!counts[fieldName]) {
-                            counts[fieldName] = { '진행': 0, '대기': 0, '보류': 0, '완료': 0,'폐기': 0, '전체': 0 };
-                        }
-                        switch(item.status) {
-                            case 0:
-                                counts[fieldName]['진행']++;
-                                break;
-                            case 1:
-                                counts[fieldName]['완료']++;
-                                break;
-                            case 2:
-                                counts[fieldName]['보류']++;
-                                break;
-                            case 3:
-                                counts[fieldName]['폐기']++;
-                                break;
-                            case 4:
-                                counts[fieldName]['대기']++;
-                                break;
-                        }
-                        counts[fieldName]['전체']++;
-                    }
                 });
-            });
-        });
 
-        // 원하는 헤더 순서
-        var headerOrder = ['블로그', '네모', '대표콜', '현수막', '송재민', '길민제', '이경주', '오상민', '류태리', '이효빈'];
+                // HTML 테이블 생성 (담당 통계)
+                var tableHtml = '<table>';
+                tableHtml += '<thead><tr><th>담당 통계</th>';
+                names.forEach(name => {
+                    tableHtml += '<th>' + name + '</th>';
+                });
+                tableHtml += '</tr></thead>';
 
-        // counts 객체의 키를 원하는 순서대로 정렬
-        var sortedNames = headerOrder.concat(Object.keys(counts).filter(name => !headerOrder.includes(name)));
+                var fieldNames = ['컨택', '정', '부'];
+                var fields = ['contact_person', 'head', 'deputy'];
 
-        // HTML 테이블 생성
-        var tableHtml = '<table>';
-        tableHtml += '<thead><tr><th>마케팅 통계</th>';
-        statuses.forEach(status => {
-            tableHtml += '<th>' + status + '</th>';
-        });
-        tableHtml += '</tr></thead>';
+                fields.forEach((field, index) => {
+                    tableHtml += '<tr><td>' + fieldNames[index] + '</td>';
+                    names.forEach(name => {
+                        var count = counts[field][name];
+                        var color = '';
+                        if (count === Math.max(...Object.values(counts[field]))) {
+                            color = ' style="color: red;"';
+                        }
+                        tableHtml += '<td' + color + '>' + count + '</td>';
+                    });
+                    tableHtml += '</tr>';
+                });
 
-        var maxCounts = {};
-        statuses.forEach(status => {
-            maxCounts[status] = Math.max(...Object.values(counts).map(obj => obj[status] || 0));
-        });
-
-        // 정렬된 키를 사용하여 테이블 생성
-        sortedNames.forEach(name => {
-            if (counts[name]) { // 항목이 없는 경우 테이블에 추가하지 않음
-                tableHtml += '<tr><td>' + name + '</td>';
-                statuses.forEach(status => {
-                    var count = counts[name][status];
-                    var color = '';
-                    if (count === maxCounts[status]) {
-                        color = ' style="color: red;"';
-                    }
-                    tableHtml += '<td' + color + '>' + count + '</td>';
+                tableHtml += '<tr><td>계</td>';
+                names.forEach(name => {
+                    var total = counts.contact_person[name] + counts.head[name] + counts.deputy[name];
+                    tableHtml += '<td>' + total + '</td>';
                 });
                 tableHtml += '</tr>';
-            }
-        });
-        tableHtml += '</table>';
+                tableHtml += '</table>';
 
-        $('#statisticsModal .modal-body').append('<br><br>'+tableHtml);
+                $('#statisticsModal .modal-body').html(tableHtml);
 
+                // 마케팅 통계도 여기 안에서 처리
+                var dataAll = $('#customerTable').DataTable().rows().data();
+                var fieldsMarketing = ['contact_person'];
+                var statuses = ['진행', '완료', '보류', '폐기', '대기', '전체'];
+                var countsMarketing = {};
 
-        $('#statisticsModal').modal('show');
+                dataAll.each(function(item) {
+                    fieldsMarketing.forEach(function(field) {
+                        var fieldNames = item[field].split(/\n|,/);
+                        fieldNames.forEach(function(fieldName) {
+                            fieldName = fieldName.replace(/\s/g, '');
+                            if (fieldName !== '') {
+                                if (!countsMarketing[fieldName]) {
+                                    countsMarketing[fieldName] = { '진행': 0, '대기': 0, '보류': 0, '완료': 0, '폐기': 0, '전체': 0 };
+                                }
+                                switch(item.status) {
+                                    case 0: countsMarketing[fieldName]['진행']++; break;
+                                    case 1: countsMarketing[fieldName]['완료']++; break;
+                                    case 2: countsMarketing[fieldName]['보류']++; break;
+                                    case 3: countsMarketing[fieldName]['폐기']++; break;
+                                    case 4: countsMarketing[fieldName]['대기']++; break;
+                                }
+                                countsMarketing[fieldName]['전체']++;
+                            }
+                        });
+                    });
+                });
+
+                var headerOrder = ['블로그', '네모', '대표콜', '현수막'].concat(names);
+                var sortedNames = headerOrder.concat(Object.keys(countsMarketing).filter(name => !headerOrder.includes(name)));
+
+                var tableHtmlMarketing = '<table>';
+                tableHtmlMarketing += '<thead><tr><th>마케팅 통계</th>';
+                statuses.forEach(status => {
+                    tableHtmlMarketing += '<th>' + status + '</th>';
+                });
+                tableHtmlMarketing += '</tr></thead>';
+
+                var maxCounts = {};
+                statuses.forEach(status => {
+                    maxCounts[status] = Math.max(...Object.values(countsMarketing).map(obj => obj[status] || 0));
+                });
+
+                sortedNames.forEach(name => {
+                    if (countsMarketing[name]) {
+                        tableHtmlMarketing += '<tr><td>' + name + '</td>';
+                        statuses.forEach(status => {
+                            var count = countsMarketing[name][status];
+                            var color = '';
+                            if (count === maxCounts[status]) color = ' style="color: red;"';
+                            tableHtmlMarketing += '<td' + color + '>' + count + '</td>';
+                        });
+                        tableHtmlMarketing += '</tr>';
+                    }
+                });
+
+                tableHtmlMarketing += '</table>';
+                $('#statisticsModal .modal-body').append('<br><br>' + tableHtmlMarketing);
+
+                $('#statisticsModal').modal('show');
+            })
+            .catch(err => {
+                console.error('사용자 목록 로딩 실패', err);
+            });
     });
+
 
     $('#customerTable_filter').prepend('<div id="custombtn" class="btn-group" role="group" aria-label="Basic radio toggle button group"></div>');
 
