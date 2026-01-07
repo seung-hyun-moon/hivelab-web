@@ -1,7 +1,7 @@
 function formatData(data, type, row) {
     if (type === 'display') {
         data = data || '';
-        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + data + '</textarea>';
+        return '<textarea readonly class="data-cell" onmousedown="saveSelection(this);" onclick="toggleHeight(this, event);">' + data + '</textarea>';
     }
     return data;
 }
@@ -14,7 +14,7 @@ function formatData2(data, type, row) {
         var area = row.area ? row.area + ' | ' : '- | ';
         var location = row.location ? row.location + '\n' : '-\n';
         var special_notes = row.special_notes ? row.special_notes : '특이사항 : -';
-        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + move_in_date + price + area + location + special_notes + '\n\n' + data + '</textarea>';
+        return '<textarea readonly class="data-cell" onmousedown="saveSelection(this);" onclick="toggleHeight(this, event);">' + move_in_date + price + area + location + special_notes + '\n\n' + data + '</textarea>';
     }
     return data;
 }
@@ -23,17 +23,46 @@ function formatData3(data, type, row) {
     if (type === 'display') {
         data = data ? data + ' | ' : '';
         var company_name = row.company_name ? row.company_name : '';
-        return '<textarea readonly class="data-cell" onclick="toggleHeight(this);">' + data + company_name + '</textarea>';
+        return '<textarea readonly class="data-cell" onmousedown="saveSelection(this);" onclick="toggleHeight(this, event);">' + data + company_name + '</textarea>';
     }
     return data;
 }
 
-function toggleHeight(element) {
-    if (element.style.height !== element.scrollHeight + 'px') {
-        element.style.height = element.scrollHeight + 'px';
-    } else {
-        element.style.height = '';
+var toggleTimer = null;
+
+// [추가] 마우스를 누르는 순간 이미 드래그된 상태인지 체크
+function saveSelection(element) {
+    element.dataset.hadSelection = (element.selectionStart !== element.selectionEnd) ? "true" : "false";
+}
+
+function toggleHeight(element, event) {
+    // 1. 더블클릭, 세번클릭(detail > 1) 시에는 접기/펴기 동작 취소
+    if (event.detail > 1) {
+        if (toggleTimer) clearTimeout(toggleTimer);
+        return;
     }
+
+    // 2. 접혀있는 상태라면 즉시 펼치기
+    if (element.style.height === '') {
+        element.style.height = element.scrollHeight + 'px';
+        return;
+    }
+
+    // 3. 펼쳐져 있는 상태에서 접을 때만 체크 (200ms 대기)
+    if (toggleTimer) clearTimeout(toggleTimer);
+
+    toggleTimer = setTimeout(function() {
+        var isDraggingNow = element.selectionStart !== element.selectionEnd; // 방금 드래그를 마친 경우
+        var wasSelected = element.dataset.hadSelection === "true"; // 이미 선택된 상태에서 클릭한 경우
+
+        // 현재 드래그 중이 아니고, 클릭 전에도 선택된 상태가 아니었을 때만 접기
+        if (!isDraggingNow && !wasSelected) {
+            element.style.height = '';
+        }
+
+        // 상태 초기화
+        element.dataset.hadSelection = "false";
+    }, 100);
 }
 
 function formatYYMMDD() {
