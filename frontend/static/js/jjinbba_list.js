@@ -289,44 +289,71 @@ $(document).ready(function() {
     // ★ 수정 버튼 클릭 이벤트
     $('#jjinbbaTable tbody').on('click', 'button.edit-btn', function () {
         var id = $(this).data('id');
+
         $.ajax({
             url: '/api/jjinbba/' + id,
             type: 'GET',
-            success: function(itemData) {
+            success: function (itemData) {
+                console.log(itemData.customer, itemData, currentUserName);
 
-                // 고객 정보 조회
+                // 👉 권한 통과 후 실행될 공통 로직
+                function openModifyModal() {
+                    fetchCustomers().then(() => {
+                        $('#modifyJjinbbaModal').find('textarea[name="numbers"]').val(itemData.numbers.join(" "));
+                        $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
+                        $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
+                        $('#modifyJjinbbaModal').find('select[name="customer"]').val(itemData.customer);
+
+                        $('#modifyJjinbbaModal').modal('show');
+                    });
+                }
+
+                // ✅ customer가 없는 경우 → creator만 허용
+                if (!itemData.customer) {
+                    if (itemData.person !== currentUserName) {
+                        alert('권한이 없습니다.');
+                        return;
+                    }
+
+                    openModifyModal();
+                    return;
+                }
+
+                // ✅ customer가 있는 경우 → 기존 권한 로직 유지
                 $.ajax({
                     url: '/api/customer/' + itemData.customer,
                     type: 'GET',
-                    success: function(customerData) {
-                        // PO와 PA를 배열로 만들기 (띄어쓰기, 쉼표 등 구분)
-                        var poList = (customerData.head || '').split(/[\s,]+/).map(s => s.trim());
-                        var paList = (customerData.deputy || '').split(/[\s,]+/).map(s => s.trim());
-                        var allowedUsers = [...poList, ...paList, customerData.creator]; // creator 추가
+                    success: function (customerData) {
 
-                        // 현재 사용자 체크
+                        var poList = (customerData.head || '')
+                            .split(/[\s,]+/)
+                            .map(s => s.trim())
+                            .filter(Boolean);
+
+                        var paList = (customerData.deputy || '')
+                            .split(/[\s,]+/)
+                            .map(s => s.trim())
+                            .filter(Boolean);
+
+                        var allowedUsers = [
+                            ...poList,
+                            ...paList,
+                            customerData.person
+                        ];
+
                         if (!allowedUsers.includes(currentUserName)) {
                             alert('권한이 없습니다.');
-                            return; // 여기서 종료
+                            return;
                         }
 
-                        // 권한이 있으면 기존 모달 로직 실행
-                        fetchCustomers().then(() => {
-                            $('#modifyJjinbbaModal').find('textarea[name="numbers"]').val(itemData.numbers.join(" "));
-                            $('#modifyJjinbbaModal').find('input[name="description"]').val(itemData.description);
-                            $('#modifyJjinbbaModal').find('select[name="person"]').val(itemData.person);
-                            $('#modifyJjinbbaModal').find('select[name="customer"]').val(itemData.customer);
-
-                            $('#modifyJjinbbaModal').modal('show');
-                        });
-
+                        openModifyModal();
                     },
-                    error: function() {
+                    error: function () {
                         alert('고객 정보를 불러오는데 실패했습니다.');
                     }
                 });
             },
-            error: function() {
+            error: function () {
                 alert('항목 데이터를 불러오는데 실패했습니다.');
             }
         });
