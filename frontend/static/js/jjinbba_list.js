@@ -294,8 +294,6 @@ $(document).ready(function() {
             url: '/api/jjinbba/' + id,
             type: 'GET',
             success: function (itemData) {
-                console.log(itemData.customer, itemData, currentUserName);
-
                 // 👉 권한 통과 후 실행될 공통 로직
                 function openModifyModal() {
                     fetchCustomers().then(() => {
