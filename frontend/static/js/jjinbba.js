@@ -402,6 +402,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.open(url, '_blank');
     });
 
+    document.getElementById('id_map_edit')?.addEventListener('click', function() {
+        const mapUrl = `/jjinbba/map?id=${encodeURIComponent(number)}`;
+        window.open(mapUrl, '_blank');
+    });
+
     // 11) 이미지 ZIP 다운로드 (img_urls 사용)
     document.getElementById('id_each_img_download').addEventListener('click', async function() {
         // 클릭 시작 시 로딩 아이콘 표시

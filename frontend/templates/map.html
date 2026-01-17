@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매물 지도 뷰어</title>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=vz5JT2DPsIjdjZgTSkUHjLQPoNZ0cZoPq6xoYe5k"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', sans-serif;
+            background: #f4f5f7;
+            color: #191f28;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* 토스 스타일 컨트롤 바 */
+        .control-bar {
+            background: #fff;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e8eb;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            z-index: 1000;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4e5968;
+        }
+
+        input[type="text"], input[type="number"], select {
+            padding: 10px 14px;
+            border: 1px solid #e5e8eb;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+            background: #f9fafb;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            border-color: #1b64da;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(27, 100, 218, 0.1);
+        }
+
+        input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #e5e8eb;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        input[type="range"] {
+            width: 80px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #1b64da;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557c0;
+        }
+
+        .btn-secondary {
+            background: #f2f4f6;
+            color: #4e5968;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e8eb;
+        }
+
+        .btn-danger {
+            background: #f2f4f6;
+            color: #e53935;
+        }
+
+        .btn-danger:hover {
+            background: #ffebee;
+        }
+
+        .btn-tool {
+            background: #f2f4f6;
+            color: #4e5968;
+        }
+
+        .btn-tool:hover {
+            background: #e5e8eb;
+        }
+
+        .btn-tool.active {
+            background: #1b64da;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 12px;
+            min-width: 32px;
+            justify-content: center;
+        }
+
+        /* 메인 콘텐츠 영역 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 지도 영역 */
+        #map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 캔버스 오버레이 */
+        #drawing-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #drawing-canvas.active {
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+
+        /* 토스 스타일 교통정보 패널 - 투명도 적용 */
+        .transport-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: auto;
+            min-width: 280px;
+            max-width: 90%;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            z-index: 200;
+            display: none;
+            cursor: move;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .transport-panel.visible {
+            display: block;
+        }
+
+        .transport-header {
+            background: rgba(27, 100, 218, 0.95);
+            color: white;
+            padding: 12px 16px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .transport-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .transport-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .transport-header .control-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background 0.2s;
+        }
+
+        .transport-header .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .transport-header .close-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin-left: 4px;
+        }
+
+        .transport-header .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .opacity-slider {
+            width: 60px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .transport-content {
+            padding: 12px;
+            transform-origin: top left;
+        }
+
+        .transport-section {
+            margin-bottom: 12px;
+        }
+
+        .transport-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #6b7684;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 지하철 카드 */
+        .subway-card {
+            background: rgba(249, 250, 251, 0.8);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+
+        .subway-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .subway-station {
+            font-weight: 700;
+            font-size: 12px;
+            color: #191f28;
+            margin-bottom: 6px;
+        }
+
+        .subway-lines {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .subway-line {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .walking-info {
+            font-size: 9px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* 버스 카드 */
+        .bus-type {
+            margin-bottom: 10px;
+        }
+
+        .bus-type:last-child {
+            margin-bottom: 0;
+        }
+
+        .bus-type-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .bus-type-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .bus-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+        }
+
+        .bus-number {
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+            background: rgba(242, 244, 246, 0.9);
+            color: #4e5968;
+        }
+
+        /* 로딩 오버레이 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid #e5e8eb;
+            border-top: 3px solid #1b64da;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 에러 메시지 */
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            text-align: center;
+            z-index: 500;
+            display: none;
+            max-width: 320px;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .error-message h3 {
+            color: #e53935;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .error-message p {
+            color: #4e5968;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* 토스 스타일 초기 화면 */
+        .initial-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+
+        .initial-screen.hidden {
+            display: none;
+        }
+
+        .initial-box {
+            text-align: center;
+            max-width: 360px;
+            width: 90%;
+            padding: 20px;
+        }
+
+        .initial-box .icon {
+            width: 72px;
+            height: 72px;
+            background: #f2f4f6;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 32px;
+        }
+
+        .initial-box h1 {
+            color: #191f28;
+            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .initial-box p {
+            color: #8b95a1;
+            margin-bottom: 32px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .initial-box input {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .initial-box button {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            justify-content: center;
+        }
+
+        /* 구분선 */
+        .divider {
+            width: 1px;
+            height: 24px;
+            background: #e5e8eb;
+            margin: 0 4px;
+        }
+
+        /* 텍스트 입력 모달 */
+        .text-input-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .text-input-modal.visible {
+            display: flex;
+        }
+
+        .text-input-box {
+            background: white;
+            padding: 28px;
+            border-radius: 16px;
+            min-width: 320px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+        }
+
+        .text-input-box h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #191f28;
+        }
+
+        .text-input-box input {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .text-input-box .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* 캡처 영역 */
+        #capture-area {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 줌 레벨 표시 */
+        .zoom-level {
+            font-size: 10px;
+            color: rgba(255,255,255,0.8);
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 컨트롤 바 -->
+        <div class="control-bar">
+            <div class="control-group">
+                <label>매물번호</label>
+                <input type="text" id="property-id-input" placeholder="매물번호 입력" style="width: 160px;">
+                <button class="btn-primary" onclick="loadProperty()">조회</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="control-group">
+                <button class="btn-tool" id="btn-line" onclick="setTool('line')">📏 선분</button>
+                <button class="btn-tool" id="btn-circle" onclick="setTool('circle')">⭕ 원</button>
+                <button class="btn-tool" id="btn-text" onclick="setTool('text')">✏️ 텍스트</button>
+                <button class="btn-tool" id="btn-eraser" onclick="setTool('eraser')">🧹 지우기</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="control-group">
+                <label>색상</label>
+                <input type="color" id="draw-color" value="#ff0000">
+            </div>
+
+            <div class="control-group">
+                <label>굵기</label>
+                <input type="number" id="draw-width" value="3" min="1" max="20" style="width: 64px;">
+            </div>
+
+            <div class="control-group">
+                <label>글꼴</label>
+                <select id="font-family">
+                    <option value="Malgun Gothic">맑은 고딕</option>
+                    <option value="Nanum Gothic">나눔고딕</option>
+                    <option value="Noto Sans KR">Noto Sans</option>
+                    <option value="Arial">Arial</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>크기</label>
+                <input type="number" id="font-size" value="16" min="10" max="72" style="width: 64px;">
+            </div>
+
+            <div class="divider"></div>
+
+            <button class="btn-danger" onclick="clearDrawings()">전체 지우기</button>
+            <button class="btn-primary" onclick="captureScreen()">📷 캡처</button>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="main-content">
+            <div id="capture-area">
+                <div id="map-container">
+                    <div id="map"></div>
+                    <canvas id="drawing-canvas"></canvas>
+                </div>
+
+                <!-- 교통정보 패널 -->
+                <div class="transport-panel" id="transport-panel">
+                    <div class="transport-header">
+                        <div class="transport-header-left">
+                            <span>🚇 교통 정보</span>
+                        </div>
+                        <div class="transport-header-controls">
+                            <button class="control-btn" onclick="zoomPanel(-0.1)" title="축소">−</button>
+                            <span class="zoom-level" id="zoom-level">100%</span>
+                            <button class="control-btn" onclick="zoomPanel(0.1)" title="확대">+</button>
+                            <input type="range" class="opacity-slider" id="opacity-slider" min="30" max="100" value="80" onchange="changeOpacity(this.value)" title="투명도">
+                            <button class="close-btn" onclick="toggleTransportPanel()">×</button>
+                        </div>
+                    </div>
+                    <div class="transport-content" id="transport-content">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 초기 화면 -->
+            <div class="initial-screen" id="initial-screen">
+                <div class="initial-box">
+                    <div class="icon">🏠</div>
+                    <h1>매물 지도 뷰어</h1>
+                    <p>매물번호를 입력하면<br>위치와 교통정보를 확인할 수 있어요</p>
+                    <input type="text" id="initial-property-id" placeholder="매물번호 입력">
+                    <button class="btn-primary" onclick="loadPropertyFromInitial()">조회하기</button>
+                </div>
+            </div>
+
+            <!-- 로딩 오버레이 -->
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- 에러 메시지 -->
+            <div class="error-message" id="error-message">
+                <h3>오류 발생</h3>
+                <p id="error-text"></p>
+                <button class="btn-primary" onclick="hideError()" style="margin-top: 20px; width: 100%; justify-content: center;">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 텍스트 입력 모달 -->
+    <div class="text-input-modal" id="text-modal">
+        <div class="text-input-box">
+            <h3>텍스트 입력</h3>
+            <input type="text" id="text-input" placeholder="텍스트를 입력하세요">
+            <div class="btn-group">
+                <button class="btn-secondary" onclick="cancelTextInput()">취소</button>
+                <button class="btn-primary" onclick="confirmTextInput()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 상수
+        const BASE_URL = 'http://172.30.1.68';
+        const NCP_KEY_ID = 'vz5JT2DPsIjdjZgTSkUHjLQPoNZ0cZoPq6xoYe5k';
+
+        // 전역 변수
+        let map = null;
+        let marker = null;
+        let currentTool = null;
+        let isDrawing = false;
+        let startPos = null;
+        let drawings = [];
+        let textPosition = null;
+        let transportData = null;
+        let panelZoom = 1.0;
+        let panelOpacity = 0.8;
+
+        // 캔버스 관련
+        let canvas = null;
+        let ctx = null;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            // 캔버스 초기화
+            canvas = document.getElementById('drawing-canvas');
+            ctx = canvas.getContext('2d');
+
+            // URL 파라미터 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            const propertyId = urlParams.get('id') || urlParams.get('매물번호');
+
+            if (propertyId) {
+                document.getElementById('property-id-input').value = propertyId;
+                loadProperty();
+            }
+
+            // 엔터키 이벤트
+            document.getElementById('property-id-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loadProperty();
+            });
+
+            document.getElementById('initial-property-id').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loadPropertyFromInitial();
+            });
+
+            document.getElementById('text-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') confirmTextInput();
+            });
+
+            // 캔버스 이벤트
+            setupCanvasEvents();
+
+            // 교통정보 패널 드래그
+            setupDraggable();
+
+            // 초기 투명도 설정
+            updatePanelOpacity();
+        });
+
+        // 패널 줌 조절
+        function zoomPanel(delta) {
+            panelZoom = Math.max(0.5, Math.min(1.5, panelZoom + delta));
+            const content = document.getElementById('transport-content');
+            content.style.transform = `scale(${panelZoom})`;
+            content.style.width = `${100 / panelZoom}%`;
+            document.getElementById('zoom-level').textContent = `${Math.round(panelZoom * 100)}%`;
+        }
+
+        // 패널 투명도 조절
+        function changeOpacity(value) {
+            panelOpacity = value / 100;
+            updatePanelOpacity();
+        }
+
+        function updatePanelOpacity() {
+            const panel = document.getElementById('transport-panel');
+            panel.style.background = `rgba(255, 255, 255, ${panelOpacity})`;
+        }
+
+        // 지도 초기화
+        function initMap(lat, lng) {
+            const mapContainer = document.getElementById('map');
+
+            map = new naver.maps.Map(mapContainer, {
+                center: new naver.maps.LatLng(lat, lng),
+                zoom: 17,
+                scrollWheel: true,
+                zoomControl: true,
+                zoomControlOptions: {
+                    position: naver.maps.Position.TOP_LEFT
+                }
+            });
+
+            // 마커 추가
+            marker = new naver.maps.Marker({
+                position: new naver.maps.LatLng(lat, lng),
+                map: map,
+                icon: {
+                    content: '<div style="width: 30px; height: 30px; position: relative;"><div style="width: 20px; height: 20px; background: #e53935; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); position: absolute; top: 0; left: 5px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div><div style="width: 8px; height: 8px; background: white; border-radius: 50%; position: absolute; top: 6px; left: 11px;"></div></div>',
+                    anchor: new naver.maps.Point(15, 30)
+                }
+            });
+
+            // 캔버스 크기 설정
+            resizeCanvas();
+
+            // 지도 크기 변경 시 캔버스 리사이즈
+            naver.maps.Event.addListener(map, 'resize', resizeCanvas);
+            window.addEventListener('resize', resizeCanvas);
+
+            // 지도 이동/줌 시 캔버스 다시 그리기
+            naver.maps.Event.addListener(map, 'zoom_changed', () => {
+                setTimeout(redrawCanvas, 100);
+            });
+            naver.maps.Event.addListener(map, 'center_changed', () => {
+                setTimeout(redrawCanvas, 100);
+            });
+        }
+
+        // 캔버스 크기 조정
+        function resizeCanvas() {
+            const container = document.getElementById('map-container');
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            redrawCanvas();
+        }
+
+        // 캔버스 이벤트 설정
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('mouseleave', handleMouseUp);
+        }
+
+        function handleMouseDown(e) {
+            if (!currentTool) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (currentTool === 'eraser') {
+                eraseAtPosition(x, y);
+                return;
+            }
+
+            if (currentTool === 'text') {
+                textPosition = { x, y };
+                document.getElementById('text-modal').classList.add('visible');
+                document.getElementById('text-input').focus();
+                return;
+            }
+
+            isDrawing = true;
+            startPos = { x, y };
+        }
+
+        function handleMouseMove(e) {
+            if (!isDrawing || !currentTool || currentTool === 'text' || currentTool === 'eraser') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            redrawCanvas();
+
+            // 미리보기 그리기
+            const color = document.getElementById('draw-color').value;
+            const width = parseInt(document.getElementById('draw-width').value);
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.lineCap = 'round';
+
+            if (currentTool === 'line') {
+                ctx.beginPath();
+                ctx.moveTo(startPos.x, startPos.y);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            } else if (currentTool === 'circle') {
+                const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2));
+                ctx.beginPath();
+                ctx.arc(startPos.x, startPos.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (!isDrawing || !currentTool || currentTool === 'text' || currentTool === 'eraser') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const color = document.getElementById('draw-color').value;
+            const width = parseInt(document.getElementById('draw-width').value);
+
+            if (currentTool === 'line') {
+                drawings.push({
+                    type: 'line',
+                    startX: startPos.x,
+                    startY: startPos.y,
+                    endX: x,
+                    endY: y,
+                    color: color,
+                    width: width
+                });
+            } else if (currentTool === 'circle') {
+                const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2));
+                drawings.push({
+                    type: 'circle',
+                    centerX: startPos.x,
+                    centerY: startPos.y,
+                    radius: radius,
+                    color: color,
+                    width: width
+                });
+            }
+
+            isDrawing = false;
+            startPos = null;
+            redrawCanvas();
+        }
+
+        // 캔버스 다시 그리기
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawings.forEach(drawing => {
+                ctx.strokeStyle = drawing.color;
+                ctx.fillStyle = drawing.color;
+                ctx.lineWidth = drawing.width || 3;
+                ctx.lineCap = 'round';
+
+                if (drawing.type === 'line') {
+                    ctx.beginPath();
+                    ctx.moveTo(drawing.startX, drawing.startY);
+                    ctx.lineTo(drawing.endX, drawing.endY);
+                    ctx.stroke();
+                } else if (drawing.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(drawing.centerX, drawing.centerY, drawing.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (drawing.type === 'text') {
+                    ctx.font = `${drawing.fontSize}px ${drawing.fontFamily}`;
+                    ctx.fillText(drawing.text, drawing.x, drawing.y);
+                }
+            });
+        }
+
+        // 도구 선택
+        function setTool(tool) {
+            // 이전 도구 버튼 비활성화
+            document.querySelectorAll('.btn-tool').forEach(btn => btn.classList.remove('active'));
+
+            if (currentTool === tool) {
+                currentTool = null;
+                canvas.classList.remove('active');
+            } else {
+                currentTool = tool;
+                canvas.classList.add('active');
+                document.getElementById(`btn-${tool}`).classList.add('active');
+            }
+        }
+
+        // 텍스트 입력 확인
+        function confirmTextInput() {
+            const text = document.getElementById('text-input').value.trim();
+            if (text && textPosition) {
+                const color = document.getElementById('draw-color').value;
+                const fontFamily = document.getElementById('font-family').value;
+                const fontSize = parseInt(document.getElementById('font-size').value);
+
+                drawings.push({
+                    type: 'text',
+                    text: text,
+                    x: textPosition.x,
+                    y: textPosition.y,
+                    color: color,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize
+                });
+
+                redrawCanvas();
+            }
+
+            cancelTextInput();
+        }
+
+        function cancelTextInput() {
+            document.getElementById('text-modal').classList.remove('visible');
+            document.getElementById('text-input').value = '';
+            textPosition = null;
+        }
+
+        // 지우개
+        function eraseAtPosition(x, y) {
+            const threshold = 20;
+
+            for (let i = drawings.length - 1; i >= 0; i--) {
+                const d = drawings[i];
+                let shouldRemove = false;
+
+                if (d.type === 'line') {
+                    const dist = pointToLineDistance(x, y, d.startX, d.startY, d.endX, d.endY);
+                    shouldRemove = dist < threshold;
+                } else if (d.type === 'circle') {
+                    const distToCenter = Math.sqrt(Math.pow(x - d.centerX, 2) + Math.pow(y - d.centerY, 2));
+                    shouldRemove = Math.abs(distToCenter - d.radius) < threshold;
+                } else if (d.type === 'text') {
+                    ctx.font = `${d.fontSize}px ${d.fontFamily}`;
+                    const metrics = ctx.measureText(d.text);
+                    shouldRemove = x >= d.x && x <= d.x + metrics.width && y >= d.y - d.fontSize && y <= d.y;
+                }
+
+                if (shouldRemove) {
+                    drawings.splice(i, 1);
+                    redrawCanvas();
+                    return;
+                }
+            }
+        }
+
+        // 점에서 선분까지의 거리
+        function pointToLineDistance(px, py, x1, y1, x2, y2) {
+            const A = px - x1;
+            const B = py - y1;
+            const C = x2 - x1;
+            const D = y2 - y1;
+
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+
+            if (lenSq !== 0) param = dot / lenSq;
+
+            let xx, yy;
+
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            } else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            } else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
+            }
+
+            const dx = px - xx;
+            const dy = py - yy;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // 전체 지우기
+        function clearDrawings() {
+            drawings = [];
+            redrawCanvas();
+        }
+
+        // 매물 조회
+        async function loadProperty() {
+            const propertyId = document.getElementById('property-id-input').value.trim();
+            if (!propertyId) {
+                showError('매물번호를 입력해주세요.');
+                return;
+            }
+
+            showLoading();
+            hideInitialScreen();
+
+            try {
+                // 매물 정보 조회
+                const singleResponse = await fetch(`${BASE_URL}/api/jjinbba/single/${propertyId}`);
+                if (!singleResponse.ok) throw new Error('매물 정보를 가져올 수 없습니다.');
+
+                const singleData = await singleResponse.json();
+
+                // API 응답에서 직접 latitude, longitude 가져옴
+                const latitude = parseFloat(singleData.latitude);
+                const longitude = parseFloat(singleData.longitude);
+
+                if (!latitude || !longitude) {
+                    throw new Error('위치 정보가 없습니다.');
+                }
+
+                // 교통 정보 조회
+                try {
+                    const transportResponse = await fetch(`${BASE_URL}/api/jjinbba/transport/${propertyId}`);
+                    if (transportResponse.ok) {
+                        const transportResult = await transportResponse.json();
+                        if (transportResult.isSuccess && transportResult.result) {
+                            transportData = transportResult.result;
+                            renderTransportInfo(transportData);
+                            showTransportPanel();
+                        }
+                    }
+                } catch (transportError) {
+                    console.log('교통 정보 조회 실패:', transportError);
+                }
+
+                // 지도 초기화
+                initMap(latitude, longitude);
+
+                // URL 업데이트
+                const newUrl = `${window.location.pathname}?id=${propertyId}`;
+                window.history.pushState({ propertyId }, '', newUrl);
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function loadPropertyFromInitial() {
+            const propertyId = document.getElementById('initial-property-id').value.trim();
+            document.getElementById('property-id-input').value = propertyId;
+            loadProperty();
+        }
+
+        // 교통 정보 렌더링
+        function renderTransportInfo(data) {
+            const content = document.getElementById('transport-content');
+            let html = '';
+
+            // 지하철 정보
+            if (data.subwayList && data.subwayList.length > 0) {
+                html += '<div class="transport-section">';
+                html += '<div class="section-title">지하철</div>';
+
+                data.subwayList.forEach(station => {
+                    html += '<div class="subway-card">';
+                    html += `<div class="subway-station">${station.stationName}</div>`;
+                    html += '<div class="subway-lines">';
+
+                    station.typeList.forEach(line => {
+                        html += `<span class="subway-line" style="background: ${line.color}">`;
+                        html += `${line.name} <span class="walking-info">${line.walkingDuration}분</span>`;
+                        html += '</span>';
+                    });
+
+                    html += '</div></div>';
+                });
+
+                html += '</div>';
+            }
+
+            // 버스 정보
+            if (data.busList && data.busList.length > 0) {
+                html += '<div class="transport-section">';
+                html += '<div class="section-title">버스</div>';
+
+                data.busList.forEach(busType => {
+                    html += '<div class="bus-type">';
+                    html += '<div class="bus-type-header">';
+                    html += `<span class="bus-type-badge" style="background: ${busType.typeColor}">${busType.typeName}</span>`;
+                    html += '</div>';
+                    html += '<div class="bus-list">';
+
+                    busType.list.forEach(bus => {
+                        html += `<span class="bus-number">${bus}</span>`;
+                    });
+
+                    html += '</div></div>';
+                });
+
+                html += '</div>';
+            }
+
+            content.innerHTML = html;
+        }
+
+        // 교통정보 패널 토글
+        function toggleTransportPanel() {
+            document.getElementById('transport-panel').classList.toggle('visible');
+        }
+
+        function showTransportPanel() {
+            document.getElementById('transport-panel').classList.add('visible');
+        }
+
+        // 드래그 설정
+        function setupDraggable() {
+            const panel = document.getElementById('transport-panel');
+            const header = panel.querySelector('.transport-header');
+            let isDragging = false;
+            let currentX, currentY, initialX, initialY;
+
+            header.addEventListener('mousedown', (e) => {
+                // 컨트롤 버튼이나 슬라이더 클릭 시 드래그 방지
+                if (e.target.closest('.transport-header-controls')) return;
+                isDragging = true;
+                initialX = e.clientX - panel.offsetLeft;
+                initialY = e.clientY - panel.offsetTop;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                // 경계 체크
+                const container = document.querySelector('.main-content');
+                const maxX = container.offsetWidth - panel.offsetWidth;
+                const maxY = container.offsetHeight - panel.offsetHeight;
+
+                currentX = Math.max(0, Math.min(currentX, maxX));
+                currentY = Math.max(0, Math.min(currentY, maxY));
+
+                panel.style.left = currentX + 'px';
+                panel.style.top = currentY + 'px';
+                panel.style.right = 'auto';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        // 캡처
+        async function captureScreen() {
+            showLoading();
+
+            try {
+                const captureArea = document.getElementById('capture-area');
+
+                const captureCanvas = await html2canvas(captureArea, {
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    scale: 2
+                });
+
+                // 다운로드
+                const link = document.createElement('a');
+                const propertyId = document.getElementById('property-id-input').value || 'map';
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+                link.download = `property_${propertyId}_${timestamp}.png`;
+                link.href = captureCanvas.toDataURL('image/png');
+                link.click();
+
+            } catch (error) {
+                showError('캡처 중 오류가 발생했습니다: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // UI 헬퍼
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.add('visible');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('visible');
+        }
+
+        function showError(message) {
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error-message').classList.add('visible');
+        }
+
+        function hideError() {
+            document.getElementById('error-message').classList.remove('visible');
+        }
+
+        function hideInitialScreen() {
+            document.getElementById('initial-screen').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

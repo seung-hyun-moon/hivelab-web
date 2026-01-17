@@ -106,6 +106,16 @@ async def move_property(request: Request):
     return templates.TemplateResponse("property.html", {"request": request, "hide_sidebar": False})
 
 
+@app.get("/jjinbba/map")
+async def move_jjinbba_map(request: Request):
+    return templates.TemplateResponse(
+        "map.html",
+        {
+            "request": request
+        }
+    )
+
+
 @app.get("/jjinbba")
 @app.get("/jjinbba/{number}")
 async def move_jjinbba(request: Request, number: int = None):
