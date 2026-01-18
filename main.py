@@ -175,4 +175,4 @@ async def logout():
     return response
 
 if __name__ == "__main__":
-    uvicorn.run(f"{Path(__file__).stem}:app", host="0.0.0.0", port=80, reload=True)
+    uvicorn.run(f"{Path(__file__).stem}:app", host="0.0.0.0", port=80)
